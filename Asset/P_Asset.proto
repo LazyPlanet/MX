@@ -1,0 +1,202 @@
+import "google/protobuf/descriptor.proto";
+
+package Adoter.Asset;
+/////////////////////////////////////////////////////
+// 
+// 游戏中各种资源，物品数据结构定义 
+//
+// 资源区别与物品的主要依据之一就是：要不要显示在包裹里面.
+//  
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
+// 通用数据定义区：即其他(.proto)文件也用的定义数据
+/////////////////////////////////////////////////////
+
+extend google.protobuf.EnumValueOptions {
+	optional int32 inventory_size = 60000; //包裹初始大小
+}
+
+extend google.protobuf.FieldOptions {
+	optional int32 repeated_size = 60001; //默认大小
+}
+
+//包裹类型：必须按照顺序添加
+enum INVENTORY_TYPE {
+	INVENTORY_TYPE_BACKPACKAGE = 1 [ (inventory_size) = 64 ]; //普通包裹
+	INVENTORY_TYPE_EQUIPMENT = 2 [ (inventory_size) = 6 ]; //装备包裹
+	INVENTORY_TYPE_FASHION = 3 [ (inventory_size) = 16 ]; //时装包裹
+	INVENTORY_TYPE_COUNT = 4; //最大包裹数
+}
+
+//性别
+enum GENDER_TYPE {
+	GENDER_TYPE_MAN = 1; //男
+	GENDER_TYPE_WOMAN = 2; //女
+}
+
+/////////////////////////////////////////////////////
+// 数据地区版本
+/////////////////////////////////////////////////////
+enum VERSION_TYPE {
+	VERSION_TYPE_GLOBAL = 0x00000001; //全球统一数据
+	VERSION_TYPE_MAINLAND = 0x00000002; //大陆(中国区不包括台湾、香港、澳门)
+	VERSION_TYPE_TAIWAN = 0x00000003; //台湾
+}
+
+/////////////////////////////////////////////////////
+// 资源类型
+// 
+// 一定要简单，易于读取和使用
+//
+/////////////////////////////////////////////////////
+enum ASSET_TYPE {
+	///////////资源类型///////////
+	ASSET_TYPE_BEGIN = 1; //资源开始
+	ASSET_TYPE_ROOM = 2; //房间
+	ASSET_TYPE_COMMON_LIMIT = 3; //通用限制
+	ASSET_TYPE_COMMON_REWARD = 4; //通用奖励
+	ASSET_TYPE_COOL_DOWN = 5; //冷却
+	ASSET_TYPE_MJ_CARD = 6; //麻将牌
+	ASSET_TYPE_COMMON_CONST = 7; //通用常量定义
+	ASSET_TYPE_COUNT = 200; //最大资源数
+	///////////物品类型///////////
+	ITEM_TYPE_BEGIN = 201; //物品开始
+	ITEM_TYPE_POTION = 202; //药品
+	ITEM_TYPE_EQUIPMENT = 203; //装备
+	ITEM_TYPE_GUN = 204; //枪
+}
+
+/////////////////////////////////////////////////////
+// 全局唯一ID的数据结构
+//
+//	-----------------------------------------------------------------
+// 	| Type(2Bytes)	|SubType(2Bytes)|	Index(4Bytes)		|
+//	-----------------------------------------------------------------
+//
+/////////////////////////////////////////////////////
+
+//公共资源属性
+message AssetCommonProp {
+	required int64 global_id = 1; //标识ID
+	required VERSION_TYPE version = 2; //版本
+	required bytes name = 3; //名称
+	optional bytes show_name = 4; //显示名称
+	optional bytes desc = 5; //描述
+}
+
+/////////////////////////////////////////////////////
+// 资源数据类别定义区
+// 
+// 每项必须含有字段，且位置索引不能更换：
+//
+//	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_PLANT ];  //需要指定默认值
+//	
+//	optional AssetCommonProp common_prop = 2;
+// 
+/////////////////////////////////////////////////////
+
+//通用限制
+message CommonLimit {
+	//限制类型(主要用于日志)
+	enum COMMON_LIMIT_TYPE {
+		COMMON_LIMIT_TYPE_PLANT = 1; //种植次数限制
+	}
+	//冷却时间
+	enum COOL_DOWN_TYPE {
+		COOL_DOWN_TYPE_DAY = 1; //每天
+		COOL_DOWN_TYPE_WEEK = 2; //每周
+		COOL_DOWN_TYPE_MONTH = 3; //每月
+		COOL_DOWN_TYPE_YEAR = 4; //每年
+		COOL_DOWN_TYPE_NEVER = 5; //永不
+	}
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_COMMON_LIMIT ];
+	optional AssetCommonProp common_prop = 2;
+	optional COMMON_LIMIT_TYPE limit_type = 3; //限制类型
+	optional COOL_DOWN_TYPE cool_down_type = 4; //冷却类型
+}
+
+//冷却
+message CoolDown {
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_COOL_DOWN ];
+	optional AssetCommonProp common_prop = 2;
+	optional int32 time = 3; //冷却时间(单位：秒)
+}
+
+//麻将牌
+message MJCard {
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_MJ_CARD ];
+	optional AssetCommonProp common_prop = 2;
+	optional int32 group_count = 3 [ default = 4 ]; //组数量
+	message Card {
+		enum CARD_TYPE {
+			CARD_TYPE_WANZI = 1; //万子牌
+			CARD_TYPE_BINGZI = 2; //饼子牌
+			CARD_TYPE_TIAOZI = 3; //条子牌
+			CARD_TYPE_FENG = 4; //风牌
+			CARD_TYPE_JIAN = 5; //箭牌
+		}
+		optional CARD_TYPE type_t = 1;	//牌类型
+		optional int32 value = 2; //牌值
+		optional bytes model_path = 3;	//牌模型或者图片路径
+	}
+	optional int32 cards_count = 4 [ default = 9 ]; //牌数量
+	repeated Card cards = 5;
+}
+
+//通用常量定义
+message CommonConst {
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_COMMON_CONST ];
+	optional AssetCommonProp common_prop = 2;
+	optional int32 max_cards_count = 3 [ default = 136 ]; //牌总数
+}
+/////////////////////////////////////////////////////
+// 物品(作为特殊资源)数据类别定义区
+//
+// 每项必须含有字段，且位置索引不能更换：
+// 
+//	optional ASSET_TYPE type_t = 1 [ default = ITEM_TYPE_POTION ];	//需要指定默认值
+//
+//	optional Item_CommonProp item_common_prop = 2; //物品公共属性
+//
+// 命名规则：Item_Xxxxxx
+//
+/////////////////////////////////////////////////////
+
+//物品通用属性
+message Item_CommonProp {
+	optional AssetCommonProp common_prop = 1; //通用属性
+	optional int32 quality = 2 [ default = 1 ]; //品质
+	optional int32 min_level_limit = 3; //玩家使用级别最小限制
+	optional int32 max_level_limit = 4; //玩家使用级别最大限制
+	optional int32 pile_max = 5 [ default = 1 ]; //堆叠上限
+	optional int32 count = 6 [ default = 1 ]; //数量
+	optional bool batch_use = 7; //能否可以批量使用
+	optional bool auto_use = 8; //能否可以自动使用
+	optional int64 cool_down_id = 9; //冷却ID([CoolDown]数据)
+	optional INVENTORY_TYPE inventory = 10; //默认进包
+}
+
+//物品基类(所有物品都包在此)
+message Item_Item {	
+	optional ASSET_TYPE type_t = 1 [ default = ITEM_TYPE_BEGIN ];
+	optional bytes stuff = 2; //包含的子类数据，非物品通用数据(例如，Item_Potion序列化后的数据)
+	optional bytes stuff_extra = 3; //物品额外存盘数据
+}
+
+//药品
+message Item_Potion {
+	enum POTION_TYPE {
+		POTION_TYPE_HEMO = 1; //回血丹
+		POTION_TYPE_MAGIC = 2; //回魔丹
+		POTION_TYPE_PHYSICAL_STRENGTH = 3; //体力丹
+	}
+	optional ASSET_TYPE type_t = 1 [ default = ITEM_TYPE_POTION ];
+	optional Item_CommonProp item_common_prop = 2; //物品公共属性
+	optional POTION_TYPE potion_type = 3; //药品类型
+	optional int32 increase_value = 4 [ default = 1 ]; //增加属性
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

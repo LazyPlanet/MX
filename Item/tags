@@ -1,0 +1,49 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+Adoter	Item.cpp	/^namespace Adoter$/;"	n	file:
+Adoter	Item.h	/^namespace Adoter$/;"	n
+Adoter	Item_Equipment.cpp	/^namespace Adoter$/;"	n	file:
+Adoter	Item_Equipment.h	/^namespace Adoter$/;"	n
+Adoter	Item_Potion.cpp	/^namespace Adoter$/;"	n	file:
+Adoter	Item_Potion.h	/^namespace Adoter$/;"	n
+BASE_OBJ	Makefile	/^BASE_OBJ=Item.o Item_Potion.o Item_Equipment.o$/;"	m
+CXX	Makefile	/^CXX=g++$/;"	m
+CanUse	Item.cpp	/^bool Item::CanUse() $/;"	f	class:Adoter::Item
+CanUse	Item_Equipment.cpp	/^bool Item_Equipment::CanUse()$/;"	f	class:Adoter::Item_Equipment
+CanUse	Item_Potion.cpp	/^bool Item_Potion::CanUse()$/;"	f	class:Adoter::Item_Potion
+GetStuff	Item.h	/^	virtual std::string* GetStuff() { return this->_stuff->mutable_stuff(); }$/;"	f	class:Adoter::Item
+GetType	Item.h	/^	virtual Asset::ConfigType GetType() { return this->_stuff->type_t(); }$/;"	f	class:Adoter::Item
+INCPATH	Makefile	/^INCPATH=-I. -I.. -I$(PROTOBUF_DIR)\/include -I$(BOOST_ROOT)$/;"	m
+Item	Item.cpp	/^Item::Item()$/;"	f	class:Adoter::Item
+Item	Item.cpp	/^Item::Item(Asset::Item_Item& item)$/;"	f	class:Adoter::Item
+Item	Item.cpp	/^Item::Item(pb::Message* message) : Item()\/*委托构造函数*\/$/;"	f	class:Adoter::Item
+Item	Item.cpp	/^Item::Item(std::shared_ptr<Asset::Item_Item> item)$/;"	f	class:Adoter::Item
+Item	Item.h	/^class Item : public std::enable_shared_from_this<Item>$/;"	c	namespace:Adoter
+Item_Equipment	Item_Equipment.cpp	/^Item_Equipment::Item_Equipment()$/;"	f	class:Adoter::Item_Equipment
+Item_Equipment	Item_Equipment.cpp	/^Item_Equipment::Item_Equipment(Asset::Item_Equipment* stuff)$/;"	f	class:Adoter::Item_Equipment
+Item_Equipment	Item_Equipment.h	/^class Item_Equipment : public Item$/;"	c	namespace:Adoter
+Item_Potion	Item_Potion.cpp	/^Item_Potion::Item_Potion()$/;"	f	class:Adoter::Item_Potion
+Item_Potion	Item_Potion.cpp	/^Item_Potion::Item_Potion(Asset::Item_Potion* stuff)$/;"	f	class:Adoter::Item_Potion
+Item_Potion	Item_Potion.h	/^class Item_Potion : public Item$/;"	c	namespace:Adoter
+LDFLAGS	Makefile	/^LDFLAGS = -lboost_system -lboost_thread$/;"	m
+LIBRARY	Makefile	/^LIBRARY=-L$(PROTOBUF_DIR)\/lib\/libprotobuf.a -L$(BOOST_ROOT)\/stage\/lib\/$/;"	m
+PROTO_OBJ	Makefile	/^PROTO_OBJ=$(patsubst %.proto,%.pb.o,$(PROTO_SRC))$/;"	m
+PROTO_OPTIONS	Makefile	/^PROTO_OPTIONS=--proto_path=. --proto_path=$(PROTOBUF_DIR)\/include$/;"	m
+PROTO_SRC	Makefile	/^PROTO_SRC=$/;"	m
+TARGET	Makefile	/^TARGET=$(BASE_OBJ)$/;"	m
+Use	Item.cpp	/^int32_t Item::Use() $/;"	f	class:Adoter::Item
+Use	Item_Equipment.cpp	/^int32_t Item_Equipment::Use()$/;"	f	class:Adoter::Item_Equipment
+Use	Item_Potion.cpp	/^int32_t Item_Potion::Use()$/;"	f	class:Adoter::Item_Potion
+_stuff	Item.h	/^	std::shared_ptr<Asset::Item_Item> _stuff;$/;"	m	class:Adoter::Item
+override	Item_Equipment.h	/^	virtual bool CanUse() override;     $/;"	m	class:Adoter::Item_Equipment
+override	Item_Equipment.h	/^	virtual int32_t Use() override; $/;"	m	class:Adoter::Item_Equipment
+override	Item_Potion.h	/^	virtual bool CanUse() override; \/\/是否可使用    $/;"	m	class:Adoter::Item_Potion
+override	Item_Potion.h	/^	virtual int32_t Use() override; \/\/返回值：消耗数量$/;"	m	class:Adoter::Item_Potion
+stuff_extra	Item_Equipment.h	/^	Asset::ItemEquipment stuff_extra;$/;"	m	class:Adoter::Item_Equipment
+~Item	Item.cpp	/^Item::~Item()$/;"	f	class:Adoter::Item
+~Item_Equipment	Item_Equipment.cpp	/^Item_Equipment::~Item_Equipment()$/;"	f	class:Adoter::Item_Equipment
+~Item_Potion	Item_Potion.cpp	/^Item_Potion::~Item_Potion()$/;"	f	class:Adoter::Item_Potion

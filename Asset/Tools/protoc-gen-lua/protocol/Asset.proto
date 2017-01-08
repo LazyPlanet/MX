@@ -1,0 +1,18 @@
+
+package Asset;
+
+message Set {
+	optional bytes username = 1;
+	optional bytes password = 2;
+	optional bytes filename = 3;
+	optional bytes assetpath = 4;
+	optional bytes protocol_filename = 5;
+}
+
+message Element {
+	message Meta {
+		optional int32 type = 1;
+		repeated int32 index = 2;
+	}
+	repeated Meta metas = 1;
+}

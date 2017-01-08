@@ -1,0 +1,221 @@
+import "P_Asset.proto";
+import "google/protobuf/descriptor.proto";
+
+package Adoter.Asset;
+
+message FiledCheck {
+	optional int64 minv	= 1;
+	optional int64 maxv	= 2;
+}
+
+extend google.protobuf.FieldOptions {
+	optional string comment		= 50000;
+	optional FiledCheck checker	= 50001;
+}
+
+message Bar {
+	optional int32 rate = 1 [(checker).minv = 50, (checker).maxv = 100];
+}
+
+extend google.protobuf.MessageOptions {
+	optional string my_option = 51234;
+}
+
+message MyMessage {
+	option (my_option) = "Hello world!";
+}
+
+/////////////////////////////////////////////////////
+//
+// 游戏中各种存盘、属性、基础数据结构定义
+//
+// Client<->Server公共使用，单独服务器使用的数据格式请勿在此定义
+//
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
+// 通用数据定义区
+/////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////
+// 游戏基本属性定义区
+/////////////////////////////////////////////////////
+
+//玩家临时属性，不存盘
+message PlayerProvisionalProp {
+	optional float sight_distance = 1;
+}
+
+//玩家信息
+message Player {
+	optional ENTITY_TYPE entity_type = 1 [ default = ENTITY_TYPE_PLAYER ];
+	optional CommonProp common_prop = 2; //公共属性(存储[CommonProp]字段)
+	optional int32 local_zone = 3; //注册ZONEID
+	optional int32 locate_zone = 4; //当前所在ZONEID(防止以后跨服或者合服)
+	optional Inventories inventory = 5; //玩家包裹
+//////////////非存盘数据结构
+	optional PlayerProvisionalProp provisional_prop = 6; //玩家临时状态数据
+}
+
+//包裹结构
+message Inventories {
+	message Inventory {
+		optional INVENTORY_TYPE inventory_type = 1;
+		repeated Item_Item items = 2; //包裹中存储的物品信息
+	}
+	repeated Inventory inventories = 1; //多个包裹(根据INVENTORY_TYPE_COUNT自动调整数量，所以无用包裹请勿增加[INVENTORY_TYPE]类型)
+}
+
+/////////////////////////////////////////////////////
+// 物品逻辑存盘数据定义区
+/////////////////////////////////////////////////////
+message ItemEquipment {
+	optional int32 star = 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////
+//
+// Client<->Server协议
+//
+// 1.Server<->Client交互通过协议Meta传送，其中包含内容类型和内容MESSAGE数据;
+//
+// 2.每个协议必须包含META_TYPE，否则双方无法处理;
+//
+/////////////////////////////////////////////////////
+
+message Meta {
+	optional META_TYPE type_t = 1;
+	optional bytes stuff = 2;
+}
+
+/////////////////////////////////////////////////////
+//客户端和服务器公用的数据定义区
+/////////////////////////////////////////////////////
+
+//通用错误码定义
+enum ERROR_TYPE {
+	ERROR_TYPE_NORMAL = 1;
+	ERROR_TYPE_INVENTORY_FULL = 2; //包裹已满
+}
+
+enum ERROR_SHOW_TYPE {
+	ERROR_SHOW_TYPE_CHAT = 1;
+}
+
+enum ERROR_CODE {
+	ERROR_SUCCESS = 0;	//成功
+	ERROR_LOAD = 1;		//加载数据失败
+}
+
+/////////////////////////////////////////////////////
+//通用协议类型
+/////////////////////////////////////////////////////
+enum META_TYPE {
+	///////////客户端发送数据///////////
+	META_TYPE_C2S_BEGIN = 1; //客户端开始协议
+	META_TYPE_C2S_LOGIN = 2; //登录游戏
+	META_TYPE_C2S_SELECT_SERVER = 3; //选择服务器
+	META_TYPE_C2S_CREATE_PLAYER = 4; //创建角色
+	META_TYPE_C2S_ENTER_GAME = 5; //进入游戏(选择的角色)
+	META_TYPE_C2S_ENTER_SCENE = 6; //进入场景(进入游戏之后、加载完场景后发送)
+	META_TYPE_C2S_MOVE = 7; //移动
+	META_TYPE_C2S_COUNT = 500; //客户端协议最大数量
+	///////////服务器发送数据///////////
+	META_TYPE_S2C_BEGIN = 501; //服务器开始协议
+	META_TYPE_S2C_TICKET = 502; //登录认证
+	META_TYPE_S2C_SERVER_LIST = 503; //游戏服务器列表(AS->C)
+	META_TYPE_S2C_PLAYERS = 504; //同步账号下角色数据
+	META_TYPE_S2C_PLAYER_INFO = 505; //同步玩家角色数据(登录之后同步)
+	META_TYPE_S2C_MUTABLE_PROPERTY = 506; //同步玩家易变属性数据
+	META_TYPE_S2C_ALTER_ERROR = 507; //错误码信息
+	META_TYPE_S2C_SURROUNDINGS_CHANGED = 508; //周围事物
+	META_TYPE_S2C_COUNT = 1000; //服务器协议最大数量
+}
+/////////////////////////////////////////////////////
+//客户端发送协议定义区
+/////////////////////////////////////////////////////
+
+//创建角色
+message CreatePlayer {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_C2S_CREATE_PLAYER ];
+}
+
+message Account {
+	optional bytes username = 1;
+	optional bytes password = 2;
+}
+//登录游戏
+message Login {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_C2S_LOGIN ];
+	optional Account account = 2;
+}
+
+//进入游戏
+message EnterGame {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_C2S_ENTER_GAME ];
+	optional int64 player_id = 2; //角色ID
+}
+
+//进入场景
+message EnterScene {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_C2S_ENTER_SCENE ];
+	optional int64 scene_id = 2; //场景ID
+}
+
+//移动
+message Move {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_C2S_MOVE ];
+	optional Vector3 move_to = 2; //移动到位置
+}
+/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+//服务器发送协议定义区
+/////////////////////////////////////////////////////
+
+//同步账号下角色数据
+message PlayerList {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_S2C_PLAYERS ];
+	repeated Player players = 2;
+}
+
+//同步玩家角色数据
+message PlayerInfo {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_S2C_PLAYER_INFO ];
+	optional Player player = 2;
+}
+
+//同步玩家易变数据
+message MutableProperty {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_S2C_MUTABLE_PROPERTY ];
+	optional int64 player_id = 2;
+	optional int32 speed = 3;
+	optional int32 orientation = 4;
+	optional Vector3 position = 5;
+}
+
+//错误码提示
+message AlterError {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_S2C_ALTER_ERROR ];
+	optional ERROR_TYPE error_type = 2;
+	optional ERROR_SHOW_TYPE error_show_type = 3;
+	optional ERROR_CODE error_code = 4;
+}
+
+//周围物体发生变化，如进入、离开场景
+message SurroundingsChanged {
+	optional META_TYPE type_t = 1 [ default = META_TYPE_S2C_SURROUNDINGS_CHANGED ];
+	enum ACTION_TYPE {
+		ACTION_TYPE_ENTER = 1;
+		ACTION_TYPE_LEAVE = 2;
+		ACTION_TYPE_MOVE = 3;
+	}
+	optional ACTION_TYPE action_type = 2;
+	optional int64 entity_id = 3;
+	optional bytes content = 4;
+}

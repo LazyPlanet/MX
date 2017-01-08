@@ -1,0 +1,348 @@
+import "google/protobuf/descriptor.proto";
+
+package Adoter.Asset;
+/////////////////////////////////////////////////////
+// 
+// 游戏中各种资源，物品数据结构定义 
+//
+// 资源区别与物品的主要依据之一就是：要不要显示在包裹里面.
+//  
+/////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////
+// 通用数据定义区：即其他(.proto)文件也用的定义数据
+/////////////////////////////////////////////////////
+
+extend google.protobuf.EnumValueOptions {
+	optional int32 inventory_size = 60000; //包裹初始大小
+}
+
+extend google.protobuf.FieldOptions {
+	optional int32 repeated_size = 60001; //默认大小
+}
+
+//职业
+enum PROF_TYPE {
+	PROF_TYPE_NULL = 0x0000; //无职业(限制、要求)
+	PROF_TYPE_FARMER = 0x0001; //农民
+	PROF_TYPE_FARMER_HOSTER = 0x0002; //农场主
+	PROF_TYPE_FARMER_AND_HOSTER = 0x0003; //农民|农场主
+	PROF_TYPE_COWBOY = 0x0004; //牛仔
+	PROF_TYPE_BOUNTY_HUNTER = 0x0010; //赏金猎人
+}
+
+//包裹类型：必须按照顺序添加
+enum INVENTORY_TYPE {
+	INVENTORY_TYPE_BACKPACKAGE = 1 [ (inventory_size) = 64 ]; //普通包裹
+	INVENTORY_TYPE_EQUIPMENT = 2 [ (inventory_size) = 6 ]; //装备包裹
+	INVENTORY_TYPE_FASHION = 3 [ (inventory_size) = 16 ]; //时装包裹
+	INVENTORY_TYPE_COUNT = 4; //最大包裹数
+}
+
+//实体类型
+enum ENTITY_TYPE {
+	ENTITY_TYPE_NULL = 1; //无实体类型
+	ENTITY_TYPE_PLAYER = 2;	//玩家
+	ENTITY_TYPE_HOST = 3; //本地居民
+	ENTITY_TYPE_NPC = 4; //模拟玩家
+	ENTITY_TYPE_BUILDING = 5; //建筑
+	ENTITY_TYPE_SEA = 6; //海洋单位
+	ENTITY_TYPE_AIR = 7; //空中单位
+	ENTITY_TYPE_LAND = 8; //陆面单位
+	ENTITY_TYPE_PARTICLE = 9; //粒子
+}
+
+//三维坐标
+message Vector3 {
+	optional float x = 1; //坐标X
+	optional float y = 2; //坐标Y
+	optional float z = 3; //坐标Z
+}
+
+//阵营
+enum CAMP_TYPE {
+	CAMP_TYPE_NULL = 1; //无阵营
+	CAMP_TYPE_HUMON = 2; //玩家
+
+}
+
+//性别
+enum GENDER_TYPE {
+	GENDER_TYPE_MAN = 1; //男
+	GENDER_TYPE_WOMAN = 2; //女
+}
+
+//实体动作状态
+enum ENTITY_ACTION_STATE_TYPE {
+	ENTITY_ACTION_STATE_TYPE_IDLE = 1; //无状态
+	ENTITY_ACTION_STATE_TYPE_MOVE = 2; //移动
+	ENTITY_ACTION_STATE_TYPE_RUN = 3; //跑
+	ENTITY_ACTION_STATE_TYPE_RIDE = 4; //骑
+	ENTITY_ACTION_STATE_TYPE_FIGHT = 5; //战斗
+}
+
+//玩家、AI、NPC公共数据 //说明：定义在这里只是因为有NPC要资源
+message CommonProp {
+	optional int64 entity_id = 1; //实体ID
+	optional ENTITY_TYPE entity_type = 2 [ default = ENTITY_TYPE_HOST ]; //实体类型
+	optional bytes name = 3; //名字
+	optional float radius = 4 [ default = 0.5 ]; //模型半径(单位：米)
+	optional float height = 5 [ default = 1.5 ]; //模型高度(单位：米)
+	optional int32 level = 6 [ default = 1 ]; //级别
+	optional GENDER_TYPE gender = 7 [ default = GENDER_TYPE_MAN]; //性别
+	optional PROF_TYPE profession = 8 [ default = PROF_TYPE_FARMER ]; //职业
+	optional int32 speed = 9 [ default = 1 ]; //移动速度(单位：米/秒)
+	optional int32 hp = 10 [ default = 100 ]; //血量
+	optional int32 mp = 11 [ default = 100 ]; //魔法
+	optional int32 orientation_x = 12; //角度、朝向(弧度计算公式：radius = orientation * (2 * 3.1415926 / 360))
+	optional int32 orientation_y = 13; //角度、朝向(弧度计算公式：radius = orientation * (2 * 3.1415926 / 360))
+	optional int64 scene_id = 14; //地图、场景ID(如果是NPC，则为出生地图)
+	optional Vector3 position = 15; //位置(如果是NPC，则为出生地点)
+	optional float visibility_range = 16 [ default = 30.0 ]; //视野范围
+	optional CAMP_TYPE camp_type = 17 [ default = CAMP_TYPE_NULL ]; //阵营
+	optional int32 skills_count = 18 [ default = 6 ]; //技能数量
+	repeated int64 skills = 19; //技能ID([Skill]数据)
+	optional int64 level_up_id = 20; //升级曲线ID([LevelUpCurve]数据)
+	optional ENTITY_ACTION_STATE_TYPE action_state_type = 21; //实体状态
+}
+
+/////////////////////////////////////////////////////
+// 数据地区版本
+/////////////////////////////////////////////////////
+enum VERSION_TYPE {
+	VERSION_TYPE_GLOBAL = 0x00000001; //全球统一数据
+	VERSION_TYPE_MAINLAND = 0x00000002; //大陆(中国区不包括台湾、香港、澳门)
+	VERSION_TYPE_TAIWAN = 0x00000003; //台湾
+}
+
+/////////////////////////////////////////////////////
+// 资源类型
+// 
+// 一定要简单，易于读取和使用
+//
+/////////////////////////////////////////////////////
+enum ASSET_TYPE {
+	///////////资源类型///////////
+	ASSET_TYPE_BEGIN = 1; //资源开始
+	ASSET_TYPE_PLANT = 2; //种植
+	ASSET_TYPE_COMMON_LIMIT = 3; //通用限制
+	ASSET_TYPE_COMMON_REWARD = 4; //通用奖励
+	ASSET_TYPE_COOL_DOWN = 5; //冷却
+	ASSET_TYPE_HOSTER = 6; //居民(即我们通常所说的NPC、AI或者...西部世界)
+	ASSET_TYPE_SKILL = 7; //技能
+	ASSET_TYPE_LEVEL_UP = 8; //升级曲线
+	ASSET_TYPE_SCENE = 9; //场景(这里指每个地图)
+	ASSET_TYPE_PARTICLE = 10; //粒子(子物体)
+	ASSET_TYPE_COUNT = 200; //最大资源数
+	///////////物品类型///////////
+	ITEM_TYPE_BEGIN = 201; //物品开始
+	ITEM_TYPE_POTION = 202; //药品
+	ITEM_TYPE_EQUIPMENT = 203; //装备
+	ITEM_TYPE_GUN = 204; //枪
+}
+
+/////////////////////////////////////////////////////
+// 全局唯一ID的数据结构
+//
+//	-----------------------------------------------------------------
+// 	| Type(2Bytes)	|SubType(2Bytes)|	Index(4Bytes)		|
+//	-----------------------------------------------------------------
+//
+/////////////////////////////////////////////////////
+
+//公共资源属性
+message AssetCommonProp {
+	required int64 global_id = 1; //标识ID
+	required VERSION_TYPE version = 2; //版本
+	required bytes name = 3; //名称
+	optional bytes show_name = 4; //显示名称
+	optional bytes desc = 5; //描述
+}
+
+/////////////////////////////////////////////////////
+// 资源数据类别定义区
+// 
+// 每项必须含有字段，且位置索引不能更换：
+//
+//	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_PLANT ];  //需要指定默认值
+//	
+//	optional AssetCommonProp common_prop = 2;
+// 
+/////////////////////////////////////////////////////
+
+//种植
+message Plant {	
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_PLANT ];
+	optional AssetCommonProp common_prop = 2;
+}
+
+//通用限制
+message CommonLimit {
+	//限制类型(主要用于日志)
+	enum COMMON_LIMIT_TYPE {
+		COMMON_LIMIT_TYPE_PLANT = 1; //种植次数限制
+	}
+	//冷却时间
+	enum COOL_DOWN_TYPE {
+		COOL_DOWN_TYPE_DAY = 1; //每天
+		COOL_DOWN_TYPE_WEEK = 2; //每周
+		COOL_DOWN_TYPE_MONTH = 3; //每月
+		COOL_DOWN_TYPE_YEAR = 4; //每年
+		COOL_DOWN_TYPE_NEVER = 5; //永不
+	}
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_COMMON_LIMIT ];
+	optional AssetCommonProp common_prop = 2;
+	optional COMMON_LIMIT_TYPE limit_type = 3; //限制类型
+	optional COOL_DOWN_TYPE cool_down_type = 4; //冷却类型
+}
+
+//冷却
+message CoolDown {
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_COOL_DOWN ];
+	optional AssetCommonProp common_prop = 2;
+	optional int32 time = 3; //冷却时间(秒)
+}
+
+//实体(场景中所有非玩家)
+message Hoster {
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_HOSTER ];
+	optional AssetCommonProp common_prop = 2;
+	optional CommonProp human_prop = 3; //具有玩家属性
+	optional bytes behaviac_tree_path = 4; //行为树路径
+	optional int32 build_time = 5; //部署时间(秒)
+	optional int32 attack_speed = 6; //攻击速度
+	optional int64 produce_entity_id = 7; //每次生产实体ID(可以是物品、怪物、或者资源...)
+	optional int32 produce_entity_speed = 8; //每次生产实体周期(每X秒生产一次)
+	optional int32 produce_entity_count = 9; //每次生产实体数量
+	optional bool actived = 10; //是否主动实体(怪...)
+}
+
+//攻击
+message Harm {
+	enum HARM_TYPE {
+		HARM_TYPE_HP = 1; //减血
+		HARM_TYPE_MP = 2; //减魔
+		HARM_TYPE_SPEED = 3; //减速
+	}
+	optional HARM_TYPE harm_type = 1; //伤害类型
+	optional int32 harm_total = 2; //伤害值(负值表示增加)
+	optional int32 last_time = 3; //持续时间(秒)
+	optional int32 harm_per_second = 4; //每秒伤害(持续伤害)
+	optional int32 harm_range = 5; //攻击范围
+	optional ENTITY_TYPE harm_target = 6; //攻击目标(如果为0，表示都能伤害)
+}
+
+//技能
+message Skill {
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_SKILL ];
+	optional AssetCommonProp common_prop = 2;
+	optional int32 level = 3; //技能等级
+	optional bytes behaviac_tree_path = 4; //行为树路径
+	optional int64 cool_down_id = 5; //冷却ID([CoolDown]数据) 
+	optional int32 defense = 6; //防御力 
+	optional Harm harm = 7; //伤害
+	optional int32 summon_entity_id = 8; //召唤实体：每次使用召唤出一个NPC
+	optional int32 death_harm_total = 9; //死亡伤害：拥有该技能的主体死亡，给周围玩家造成伤害
+}
+
+//升级曲线
+message LevelUpCurve {
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_LEVEL_UP ];
+	optional AssetCommonProp common_prop = 2;
+	//升级消耗
+	message Consume {
+		//消耗类型
+		enum CONSUME_TYPE {
+			CONSUME_TYPE_EXPERIENCE = 1; //经验
+			CONSUME_TYPE_DIOMAND = 2; //钻石
+			CONSUME_TYPE_TIME = 3; //时间
+		}
+		optional int32 level_up = 1; //到达等级
+		optional CONSUME_TYPE consume_type = 2; //消耗类型
+		optional int32 consume_value = 3; //消耗数量
+		optional int64 entity_id = 4; //升级后成为XX
+	}
+	optional int32 consumes_count = 3 [ default = 20 ]; //消耗数量
+	repeated Consume consumes = 4; //消耗
+}
+
+//场景
+message Scene {
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_SCENE ];
+	optional AssetCommonProp common_prop = 2;
+	optional int32 length = 3; //长(单位：米)
+	optional int32 width = 4; //宽(单位：米)
+	optional bytes terrain_path = 5; //对应地形(Unity3D或者UnReal导出的地形路径)
+}
+
+//粒子(子物体)
+message Particle {
+	optional ASSET_TYPE type_t = 1 [ default = ASSET_TYPE_PARTICLE ];
+	optional AssetCommonProp common_prop = 2;
+	optional ENTITY_TYPE entity_type = 3 [ default = ENTITY_TYPE_PARTICLE] ; //实体类型
+	optional int32 speed = 4; //移动速度
+	optional int32 orientation_x = 5; //水平角度、朝向(弧度计算公式：radius = orientation * (2 * 3.1415926 / 360))
+	optional int32 orientation_y = 6; //垂直角度、朝向(弧度计算公式：radius = orientation * (2 * 3.1415926 / 360))
+	optional Vector3 position = 7; //位置
+}
+/////////////////////////////////////////////////////
+// 物品(作为特殊资源)数据类别定义区
+//
+// 每项必须含有字段，且位置索引不能更换：
+// 
+//	optional ASSET_TYPE type_t = 1 [ default = ITEM_TYPE_POTION ];	//需要指定默认值
+//
+//	optional Item_CommonProp item_common_prop = 2; //物品公共属性
+//
+// 命名规则：Item_Xxxxxx
+//
+/////////////////////////////////////////////////////
+
+//物品通用属性
+message Item_CommonProp {
+	optional AssetCommonProp common_prop = 1; //通用属性
+	optional int32 quality = 2 [ default = 1 ]; //品质
+	optional int32 min_level_limit = 3; //玩家使用级别最小限制
+	optional int32 max_level_limit = 4; //玩家使用级别最大限制
+	optional int32 pile_max = 5 [ default = 1 ]; //堆叠上限
+	optional int32 count = 6 [ default = 1 ]; //数量
+	optional bool batch_use = 7; //能否可以批量使用
+	optional bool auto_use = 8; //能否可以自动使用
+	optional int64 cool_down_id = 9; //冷却ID([CoolDown]数据)
+	optional INVENTORY_TYPE inventory = 10; //默认进包
+	optional PROF_TYPE prof_mask = 11 [ default = PROF_TYPE_NULL ]; //职业要求
+}
+
+//物品基类(所有物品都包在此)
+message Item_Item {	
+	optional ASSET_TYPE type_t = 1 [ default = ITEM_TYPE_BEGIN ];
+	optional bytes stuff = 2; //包含的子类数据，非物品通用数据(例如，Item_Potion序列化后的数据)
+	optional bytes stuff_extra = 3; //物品额外存盘数据
+}
+
+//药品
+message Item_Potion {
+	enum POTION_TYPE {
+		POTION_TYPE_HEMO = 1; //回血丹
+		POTION_TYPE_MAGIC = 2; //回魔丹
+		POTION_TYPE_PHYSICAL_STRENGTH = 3; //体力丹
+	}
+	optional ASSET_TYPE type_t = 1 [ default = ITEM_TYPE_POTION ];
+	optional Item_CommonProp item_common_prop = 2; //物品公共属性
+	optional POTION_TYPE potion_type = 3; //药品类型
+	optional int32 increase_value = 4 [ default = 1 ]; //增加属性
+}
+
+//装备
+message Item_Equipment {
+	enum EQUIP_TYPE {
+		EQUIP_TYPE_HELMET = 1; //头盔
+	}
+	optional ASSET_TYPE type_t = 1 [ default = ITEM_TYPE_EQUIPMENT ];
+	optional Item_CommonProp item_common_prop = 2; //物品公共属性
+	optional EQUIP_TYPE equip_type = 3; //装备类型
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

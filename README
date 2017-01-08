@@ -1,0 +1,29 @@
+
+基于ASIO + ProtocolBuffer的游戏服务器轻量级架构
+
+1.基本架构
+
+每个玩家(资源、怪物)模型分为程序和数据资源两项，其程序项为数据资源的管理项。类似传统代码中的XX类和XX_Manager类。
+
+2.线程模型
+
+精简版的魔兽世界网络和线程模型。
+
+3.优先级队列
+
+4.消息管理
+
+5.协议管理
+
+6.数据配置
+
+7.Linux配置
+# Boost
+export BOOST_ROOT=/export/lazy/ServerService/ThirdParty/boost-1.60.0
+export LD_LIBRARY_PATH="$BOOST_ROOT/stage/lib:$LD_LIBRARY_PATH"
+
+# path
+export PATH=/export/lazy/boost_1_60_0:/usr/lib/distcc/bin:/usr/local/bin:$PATH
+
+# Proto buffer
+export PROTOBUF_DIR=/export/lazy/ServerService/ThirdParty/protobuf-2.6.0/output

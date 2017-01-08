@@ -1,0 +1,52 @@
+
+package Auth;
+
+enum MetaType {
+	META_TYPE_C2S_LOGIN = 1;
+	META_TYPE_S2C_TICKET = 2;
+	META_TYPE_S2C_SERVER_LIST = 3;
+}
+
+message Meta {
+	optional MetaType type_t = 1;
+	optional bytes stuff = 2;
+}
+
+message Account {
+	optional bytes username = 1;
+	optional bytes password = 2;
+	optional int32 expiry_time = 3;
+}
+
+//登录游戏
+message Login {
+	optional MetaType type_t = 1 [ default = META_TYPE_C2S_LOGIN ];
+	optional Account account = 2;
+}
+
+//入场券
+message LoginTicket {
+	enum AuthenticationState {
+		LOGIN = 1;
+		UNLAWFUL = 2;  
+		DONE = 3;
+	}
+	optional MetaType type_t = 1 [ default = META_TYPE_S2C_TICKET ];
+	optional AuthenticationState authentication_state = 2;
+	optional string ticket = 3;
+}
+//游戏服务器列表
+message ServerList {
+	enum ServerState {
+		NORMAL = 1;
+		HOT = 2;
+	}
+	message Server {
+		optional string ip_address = 1;
+		optional int32 port = 2;
+		optional int32 zone = 3;
+		optional ServerState state = 4;
+	}
+	optional MetaType type_t = 1 [ default = META_TYPE_S2C_SERVER_LIST ];
+	repeated Server list = 2; 
+}

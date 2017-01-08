@@ -1,0 +1,33 @@
+package Adoter.Asset;
+
+/////////////////////////////////////////////////////
+//
+// 游戏中服务器自己各种存盘、属性、基础数据结构定义
+//
+// 如果客户端使用，请勿在此定义
+//
+/////////////////////////////////////////////////////
+
+//消息类型
+enum MSG_TYPE {
+	MSG_TYPE_BEGIN = 1;
+	MSG_TYPE_AOI_ENTER = 2;
+	MSG_TYPE_AOI_LEAVE = 3;
+	MSG_TYPE_AOI_MOVE = 4;
+}
+//消息队列
+message MsgItem {
+	optional int64 message_id = 1; //消息ID
+	optional int32 type = 2; //消息类型
+	optional int32 priority = 3 [ default = 10 ]; //优先级，值0优先级最大
+	optional int64 sender = 4; //发送者
+	optional int64 receiver = 5; //接收者
+	optional int64 time = 6; //发送时间
+	optional int32 delay = 7; //发送延时(s)
+	optional bytes content = 8; //具体内容
+}
+//消息队列，可以用于存盘
+message MsgItems {
+	repeated MsgItem items = 1;
+}
+
