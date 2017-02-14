@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <cmath>
+#include <map>
 #include <unordered_map>
 #include <memory>
 #include <functional>
@@ -28,7 +29,6 @@ private:
 	int64_t _heart_count = 0; //心跳次数
 
 	CallBack _method;
-	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
 	std::shared_ptr<WorldSession> _session = nullptr;	//网络连接
 public:
 	Player();
@@ -61,11 +61,6 @@ public:
 	virtual int32_t GetLevel() { return _stuff.common_prop().level(); }
 	//获取性别
 	virtual int32_t GetGender() { return _stuff.common_prop().gender(); }
-	//获取房间
-	virtual std::shared_ptr<Room>& GetRoom() { return _locate_room; }	//获取当前房间
-	virtual void SetRoomID(int64_t room_id) { _stuff.mutable_common_prop()->set_room_id(room_id); }	
-	virtual int32_t GetRoomID() { return this->_stuff.common_prop().room_id(); }
-	virtual bool HasRoom() { return _locate_room != nullptr; }
 	//消息处理
 	virtual bool HandleMessage(const Asset::MsgItem& item); 
 	virtual void SendMessage(Asset::MsgItem& item);
@@ -125,6 +120,25 @@ public:
 	}
 	//发送错误信息
 	void AlterError(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type = Asset::ERROR_TYPE_NORMAL, Asset::ERROR_SHOW_TYPE error_show_type = Asset::ERROR_SHOW_TYPE_CHAT);
+
+///////游戏逻辑定义
+private:
+	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
+	std::unordered_map<int/*麻将牌类型*/, std::vector<int>/*牌值*/> _cards; //玩家具有的麻将
+public:
+	//获取房间
+	virtual std::shared_ptr<Room>& GetRoom() { return _locate_room; }	//获取当前房间
+	virtual void SetRoomID(int64_t room_id) { _stuff.mutable_common_prop()->set_room_id(room_id); }	
+	virtual int32_t GetRoomID() { return this->_stuff.common_prop().room_id(); }
+	virtual bool HasRoom() { return _locate_room != nullptr; }
+
+	virtual int32_t OnFaPai(int32_t card); //每次发牌
+	virtual int32_t OnFaPai(std::vector<int32_t>& cards); //游戏开始之初发牌
+	int ZhuaPai(); //抓牌
+	int ChiPai(); //吃牌
+	int PengPai(); //碰牌
+	int GangPai(); //杠牌
+	int HuPai(); //胡牌
 };
 
 /////////////////////////////////////////////////////

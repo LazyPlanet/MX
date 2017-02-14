@@ -346,6 +346,39 @@ void Player::AlterError(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_ty
 }
 
 /////////////////////////////////////////////////////
+/////游戏逻辑定义
+/////////////////////////////////////////////////////
+int Player::ZhuaPai()
+{
+	return 0;
+}
+
+int Player::ChiPai()
+{
+	return 0;
+}
+
+int Player::PengPai()
+{
+	return 0;
+}
+
+int Player::GangPai()
+{
+	return 0;
+}
+
+int32_t OnFaPai(std::vector<int32_t>& cards)
+{
+
+	return 0;
+}
+
+int32_t Player::OnFaPai(int32_t card)
+{
+	return 0;
+}
+/////////////////////////////////////////////////////
 //玩家通用管理类
 /////////////////////////////////////////////////////
 void PlayerManager::Add(std::shared_ptr<Player> player)

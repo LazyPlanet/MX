@@ -18,7 +18,7 @@ BIN=GameServer
 all: $(BIN)
 
 clean:
-	@rm -f $(BIN) $(SUB_OBJ) *.o *.pb.*
+	@rm -f $(BIN)  *.o *.pb.*
 
 rebuild: clean all
 
@@ -26,7 +26,7 @@ GameServer: $(PROTO_OBJ) $(BASE_OBJ) $(SUB_OBJ) Main.o
 	$(CXX) $^ -o $@ $(LIBRARY) $(LDFLAGS)
 
 %.pb.cc: %.proto
-	$(PROTOBUF_DIR)/bin/protoc $(PROTO_OPTIONS) --cpp_out=. $<
+	protoc $(PROTO_OPTIONS) --cpp_out=. $<
 
 %.pb.o: %.pb.cc
 	$(CXX) $(CXXFLAGS) -c $< -o $@
