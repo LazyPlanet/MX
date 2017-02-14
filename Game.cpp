@@ -7,23 +7,55 @@
 namespace Adoter
 {
 
+int32_t Game::_banker_index = 0; //庄家索引
+/////////////////////////////////////////////////////
+//一场游戏
+/////////////////////////////////////////////////////
 void Game::Init()
 {
-	_cards.reserve(CARDS_COUNT);
-
 	std::iota(_cards.begin(), _cards.end(), 1);
 
-	std::random_shuffle(_cards.begin(), _cards.end()); //洗牌
+	//std::random_shuffle(_cards.begin(), _cards.end()); //洗牌
+
 }
 
 bool Game::Start()
 {
+	if (_players.size() != 4) return false;
+
+	for (size_t i = 0; i < _players.size(); ++i)
+	{
+		auto player = _players[i];
+		
+		if (_banker_index % 4 == i)
+		{
+			player->OnFaPai(14); //庄家发牌
+		}
+		else
+		{
+			player->OnFaPai(13);
+		}
+	}
 	return true;
 }
 
-int32_t Game::GetCard()
+bool Game::Over()
 {
-	return 0;
+	_hupai_players.push_back(1);
+	++_banker_index; //换庄家
+	return true;
+}
+
+void Game::FaPai(uint32_t card_count, std::vector<int32_t>& cards)
+{
+	if (card_count > _cards.size()) return;
+
+	for (int i = 0; i < card_count; ++i)
+	{
+		int32_t value = _cards.front();	
+		cards.push_back(value);
+		_cards.pop_front();
+	}
 }
 
 /////////////////////////////////////////////////////
