@@ -15,7 +15,9 @@ void Game::Init()
 {
 	std::iota(_cards.begin(), _cards.end(), 1);
 
-	//std::random_shuffle(_cards.begin(), _cards.end()); //洗牌
+	std::vector<int32_t> cards(_cards.begin(), _cards.end());
+	std::random_shuffle(cards.begin(), cards.end()); //洗牌
+	_cards = std::list<int32_t>(cards.begin(), cards.end());
 
 }
 
@@ -27,7 +29,7 @@ bool Game::Start()
 	{
 		auto player = _players[i];
 		
-		if (_banker_index % 4 == i)
+		if ((size_t)_banker_index % 4 == i)
 		{
 			player->OnFaPai(14); //庄家发牌
 		}
@@ -50,7 +52,7 @@ void Game::FaPai(uint32_t card_count, std::vector<int32_t>& cards)
 {
 	if (card_count > _cards.size()) return;
 
-	for (int i = 0; i < card_count; ++i)
+	for (size_t i = 0; i < card_count; ++i)
 	{
 		int32_t value = _cards.front();	
 		cards.push_back(value);
