@@ -1,10 +1,11 @@
+#include <iostream>
+
+#include <hiredis.h>
+
 #include "Player.h"
 #include "Protocol.h"
 #include "CommonUtil.h"
 #include "RedisManager.h"
-
-#include <iostream>
-#include <hiredis.h>
 
 namespace Adoter
 {

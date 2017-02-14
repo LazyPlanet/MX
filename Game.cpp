@@ -1,8 +1,8 @@
-#include "Game.h"
-#include "Asset.h"
-
 #include <vector>
 #include <algorithm>
+
+#include "Game.h"
+#include "Asset.h"
 
 namespace Adoter
 {
