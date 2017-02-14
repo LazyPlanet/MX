@@ -368,7 +368,7 @@ int Player::GangPai()
 	return 0;
 }
 
-int32_t OnFaPai(std::vector<int32_t>& cards)
+int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 {
 
 	return 0;
