@@ -133,7 +133,7 @@ public:
 	virtual bool HasRoom() { return _locate_room != nullptr; }
 
 	virtual int32_t OnFaPai(int32_t card); //每次发牌
-	virtual int32_t OnFaPai(std::vector<int32_t>& cards); //游戏开始之初发牌
+	virtual int32_t OnFaPai(std::vector<int32_t>&& cards); //游戏开始之初发牌
 	int ZhuaPai(); //抓牌
 	int ChiPai(); //吃牌
 	int PengPai(); //碰牌

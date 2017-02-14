@@ -7,7 +7,6 @@
 namespace Adoter
 {
 
-int32_t Game::_banker_index = 0; //庄家索引
 /////////////////////////////////////////////////////
 //一场游戏
 /////////////////////////////////////////////////////
@@ -16,7 +15,9 @@ void Game::Init()
 	std::iota(_cards.begin(), _cards.end(), 1);
 
 	std::vector<int32_t> cards(_cards.begin(), _cards.end());
+
 	std::random_shuffle(cards.begin(), cards.end()); //洗牌
+
 	_cards = std::list<int32_t>(cards.begin(), cards.end());
 
 }
@@ -27,16 +28,12 @@ bool Game::Start()
 
 	for (size_t i = 0; i < _players.size(); ++i)
 	{
-		auto player = _players[i];
+		int32_t card_count = 13; //正常开启，普通玩家牌数量
+
+		if (_banker_index % 4 == i) card_count = 14; //庄家牌数量
 		
-		if ((size_t)_banker_index % 4 == i)
-		{
-			player->OnFaPai(14); //庄家发牌
-		}
-		else
-		{
-			player->OnFaPai(13);
-		}
+		auto cards = FaPai(card_count);
+		_players[i]->OnFaPai(std::move(cards)); 
 	}
 	return true;
 }
@@ -48,16 +45,21 @@ bool Game::Over()
 	return true;
 }
 
-void Game::FaPai(uint32_t card_count, std::vector<int32_t>& cards)
+std::vector<int32_t> Game::FaPai(size_t card_count)
 {
-	if (card_count > _cards.size()) return;
+	std::vector<int32_t> cards;
+	
+	if (card_count > _cards.size()) return cards;
 
 	for (size_t i = 0; i < card_count; ++i)
 	{
 		int32_t value = _cards.front();	
+
 		cards.push_back(value);
+
 		_cards.pop_front();
 	}
+	return cards;
 }
 
 /////////////////////////////////////////////////////
@@ -72,8 +74,15 @@ bool GameManager::Load()
 		if (!asset_card) return false;
 		
 		for (int k = 0; k < asset_card->group_count(); ++k)
+		{
 			for (int i = 0; i < asset_card->cards_count(); ++i)
-				_cards.emplace(_cards.size() + 1, asset_card->mutable_cards(i));
+			{
+				card_t card =  { (int32_t)asset_card->card_type(), (int32_t)asset_card->cards(i).value() };
+
+				_cards.emplace(_cards.size() + 1, card);
+
+			}
+		}
 	}
 
 	//if (_cards.size() != CARDS_COUNT) return false;
