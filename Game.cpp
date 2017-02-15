@@ -79,9 +79,7 @@ bool GameManager::Load()
 
 			for (int i = 0; i < cards_count; ++i)
 			{
-				card_t card = {
-					 (int32_t)asset_card->card_type(), (int32_t)asset_card->cards(i).value()
-				};
+				card_t card = {(int32_t)asset_card->card_type(), (int32_t)asset_card->cards(i).value()};
 				_cards.emplace(_cards.size() + 1, card);
 
 			}
