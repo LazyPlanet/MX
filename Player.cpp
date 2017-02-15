@@ -375,9 +375,14 @@ int32_t Player::OnFaPai(std::vector<int32_t>&& cards)
 	for (auto card_index : cards)
 	{
 		auto card = GameInstance.GetCard(card_index);
-		if (card.card_type == 0 && card.card_value == 0) return 1; //数据有误
+		if (card.card_type == 0 || card.card_value == 0) return 1; //数据有误
 
 		_cards[card.card_type].push_back(card.card_value);
+	}
+
+	for (auto cards : _cards)
+	{
+		std::sort(cards.second.begin(), cards.second.end(), [](int x, int y){ return x < y; }); //由小到大
 	}
 	return 0;
 }
