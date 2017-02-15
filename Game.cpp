@@ -59,6 +59,7 @@ std::vector<int32_t> Game::FaPai(size_t card_count)
 
 		_cards.pop_front();
 	}
+	
 	return cards;
 }
 
