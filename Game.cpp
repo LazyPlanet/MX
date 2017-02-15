@@ -75,12 +75,13 @@ bool GameManager::Load()
 		
 		for (int k = 0; k < asset_card->group_count(); ++k)
 		{
-			for (int i = 0; i < asset_card->cards_count(); ++i)
-			{
-				card_t card;
-				card.card_type = asset_card->card_type();
-				card.card_value = asset_card->cards(i).value();
+			int32_t cards_count = std::min(asset_card->group_count(), asset_card->cards_size());
 
+			for (int i = 0; i < cards_count; ++i)
+			{
+				card_t card = {
+					 (int32_t)asset_card->card_type(), (int32_t)asset_card->cards(i).value()
+				};
 				_cards.emplace(_cards.size() + 1, card);
 
 			}

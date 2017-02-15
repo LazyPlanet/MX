@@ -39,8 +39,8 @@ class GameManager
 {
 public:
 	struct card_t {
-		int32_t card_type = 0;
-		int32_t card_value = 0;
+		int32_t card_type;
+		int32_t card_value;
 	};
 	std::unordered_map<int32_t/*牌索引*/, struct card_t/*牌值*/> _cards;
 public:
