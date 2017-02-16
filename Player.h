@@ -134,12 +134,13 @@ public:
 
 	virtual int32_t OnFaPai(std::vector<int32_t>&& cards); //游戏开始之初发牌
 	//发送玩家当前手里的所有牌
-	virtual void SendPai();
+	virtual void SendPai(int32_t oper_type);
 	int ZhuaPai(); //抓牌
 	int ChiPai(); //吃牌
 	int PengPai(); //碰牌
 	int GangPai(); //杠牌
 	int HuPai(); //胡牌
+	//virtual void DaPai(); //打牌
 };
 
 /////////////////////////////////////////////////////

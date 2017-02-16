@@ -385,14 +385,21 @@ int32_t Player::OnFaPai(std::vector<int32_t>&& cards)
 		std::sort(cards.second.begin(), cards.second.end(), [](int x, int y){ return x < y; }); //由小到大
 	}
 	
-	SendPai(); //同步数据
+	if (cards.size() > 1)
+	{
+		SendPai(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START); //开局
+	}
+	else
+	{
+		SendPai(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //发牌
+	}
 	return 0;
 }
 
-void Player::SendPai()
+void Player::SendPai(int32_t oper_type)
 {
 	Asset::PaiNotify notify;
-	notify.set_oper_type(Asset::PaiNotify_CARDS_OPER_TYPE_CARDS_OPER_TYPE_START);
+	notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START);
 
 	for (auto pai : _cards)
 	{
@@ -401,6 +408,7 @@ void Player::SendPai()
 		::google::protobuf::RepeatedField<int32_t> pais(pai.second.begin(), pai.second.end());
 		notify.mutable_pais()->mutable_cards()->CopyFrom(pais);
 	}
+
 	SendProtocol(notify);
 }
 /////////////////////////////////////////////////////
