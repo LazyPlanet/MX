@@ -132,8 +132,9 @@ public:
 	virtual int32_t GetRoomID() { return this->_stuff.common_prop().room_id(); }
 	virtual bool HasRoom() { return _locate_room != nullptr; }
 
-	virtual int32_t OnFaPai(int32_t card); //每次发牌
 	virtual int32_t OnFaPai(std::vector<int32_t>&& cards); //游戏开始之初发牌
+	//发送玩家当前手里的所有牌
+	virtual void SendPai();
 	int ZhuaPai(); //抓牌
 	int ChiPai(); //吃牌
 	int PengPai(); //碰牌

@@ -385,22 +385,23 @@ int32_t Player::OnFaPai(std::vector<int32_t>&& cards)
 		std::sort(cards.second.begin(), cards.second.end(), [](int x, int y){ return x < y; }); //由小到大
 	}
 	
-	Asset::PaiNotify notify;
-	notify.set_oper_type(Asset::PaiNotify_CARDS_OPER_TYPE_CARDS_OPER_TYPE_START);
-	for (auto pai : _cards)
-	{
-		notify.mutable_pais()->set_card_type(pai.first);
-		::google::protobuf::RepeatedField<int32_t> pais(pai.second.begin(), pai.second.end());
-		notify.mutable_pais()->mutable_cards()->CopyFrom(pais);
-	}
-	//发送玩家当前手里的所有牌
-	SendProtocol(notify);
+	SendPai(); //同步数据
 	return 0;
 }
 
-int32_t Player::OnFaPai(int32_t card)
+void Player::SendPai()
 {
-	return 0;
+	Asset::PaiNotify notify;
+	notify.set_oper_type(Asset::PaiNotify_CARDS_OPER_TYPE_CARDS_OPER_TYPE_START);
+
+	for (auto pai : _cards)
+	{
+		notify.mutable_pais()->set_card_type(pai.first);
+
+		::google::protobuf::RepeatedField<int32_t> pais(pai.second.begin(), pai.second.end());
+		notify.mutable_pais()->mutable_cards()->CopyFrom(pais);
+	}
+	SendProtocol(notify);
 }
 /////////////////////////////////////////////////////
 //玩家通用管理类
