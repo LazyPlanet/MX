@@ -3,7 +3,7 @@
 class CommonUtil
 {
 public:
-	static int32_t Random(int32_t min, int32_t max)
+	static int32_t Random(int32_t min, int32_t max) //[min, max]
 	{
 		static std::default_random_engine _generator;
 		std::uniform_int_distribution<int> distribution(min, max);
