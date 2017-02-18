@@ -20,7 +20,7 @@ namespace Adoter
 class Redis 
 {
 private:
-	std::string _hostname = "10.236.132.167";
+	std::string _hostname = "127.0.0.1";
 	int32_t _port = 6379;
 	struct timeval _timeout = {1, 500000}; //1.5秒 
 

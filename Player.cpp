@@ -50,13 +50,9 @@ int32_t Player::Load()
 		{
 			auto inventory = _stuff.mutable_inventory()->mutable_inventories()->Add(); //增加新包裹，且初始化数据
 			inventory->set_inventory_type((Asset::INVENTORY_TYPE)(inventory_index + 1));
-			int inventory_size = enum_desc->value(inventory_index)->options().GetExtension(Asset::inventory_size); //默认格子数：如果修改需要清档
-			if (inventory->items_size() >= inventory_size) continue;
-			inventory->mutable_items()->Reserve(inventory_size); //设置默认格子数，即包裹大小
 			//提示信息
 			const pb::EnumValueDescriptor *enum_value = enum_desc->value(inventory_index);
 			if (!enum_value) break;
-			std::cout << "Add inventory type:" << enum_value->name() << ", size:" << inventory_size << std::endl;
 		}
 	} while(false);
 
@@ -304,12 +300,8 @@ bool Player::PushBackItem(Asset::INVENTORY_TYPE inventory_type, Item* item)
 	const pb::EnumDescriptor* enum_desc = Asset::INVENTORY_TYPE_descriptor();
 	if (!enum_desc) return false;
 
-	int inventory_size = enum_desc->value(inventory_type)->options().GetExtension(Asset::inventory_size); //默认格子数
-
 	Asset::Inventories_Inventory* inventory = _stuff.mutable_inventory()->mutable_inventories(inventory_type); 
 	if (!inventory) return false;
-
-	if (inventory->items_size() >= inventory_size) return false; //超过包裹最大限制
 
 	auto item_toadd = inventory->mutable_items()->Add();
 	item_toadd->CopyFrom(item->GetCommonProp());
