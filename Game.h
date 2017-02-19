@@ -37,12 +37,8 @@ public:
 /////////////////////////////////////////////////////
 class GameManager
 {
-public:
-	struct card_t {
-		int32_t card_type;
-		int32_t card_value;
-	};
-	std::unordered_map<int32_t/*牌索引*/, struct card_t/*牌值*/> _cards;
+private:
+	std::unordered_map<int32_t/*牌索引*/, Asset::Pai/*牌值*/> _cards;
 public:
 	static GameManager& Instance()
 	{
@@ -52,7 +48,7 @@ public:
 
 	bool Load(); //加载麻将牌数据
 
-	card_t GetCard(int32_t card_index) 
+	Asset::Pai GetCard(int32_t card_index) 
 	{
 		auto it = _cards.find(card_index);
 		if (it != _cards.end()) return it->second; 

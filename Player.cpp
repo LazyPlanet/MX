@@ -347,19 +347,45 @@ int Player::ZhuaPai()
 	return 0;
 }
 
-int Player::ChiPai()
+bool Player::CheckHuPai(const Asset::Pai& pai)
 {
-	return 0;
+	return true;
 }
 
-int Player::PengPai()
+bool Player::CheckChiPai(const Asset::Pai& pai)
 {
-	return 0;
+	auto it = _cards.find(pai.card_type());
+	if (it == _cards.end()) return false;
+
+	int32_t card_value = pai.card_value();
+
+	return true;
 }
 
-int Player::GangPai()
+bool Player::CheckPengPai(const Asset::Pai& pai)
 {
-	return 0;
+	auto it = _cards.find(pai.card_type());
+	if (it == _cards.end()) return false;
+
+	int32_t card_value = pai.card_value();
+	int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
+
+	if (2 != count) return false;
+	
+	return true;
+}
+
+bool Player::CheckGangPai(const Asset::Pai& pai)
+{
+	auto it = _cards.find(pai.card_type());
+	if (it == _cards.end()) return false;
+
+	int32_t card_value = pai.card_value();
+	int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
+
+	if (3 != count) return false;
+	
+	return true;
 }
 
 int32_t Player::OnFaPai(std::vector<int32_t>&& cards)
@@ -367,9 +393,9 @@ int32_t Player::OnFaPai(std::vector<int32_t>&& cards)
 	for (auto card_index : cards)
 	{
 		auto card = GameInstance.GetCard(card_index);
-		if (card.card_type == 0 || card.card_value == 0) return 1; //数据有误
+		if (card.card_type() == 0 || card.card_value() == 0) return 1; //数据有误
 
-		_cards[card.card_type].push_back(card.card_value);
+		_cards[card.card_type()].push_back(card.card_value());
 	}
 
 	for (auto cards : _cards) //整理牌

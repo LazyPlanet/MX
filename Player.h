@@ -124,7 +124,7 @@ public:
 ///////游戏逻辑定义
 private:
 	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
-	std::unordered_map<int/*麻将牌类型*/, std::vector<int>/*牌值*/> _cards; //玩家具有的麻将
+	std::unordered_map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家具有的麻将
 public:
 	//获取房间
 	virtual std::shared_ptr<Room>& GetRoom() { return _locate_room; }	//获取当前房间
@@ -135,11 +135,11 @@ public:
 	virtual int32_t OnFaPai(std::vector<int32_t>&& cards); //游戏开始之初发牌
 	//发送玩家当前手里的所有牌
 	virtual void SendPai(int32_t oper_type);
+	bool CheckHuPai(const Asset::Pai& pai); //胡牌
+	bool CheckGangPai(const Asset::Pai& pai); //杠牌
+	bool CheckPengPai(const Asset::Pai& pai); //碰牌
+	bool CheckChiPai(const Asset::Pai& pai); //吃牌
 	int ZhuaPai(); //抓牌
-	int ChiPai(); //吃牌
-	int PengPai(); //碰牌
-	int GangPai(); //杠牌
-	int HuPai(); //胡牌
 	//virtual void DaPai(); //打牌
 };
 

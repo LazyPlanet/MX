@@ -80,7 +80,10 @@ bool GameManager::Load()
 
 			for (int i = 0; i < cards_count; ++i)
 			{
-				card_t card = {(int32_t)asset_card->card_type(), (int32_t)asset_card->cards(i).value()};
+				Asset::Pai card;
+				card.set_card_type(asset_card->card_type());
+				card.set_card_value(asset_card->cards(i).value());
+
 				_cards.emplace(_cards.size() + 1, card);
 
 			}
