@@ -72,8 +72,9 @@ int32_t Player::Save()
 int32_t Player::CmdLogin(pb::Message* message)
 {
 	if (Load()) return 1;
-	//发送数据给客户端
-	SendPlayer();
+
+	SendPlayer(); //发送数据给客户端
+
 	return 0;
 }
 
@@ -95,7 +96,9 @@ int32_t Player::CmdEnterGame(pb::Message* message)
 int32_t Player::OnEnterGame() 
 {
 	if (Load()) return 1;
+
 	SendPlayer(); //发送数据给玩家
+	
 	return 0;
 }
 
@@ -349,7 +352,33 @@ int Player::ZhuaPai()
 
 bool Player::CheckHuPai(const Asset::Pai& pai)
 {
-	return true;
+	auto cards = _cards; //复制当前牌
+
+	cards[pai.card_type()].push_back(pai.card_value());
+
+	std::sort(cards[pai.card_type()].begin(), cards[pai.card_type()].end(), [](int x, int y){ return x < y; }); //由小到大，排序
+
+	int32_t remainder = 0, jiang_count = 0;
+	int32_t jiang_type = -1;
+
+	for (auto crds : cards) //不同牌类别的牌
+	{
+		//每个玩家有14张牌，需要满足 [3 3 3 3 2] 模型才能胡牌
+		
+		remainder = crds.second.size() % 3;
+
+		if (remainder == 1) 
+		{
+			return false;
+		}
+		else if (remainder == 2)
+		{
+			++jiang_count; //如果要胡牌，将牌只能有一对
+
+			if (jiang_count >= 2) return false;
+		}
+	}
+	return false;
 }
 
 bool Player::CheckChiPai(const Asset::Pai& pai)
@@ -359,7 +388,20 @@ bool Player::CheckChiPai(const Asset::Pai& pai)
 
 	int32_t card_value = pai.card_value();
 
-	return true;
+	//吃牌总共有有三种方式:
+	//
+	//比如上家出4万，可以吃的条件是：2/3; 5/6; 3/5 三种方法.
+	
+	if (std::find(it->second.begin(), it->second.end(), card_value - 1) != it->second.end() && 
+		std::find(it->second.begin(), it->second.end(), card_value - 2) != it->second.end()) return true; 
+	
+	if (std::find(it->second.begin(), it->second.end(), card_value + 1) != it->second.end() && 
+		std::find(it->second.begin(), it->second.end(), card_value + 2) != it->second.end()) return true; 
+
+	if (std::find(it->second.begin(), it->second.end(), card_value - 1) != it->second.end() && 
+		std::find(it->second.begin(), it->second.end(), card_value + 1) != it->second.end()) return true; 
+
+	return false;
 }
 
 bool Player::CheckPengPai(const Asset::Pai& pai)

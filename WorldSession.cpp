@@ -28,6 +28,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 		else
 		{
 				{
+					std::cout << "发送数据给:" << _socket.remote_endpoint().address() << std::endl;
 					Asset::EnterGame enter_game;
 					enter_game.set_type_t(Asset::META_TYPE_C2S_ENTER_GAME);
 					enter_game.set_player_id(100000);

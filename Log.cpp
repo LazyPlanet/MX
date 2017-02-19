@@ -66,7 +66,8 @@ void log_handler(LogLevel level, const char* filename, int line, const char *fmt
     va_end(ap);
 }
 
-LogHandler* SetLogHandler(LogHandler* new_func) {
+LogHandler* SetLogHandler(LogHandler* new_func) 
+{
     LogHandler* old = s_log_handler;
     if (old == &null_log_handler) {
         old = NULL;
