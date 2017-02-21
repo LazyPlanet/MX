@@ -2,6 +2,7 @@
 
 #include "P_Header.h"
 #include "Player.h"
+#include "Room.h"
 
 #include <list>
 #include <memory>
@@ -25,6 +26,8 @@ private:
 	std::list<int32_t> _cards; //随机牌,每次开局更新,索引为GameManager牌中索引
 	std::vector<std::shared_ptr<Player>> _players; //本次游戏参与的玩家
 	size_t _banker_index; //庄家索引
+public:
+	std::shared_ptr<Room> _room;
 public:
 	virtual void Init(); //初始化
 	virtual bool Start(); //开始游戏

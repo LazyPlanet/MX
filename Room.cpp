@@ -39,9 +39,6 @@ bool RoomManager::CheckPassword(int64_t room_id, std::string password)
 	auto room = Get(room_id);
 	if (!room) return false;
 
-	std::string ticket = room->GetPassWord();
-	if (ticket != "" && ticket != password) return false;
-
 	return true;
 }
 

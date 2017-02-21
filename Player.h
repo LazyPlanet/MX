@@ -121,6 +121,38 @@ public:
 	//发送错误信息
 	void AlterError(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type = Asset::ERROR_TYPE_NORMAL, Asset::ERROR_SHOW_TYPE error_show_type = Asset::ERROR_SHOW_TYPE_CHAT);
 
+	//消费欢乐豆：返回实际消耗的欢乐豆数
+	int64_t ConsumeHuanledou(int64_t count)
+	{
+		if (count <= 0) return 0;
+
+		if (!CheckHuanledou(count)) return 0;
+
+		_stuff.set_huanledou(_stuff.huanledou() - count);
+		return count;
+	}
+	//欢乐豆是否足够
+	bool CheckHuanledou(int64_t count)
+	{
+		int64_t curr_count = _stuff.huanledou();
+		return curr_count >= count;
+	}
+	//消费钻石：返回实际消耗的钻石数
+	int64_t ConsumeDiamond(int64_t count)
+	{
+		if (count <= 0) return 0;
+
+		if (!CheckDiamond(count)) return 0;
+
+		_stuff.set_diamond(_stuff.diamond() - count);
+		return count;
+	}
+	//钻石是否足够
+	bool CheckDiamond(int64_t count)
+	{
+		int64_t curr_count = _stuff.diamond();
+		return curr_count >= count;
+	}
 ///////游戏逻辑定义
 private:
 	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间

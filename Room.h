@@ -26,7 +26,6 @@ public:
 
 	void OnCreated(); 
 
-	std::string GetPassWord() { return _stuff->enter_password(); }
 	bool IsFull() { return _players.size() >= 4; }
 };
 

@@ -123,10 +123,43 @@ int32_t Player::CmdCreateRoom(pb::Message* message)
 	int64_t room_id = RoomInstance.CreateRoom();
 	create_room->mutable_room()->set_room_id(room_id);
 
+	Asset::ROOM_TYPE room_type = create_room->room().room_type();
+
+	const auto& messages = AssetInstance.GetMessagesByType(Asset::ASSET_TYPE_ROOM);
+	auto it = std::find_if(messages.begin(), messages.end(), 
+			[room_type](pb::Message* message){
+				auto room_limit = dynamic_cast<Asset::RoomLimit*>(message);
+				if (!room_limit) return false;
+
+				return room_type == room_limit->room_type();
+			});
+	
+
+
+	switch (room_type)
+	{
+		case Asset::ROOM_TYPE_XINSHOU:
+			{
+
+			}
+			break;
+		
+		case Asset::ROOM_TYPE_GAOSHOU:
+			{
+
+			}
+			break;
+		case Asset::ROOM_TYPE_DASHI:
+			{
+
+			}
+			break;
+		default:
+			return 1; //非法
+	}
+
 	Asset::Room asset_room;
-	asset_room.set_room_id(room_id);
-	asset_room.set_room_name(create_room->room().room_name());
-	asset_room.set_enter_password(create_room->room().enter_password());
+	asset_room.set_room_type(room_type);
 
 	Room room(asset_room);
 	room.OnCreated();
@@ -170,13 +203,6 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		{
 			AlterError(Asset::ERROR_ROOM_FULL);
 			return 3;
-		}
-
-		std::string password = room->GetPassWord();
-		if (password != "" && password != enter_room->enter_password()) 
-		{
-			AlterError(Asset::ERROR_ROOM_PASSWORD);
-			return 4;
 		}
 	}
 	OnEnterRoom(room_id); //通知同房间玩家，同时在房间中初始化该玩家
