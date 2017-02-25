@@ -20,6 +20,7 @@ Player::Player()
 	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_CREATE_ROOM, std::bind(&Player::CmdCreateRoom, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
+	
 }
 
 Player::Player(int64_t player_id, std::shared_ptr<WorldSession> session) : Player()/*委派构造函数*/
@@ -30,6 +31,7 @@ Player::Player(int64_t player_id, std::shared_ptr<WorldSession> session) : Playe
 
 int32_t Player::Load()
 {
+
 	//加载数据库
 	std::shared_ptr<Redis> redis = std::make_shared<Redis>();
 	std::string stuff = redis->GetPlayer(GetID()); //不能用引用
@@ -376,35 +378,106 @@ int Player::ZhuaPai()
 	return 0;
 }
 
-bool Player::CheckHuPai(const Asset::Pai& pai)
+//假定牌是排序过的, 且胡牌规则为 n*AAA+m*ABC+DD
+//
+//用 A + 点数 表示 万子(A1 表示 1万, 依此类推)
+//用 B + 点数 表示 筒子(B1 表示 1筒, 依此类推)
+//用 C + 点数 表示 索子(C1 表示 1索, 依此类推)
+//
+//字只有东西南北中发白:假定用D1-D7表示吧.
+//
+//算法逻辑: 首张牌用于对子，顺子, 或者三张.
+//接下来递归判断剩下牌型是否能和, 注意对子只能用一次.
+//
+//下面的算法是可以直接判断是否牌型是否和牌的，不局限于14张牌(3n+2即可)
+
+bool CanHuPai(std::vector<int32_t>& cards, bool use_pair = false)
 {
-	auto cards = _cards; //复制当前牌
 
-	cards[pai.card_type()].push_back(pai.card_value());
-
-	std::sort(cards[pai.card_type()].begin(), cards[pai.card_type()].end(), [](int x, int y){ return x < y; }); //由小到大，排序
-
-	int32_t remainder = 0, jiang_count = 0;
-	int32_t jiang_type = -1;
-
-	for (auto crds : cards) //不同牌类别的牌
+	for (auto value : cards)
 	{
-		//每个玩家有14张牌，需要满足 [3 3 3 3 2] 模型才能胡牌
-		
-		remainder = crds.second.size() % 3;
+		std::cout << value << " ";
+	}
+	std::cout << std::endl;
 
-		if (remainder == 1) 
-		{
-			return false;
-		}
-		else if (remainder == 2)
-		{
-			++jiang_count; //如果要胡牌，将牌只能有一对
 
-			if (jiang_count >= 2) return false;
+	int32_t size = cards.size();
+	if (size <= 2) 
+	{
+		return size == 0 || std::equal(cards.begin() + 1, cards.end(), cards.begin()); 
+	}
+
+	bool pair = false, straight = false;
+	if (!use_pair)
+	{
+		std::vector<int32_t> sub_cards(cards.begin() + 2, cards.end());
+		pair = cards[0] == cards[1] && CanHuPai(sub_cards, true);
+	}
+
+	//这里有个判断, 如果只剩两张牌而又不是对子肯定不算和牌,跳出是防止下面数组越界。
+	//
+	//首张牌用以三张, 剩下的牌是否能和牌。
+	
+	std::vector<int32_t> sub_cards(cards.begin() + 3, cards.end());
+	bool trips = (cards[0] == cards[1]) && (cards[1] == cards[2]) && CanHuPai(sub_cards, use_pair);
+	int32_t digit = cards[0];
+
+	if (digit <= 7)
+	{
+		//顺子的第一张牌
+		int32_t first = cards[0];
+		//顺子的第二张牌
+		int32_t second = cards[0] + 1;
+		//顺子的第三张牌
+		int32_t third = cards[0] + 2;
+		//玩家是否真的有这两张牌
+		auto it_first = std::find(cards.begin(), cards.end(), first);
+		auto it_second = std::find(cards.begin(), cards.end(), second);
+		auto it_third = std::find(cards.begin(), cards.end(), third);
+		if (it_first != cards.end() && it_second != cards.end() && it_third != cards.end())
+		{
+			//去掉用以顺子的三张牌后是否能和牌
+			cards.erase(it_first);
+			cards.erase(it_second);
+			cards.erase(it_third);
+			straight = CanHuPai(cards, use_pair);
 		}
 	}
-	return false;
+
+	return pair || trips || straight;
+}
+
+bool Player::CheckHuPai(const Asset::Pai& pai)
+{
+	//auto cards = _cards; //复制当前牌
+
+	//cards[pai.card_type()].push_back(pai.card_value());
+	
+	
+	std::vector<int32_t> cards = {
+		1, 1, 1, 4, 5, 6, 7, 7, 7, 3, 3, 2, 2, 2
+	};
+
+
+
+	//std::sort(cards[pai.card_type()].begin(), cards[pai.card_type()].end(), [](int x, int y){ return x < y; }); //由小到大，排序
+	std::sort(cards.begin(), cards.end(), [](int x, int y){
+			 return x < y; });
+
+	//for (auto crds : cards) //不同牌类别的牌
+	{
+		//每个玩家有14张牌，需要满足 [3 3 3 3 2] 模型才能胡牌
+		bool can_hu = CanHuPai(cards);	
+		if (!can_hu)
+		{
+			std::cout << "Can not hupai..." << std::endl;
+		}
+		else
+		{
+			std::cout << "Can hupai..." << std::endl;
+		}
+	}
+	return true;
 }
 
 bool Player::CheckChiPai(const Asset::Pai& pai)
