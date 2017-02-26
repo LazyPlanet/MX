@@ -11,10 +11,6 @@ const Asset::CommonConst* g_const = nullptr;
 
 bool World::Load()
 {
-	Asset::Pai pai;
-	Player player;
-	bool res = player.CheckHuPai(pai);
-
 	//协议初始化：必须最先初始化
 	if (!ProtocolInstance.Load()) 
 	{

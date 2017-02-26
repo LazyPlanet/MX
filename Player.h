@@ -71,12 +71,13 @@ public:
 	virtual void SendResponse(pb::Message* message);
 	virtual void SendToRoomers(pb::Message& message); //向房间里玩家发送协议数据，发送到客户端
 	virtual void BroadCast(Asset::MsgItem& item);
+	virtual void OnCreatePlayer(int64_t player_id);
 	//进入游戏
 	virtual int32_t CmdEnterGame(pb::Message* message);
 	virtual int32_t OnEnterGame();
 	//创建房间
 	virtual int32_t CmdCreateRoom(pb::Message* message);
-	virtual void OnCreateRoom(Asset::CreateRoom* message);
+	virtual void OnCreateRoom(int64_t room_id);
 	//进入房间
 	virtual int32_t CmdEnterRoom(pb::Message* message);
 	virtual void OnEnterRoom(int64_t room_id = 0);

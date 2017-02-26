@@ -33,7 +33,7 @@ bool Game::Start()
 		if (_banker_index % 4 == i) card_count = 14; //庄家牌数量
 		
 		auto cards = FaPai(card_count);
-		_players[i]->OnFaPai(std::move(cards)); 
+		_players[i]->OnFaPai(std::move(cards));  //各个玩家发牌
 	}
 	return true;
 }

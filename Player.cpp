@@ -17,8 +17,8 @@ Player::Player()
 	_method = std::bind(&Player::DefaultMethod, this, std::placeholders::_1);
 	//协议处理回调初始化
 	AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
-	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_CREATE_ROOM, std::bind(&Player::CmdCreateRoom, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
 	
 }
@@ -89,6 +89,13 @@ int32_t Player::CmdLogout(pb::Message* message)
 	return 0;
 }
 	
+void Player::OnCreatePlayer(int64_t player_id)
+{
+	Asset::CreatePlayer create_player;
+	create_player.set_player_id(player_id);
+	SendProtocol(create_player);
+}
+
 int32_t Player::CmdEnterGame(pb::Message* message)
 {
 	OnEnterGame();
@@ -125,6 +132,29 @@ int32_t Player::CmdCreateRoom(pb::Message* message)
 	int64_t room_id = RoomInstance.CreateRoom();
 	create_room->mutable_room()->set_room_id(room_id);
 
+	OnCreateRoom(room_id);
+	return 0;
+}
+
+void Player::OnCreateRoom(int64_t room_id)
+{
+	Asset::S_CreateRoom create_room;
+	
+	Asset::Room room;
+	room.set_room_id(room_id);
+
+	create_room.mutable_room()->CopyFrom(room);
+	SendProtocol(create_room);
+}
+
+int32_t Player::CmdEnterRoom(pb::Message* message) 
+{
+	Asset::EnterRoom* enter_room = dynamic_cast<Asset::EnterRoom*>(message);
+	if (!enter_room) return 1;
+	/*
+	int64_t room_id = RoomInstance.CreateRoom();
+	create_room->mutable_room()->set_room_id(room_id);
+
 	Asset::ROOM_TYPE room_type = create_room->room().room_type();
 
 	const auto& messages = AssetInstance.GetMessagesByType(Asset::ASSET_TYPE_ROOM);
@@ -135,7 +165,6 @@ int32_t Player::CmdCreateRoom(pb::Message* message)
 
 				return room_type == room_limit->room_type();
 			});
-	
 
 
 	switch (room_type)
@@ -167,18 +196,7 @@ int32_t Player::CmdCreateRoom(pb::Message* message)
 	room.OnCreated();
 
 	OnCreateRoom(create_room);
-	return 0;
-}
-
-void Player::OnCreateRoom(Asset::CreateRoom* message)
-{
-	SendResponse(message);
-}
-
-int32_t Player::CmdEnterRoom(pb::Message* message) 
-{
-	Asset::EnterRoom* enter_room = dynamic_cast<Asset::EnterRoom*>(message);
-	if (!enter_room) return 1;
+	*/
 
 	int64_t room_id = enter_room->room_id();
 	if (room_id == 0) //随机进入
@@ -247,8 +265,9 @@ void Player::SendProtocol(pb::Message& message)
 	Asset::Meta meta;
 	meta.set_type_t((Asset::META_TYPE)type_t);
 	meta.set_stuff(message.SerializeAsString());
+
 	std::string content = meta.SerializeAsString();
-	this->GetSession()->AsyncSend(content);
+	GetSession()->AsyncSend(content);
 }
 
 void Player::SendResponse(pb::Message* message)
@@ -260,9 +279,12 @@ void Player::SendResponse(pb::Message* message)
 	
 	int type_t = field->default_value_enum()->number();
 	if (!Asset::META_TYPE_IsValid(type_t)) return;	//如果不合法，不检查会宕线
+
+	std::cout << __func__ << ":type_t:" << type_t << std::endl;
 	
 	Asset::CommonOperationResponse response;
 	response.set_client_type_t((Asset::META_TYPE)type_t);
+	response.set_client_message(message->SerializeAsString());
 	SendProtocol(response);
 }
 
@@ -450,7 +472,8 @@ bool Player::CheckHuPai(const Asset::Pai& pai)
 	cards[pai.card_type()].push_back(pai.card_value());
 	
 	int32_t count_sum = 0;
-	for (auto crds : cards) //总数需要是14张牌
+	//每个玩家有14张牌，需要满足 [3 3 3 3 2] 模型才能胡牌
+	for (auto crds : cards)
 	{
 		int32_t count = crds.second.size();
 		count_sum += count;
@@ -461,16 +484,8 @@ bool Player::CheckHuPai(const Asset::Pai& pai)
 
 	for (auto crds : cards) //不同牌类别的牌
 	{
-		//每个玩家有14张牌，需要满足 [3 3 3 3 2] 模型才能胡牌
 		bool can_hu = CanHuPai(crds.second);	
-		if (!can_hu)
-		{
-			std::cout << "Can not hupai..." << std::endl;
-		}
-		else
-		{
-			std::cout << "Can hupai..." << std::endl;
-		}
+		if (!can_hu) return false; //牌类型检查
 	}
 	return true;
 }
