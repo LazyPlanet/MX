@@ -393,25 +393,20 @@ int Player::ZhuaPai()
 
 bool CanHuPai(std::vector<int32_t>& cards, bool use_pair = false)
 {
-
-	for (auto value : cards)
-	{
-		std::cout << value << " ";
-	}
-	std::cout << std::endl;
-
-
 	int32_t size = cards.size();
+
 	if (size <= 2) 
 	{
 		return size == 0 || std::equal(cards.begin() + 1, cards.end(), cards.begin()); 
 	}
 
-	bool pair = false, straight = false;
+	bool pair = false/*一对*/, straight/*顺子//一套副*/ = false;
+
 	if (!use_pair)
 	{
 		std::vector<int32_t> sub_cards(cards.begin() + 2, cards.end());
-		pair = cards[0] == cards[1] && CanHuPai(sub_cards, true);
+
+		pair = (cards[0] == cards[1]) && CanHuPai(sub_cards, true);
 	}
 
 	//这里有个判断, 如果只剩两张牌而又不是对子肯定不算和牌,跳出是防止下面数组越界。
@@ -419,10 +414,10 @@ bool CanHuPai(std::vector<int32_t>& cards, bool use_pair = false)
 	//首张牌用以三张, 剩下的牌是否能和牌。
 	
 	std::vector<int32_t> sub_cards(cards.begin() + 3, cards.end());
-	bool trips = (cards[0] == cards[1]) && (cards[1] == cards[2]) && CanHuPai(sub_cards, use_pair);
-	int32_t digit = cards[0];
+	bool trips = (cards[0] == cards[1]) && (cards[1] == cards[2]) && CanHuPai(sub_cards, use_pair); //刻:三个一样的牌
 
-	if (digit <= 7)
+	int32_t card_value = cards[0];
+	if (card_value <= 7)
 	{
 		//顺子的第一张牌
 		int32_t first = cards[0];
@@ -431,43 +426,43 @@ bool CanHuPai(std::vector<int32_t>& cards, bool use_pair = false)
 		//顺子的第三张牌
 		int32_t third = cards[0] + 2;
 		//玩家是否真的有这两张牌
-		auto it_first = std::find(cards.begin(), cards.end(), first);
-		auto it_second = std::find(cards.begin(), cards.end(), second);
-		auto it_third = std::find(cards.begin(), cards.end(), third);
-		if (it_first != cards.end() && it_second != cards.end() && it_third != cards.end())
+		if (std::find(cards.begin(), cards.end(), second) != cards.end() && std::find(cards.begin(), cards.end(), third) != cards.end())
 		{
 			//去掉用以顺子的三张牌后是否能和牌
-			cards.erase(it_first);
-			cards.erase(it_second);
-			cards.erase(it_third);
+			auto it_first = std::find(cards.begin(), cards.end(), first);
+			cards.erase(it_first); //删除
+			auto it_second = std::find(cards.begin(), cards.end(), second); //由于前面已经删除了元素，索引已经发生了变化，需要重新查找
+			cards.erase(it_second); //删除
+			auto it_third = std::find(cards.begin(), cards.end(), third); //由于前面已经删除了元素，索引已经发生了变化，需要重新查找
+			cards.erase(it_third); //删除
+
+			//顺子
 			straight = CanHuPai(cards, use_pair);
 		}
 	}
 
-	return pair || trips || straight;
+	return pair || trips || straight; //一对、刻或者顺子
 }
 
 bool Player::CheckHuPai(const Asset::Pai& pai)
 {
-	//auto cards = _cards; //复制当前牌
-
-	//cards[pai.card_type()].push_back(pai.card_value());
+	auto cards = _cards; //复制当前牌
+	cards[pai.card_type()].push_back(pai.card_value());
 	
+	int32_t count_sum = 0;
+	for (auto crds : cards) //总数需要是14张牌
+	{
+		int32_t count = crds.second.size();
+		count_sum += count;
+	}
+	if (count_sum != 14) return false;
 	
-	std::vector<int32_t> cards = {
-		1, 1, 1, 4, 5, 6, 7, 7, 7, 3, 3, 2, 2, 2
-	};
+	std::sort(cards[pai.card_type()].begin(), cards[pai.card_type()].end(), [](int x, int y){ return x < y; }); //由小到大，排序
 
-
-
-	//std::sort(cards[pai.card_type()].begin(), cards[pai.card_type()].end(), [](int x, int y){ return x < y; }); //由小到大，排序
-	std::sort(cards.begin(), cards.end(), [](int x, int y){
-			 return x < y; });
-
-	//for (auto crds : cards) //不同牌类别的牌
+	for (auto crds : cards) //不同牌类别的牌
 	{
 		//每个玩家有14张牌，需要满足 [3 3 3 3 2] 模型才能胡牌
-		bool can_hu = CanHuPai(cards);	
+		bool can_hu = CanHuPai(crds.second);	
 		if (!can_hu)
 		{
 			std::cout << "Can not hupai..." << std::endl;
