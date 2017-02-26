@@ -27,6 +27,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 		}
 		else
 		{
+			/*
 				{
 					std::cout << "发送数据给:" << _socket.remote_endpoint().address() << std::endl;
 					Asset::EnterGame enter_game;
@@ -46,6 +47,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					}	
 					std::cout << std::endl;
 				}
+				*/
 			Asset::Meta meta;
 			bool result = meta.ParseFromArray(_buffer.data(), bytes_transferred);
 			if (!result) 
@@ -86,7 +88,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			
 			if (Asset::META_TYPE_C2S_CREATE_PLAYER == meta.type_t()) //创建角色
 			{
-				const Asset::CreatePlayer* create_player = dynamic_cast<Asset::CreatePlayer*>(message);
+				Asset::CreatePlayer* create_player = dynamic_cast<Asset::CreatePlayer*>(message);
 				if (!create_player) return; 
 				
 			 	std::shared_ptr<Redis> redis = std::make_shared<Redis>();
@@ -95,6 +97,11 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 
 				g_player = std::make_shared<Player>(player_id, shared_from_this());
 				g_player->Save(); //存盘，防止数据库无数据
+				
+				//返回结果
+				//create_player->set_player_id(player_id);
+				//g_player->SendResponse(create_player);
+				g_player->OnCreatePlayer(player_id);
 			}
 			else if (Asset::META_TYPE_C2S_ENTER_GAME == meta.type_t()) //进入游戏
 			{

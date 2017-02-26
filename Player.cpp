@@ -31,7 +31,6 @@ Player::Player(int64_t player_id, std::shared_ptr<WorldSession> session) : Playe
 
 int32_t Player::Load()
 {
-
 	//加载数据库
 	std::shared_ptr<Redis> redis = std::make_shared<Redis>();
 	std::string stuff = redis->GetPlayer(GetID()); //不能用引用
@@ -556,19 +555,19 @@ int32_t Player::OnFaPai(std::vector<int32_t>&& cards)
 	
 	if (cards.size() > 1)
 	{
-		SendPai(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START); //开局
+		SendPai(Asset::CardsNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START); //开局
 	}
 	else
 	{
-		SendPai(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //发牌
+		SendPai(Asset::CardsNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //发牌
 	}
 	return 0;
 }
 
 void Player::SendPai(int32_t oper_type)
 {
-	Asset::PaiNotify notify;
-	notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START);
+	Asset::CardsNotify notify;
+	notify.set_data_type(Asset::CardsNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START);
 
 	for (auto pai : _cards)
 	{
