@@ -7,19 +7,40 @@
 namespace Adoter
 {
 
+/////////////////////////////////////////////////////
+//房间
+/////////////////////////////////////////////////////
 void Room::EnterRoom(std::shared_ptr<Player> player)
 {
 	if (!player) return; 
 
 	if (IsFull()) return;
 
-	_players.insert(player->GetID());
+	_players.emplace(player->GetID(), player);
 }
 
 void Room::LeaveRoom(std::shared_ptr<Player> player)
 {
 	if (!player) return;
-	_players.erase(player->GetID());
+
+	_players.erase(player->GetID()); //玩家退出房间
+}
+	
+void Room::OnPlayerOperate(std::shared_ptr<Player> player, Asset::GAME_OPER_TYPE oper_type)
+{
+	if (!player) return;
+
+	BroadCast(nullptr, player->GetID());
+}
+
+void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
+{
+	for (auto player : _players)
+	{
+		if (exclude_player_id == player.second->GetID()) continue;
+
+		player.second->SendProtocol(message);
+	}
 }
 	
 void Room::OnCreated() 
@@ -27,6 +48,9 @@ void Room::OnCreated()
 	RoomInstance.OnCreateRoom(shared_from_this()); 
 }
 
+/////////////////////////////////////////////////////
+//房间通用管理类
+/////////////////////////////////////////////////////
 std::shared_ptr<Room> RoomManager::Get(int64_t room_id)
 {
 	auto it = _rooms.find(room_id);

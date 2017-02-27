@@ -1,7 +1,8 @@
 #pragma once
 
 #include <memory>
-#include <unordered_set>
+#include <unordered_map>
+
 #include "Asset.h"
 #include "Player.h"
 
@@ -14,11 +15,12 @@ class Room : public std::enable_shared_from_this<Room>
 {
 private:
 	std::shared_ptr<Asset::Room> _stuff;
-	std::unordered_set<int64_t> _players; //房间中的玩家
+	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
 public:
 	explicit Room(Asset::Room& room) {  _stuff = std::make_shared<Asset::Room>(room); }
 
 	virtual int64_t GetID() { return _stuff->room_id(); }
+
 	virtual void SetID(int64_t room_id) { return _stuff->set_room_id(room_id); }
 public:
 	void EnterRoom(std::shared_ptr<Player> player);
@@ -27,6 +29,10 @@ public:
 	void OnCreated(); 
 
 	bool IsFull() { return _players.size() >= 4; }
+
+	void OnPlayerOperate(std::shared_ptr<Player> player, Asset::GAME_OPER_TYPE oper_type);
+
+	void BroadCast(pb::Message* message, int64_t exclude_player_id);
 };
 
 /////////////////////////////////////////////////////

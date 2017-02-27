@@ -68,6 +68,7 @@ public:
 	//协议处理(Protocol Buffer)
 	virtual bool HandleProtocol(int32_t type_t, pb::Message* message);
 	virtual void SendProtocol(pb::Message& message);
+	virtual void SendProtocol(const pb::Message* message);
 	virtual void SendResponse(pb::Message* message);
 	virtual void SendToRoomers(pb::Message& message); //向房间里玩家发送协议数据，发送到客户端
 	virtual void BroadCast(Asset::MsgItem& item);
@@ -159,8 +160,10 @@ private:
 	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
 	std::unordered_map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家具有的麻将
 public:
+	//玩家操作
+	virtual int32_t CmdGameOperate(pb::Message* message);
 	//获取房间
-	virtual std::shared_ptr<Room>& GetRoom() { return _locate_room; }	//获取当前房间
+	virtual std::shared_ptr<Room> GetRoom() { return _locate_room; }	//获取当前房间
 	virtual void SetRoomID(int64_t room_id) { _stuff.mutable_common_prop()->set_room_id(room_id); }	
 	virtual int32_t GetRoomID() { return this->_stuff.common_prop().room_id(); }
 	virtual bool HasRoom() { return _locate_room != nullptr; }

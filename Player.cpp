@@ -20,7 +20,7 @@ Player::Player()
 	AddHandler(Asset::META_TYPE_C2S_CREATE_ROOM, std::bind(&Player::CmdCreateRoom, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
-	
+	AddHandler(Asset::META_TYPE_C2S_GAME_OPERATION, std::bind(&Player::CmdGameOperate, this, std::placeholders::_1));
 }
 
 Player::Player(int64_t player_id, std::shared_ptr<WorldSession> session) : Player()/*委派构造函数*/
@@ -146,6 +146,35 @@ void Player::OnCreateRoom(int64_t room_id)
 	SendProtocol(create_room);
 }
 
+int32_t Player::CmdGameOperate(pb::Message* message)
+{
+	auto game_operate = dynamic_cast<Asset::GameOperation*>(message);
+	if (!game_operate) return 1;
+
+	switch(game_operate->oper_type())
+	{
+		case Asset::GAME_OPER_TYPE_START: //开始游戏：其实是个准备
+		{
+			_stuff.mutable_player_prop()->set_game_oper_state(Asset::GAME_OPER_TYPE_START);
+		}
+		break;
+
+		default:
+		{
+			 _stuff.mutable_player_prop()->clear_game_oper_state();
+		}
+		break;
+	}
+
+	//通知房间
+	auto local_room = GetRoom();
+	if (!local_room) return 2;
+
+	local_room->OnPlayerOperate(shared_from_this(), game_operate->oper_type());
+
+	return 0;
+}
+
 int32_t Player::CmdEnterRoom(pb::Message* message) 
 {
 	Asset::EnterRoom* enter_room = dynamic_cast<Asset::EnterRoom*>(message);
@@ -252,6 +281,11 @@ void Player::SendMessage(Asset::MsgItem& item)
 {
 	DispatcherInstance.SendMessage(item);
 }	
+
+void Player::SendProtocol(const pb::Message* message)
+{
+	//SendProtocol(*message);
+}
 
 void Player::SendProtocol(pb::Message& message)
 {
@@ -372,6 +406,9 @@ void Player::OnLeaveRoom()
 {
 	if (!_locate_room) return; 
 
+	//清理状态
+	_stuff.mutable_player_prop()->clear_game_oper_state();
+	//通知房间
 	GetRoom()->LeaveRoom(shared_from_this());
 }
 	
