@@ -22,9 +22,11 @@ void Game::Init()
 
 }
 
-bool Game::Start()
+bool Game::Start(std::unordered_map<int64_t, std::shared_ptr<Player>>& players)
 {
-	if (_players.size() != 4) return false;
+	_players = players; //复制下玩家数据
+
+	if (_players.size() != 4) return false; //做下检查，是否满足开局条件
 
 	for (size_t i = 0; i < _players.size(); ++i)
 	{

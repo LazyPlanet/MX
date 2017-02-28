@@ -17,10 +17,10 @@ Player::Player()
 	_method = std::bind(&Player::DefaultMethod, this, std::placeholders::_1);
 	//协议处理回调初始化
 	AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
-	AddHandler(Asset::META_TYPE_C2S_CREATE_ROOM, std::bind(&Player::CmdCreateRoom, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_SHARE_CREATE_ROOM, std::bind(&Player::CmdCreateRoom, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
-	AddHandler(Asset::META_TYPE_C2S_GAME_OPERATION, std::bind(&Player::CmdGameOperate, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_SHARE_GAME_OPERATION, std::bind(&Player::CmdGameOperate, this, std::placeholders::_1));
 }
 
 Player::Player(int64_t player_id, std::shared_ptr<WorldSession> session) : Player()/*委派构造函数*/
@@ -131,31 +131,29 @@ int32_t Player::CmdCreateRoom(pb::Message* message)
 	int64_t room_id = RoomInstance.CreateRoom();
 	create_room->mutable_room()->set_room_id(room_id);
 
-	OnCreateRoom(room_id);
+	SendProtocol(create_room);
+
 	return 0;
 }
 
 void Player::OnCreateRoom(int64_t room_id)
 {
-	Asset::S_CreateRoom create_room;
-	
-	Asset::Room room;
-	room.set_room_id(room_id);
 
-	create_room.mutable_room()->CopyFrom(room);
-	SendProtocol(create_room);
 }
 
 int32_t Player::CmdGameOperate(pb::Message* message)
 {
 	auto game_operate = dynamic_cast<Asset::GameOperation*>(message);
 	if (!game_operate) return 1;
+	
+	if (!_locate_room) return 2; //如果玩家不在房间，也不存在后面的逻辑
 
 	switch(game_operate->oper_type())
 	{
 		case Asset::GAME_OPER_TYPE_START: //开始游戏：其实是个准备
+		case Asset::GAME_OPER_TYPE_LEAVE: //开始游戏：其实是个准备
 		{
-			_stuff.mutable_player_prop()->set_game_oper_state(Asset::GAME_OPER_TYPE_START);
+			_stuff.mutable_player_prop()->set_game_oper_state(game_operate->oper_type());
 		}
 		break;
 
@@ -166,11 +164,7 @@ int32_t Player::CmdGameOperate(pb::Message* message)
 		break;
 	}
 
-	//通知房间
-	auto local_room = GetRoom();
-	if (!local_room) return 2;
-
-	local_room->OnPlayerOperate(shared_from_this(), game_operate->oper_type());
+	_locate_room->OnPlayerOperate(shared_from_this(), message); //广播给其他玩家
 
 	return 0;
 }
@@ -282,9 +276,9 @@ void Player::SendMessage(Asset::MsgItem& item)
 	DispatcherInstance.SendMessage(item);
 }	
 
-void Player::SendProtocol(const pb::Message* message)
+void Player::SendProtocol(pb::Message* message)
 {
-	//SendProtocol(*message);
+	SendProtocol(*message);
 }
 
 void Player::SendProtocol(pb::Message& message)

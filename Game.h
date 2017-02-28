@@ -23,14 +23,17 @@ class Game : public std::enable_shared_from_this<Game>
 {
 private:
 	std::vector<int64_t> _hupai_players;
+
 	std::list<int32_t> _cards; //随机牌,每次开局更新,索引为GameManager牌中索引
-	std::vector<std::shared_ptr<Player>> _players; //本次游戏参与的玩家
+
 	size_t _banker_index; //庄家索引
-public:
+
 	std::shared_ptr<Room> _room;
+	
+	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
 public:
 	virtual void Init(); //初始化
-	virtual bool Start(); //开始游戏
+	virtual bool Start(std::unordered_map<int64_t, std::shared_ptr<Player>>& players); //开始游戏
 	virtual bool Over(); //游戏结束
 	virtual std::vector<int32_t> FaPai(size_t card_count); //发牌
 };
