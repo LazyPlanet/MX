@@ -15,12 +15,14 @@ Player::Player()
 {
 	//协议默认处理函数
 	_method = std::bind(&Player::DefaultMethod, this, std::placeholders::_1);
+
 	//协议处理回调初始化
-	AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_CREATE_ROOM, std::bind(&Player::CmdCreateRoom, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_SHARE_GAME_OPERATION, std::bind(&Player::CmdGameOperate, this, std::placeholders::_1));
+
+	AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
-	AddHandler(Asset::META_TYPE_SHARE_GAME_OPERATION, std::bind(&Player::CmdGameOperate, this, std::placeholders::_1));
 }
 
 Player::Player(int64_t player_id, std::shared_ptr<WorldSession> session) : Player()/*委派构造函数*/
@@ -45,11 +47,11 @@ int32_t Player::Load()
 	do {
 		const pb::EnumDescriptor* enum_desc = Asset::INVENTORY_TYPE_descriptor();
 		if (!enum_desc) return 0;
-		int32_t curr_inventories_size = _stuff.inventory().inventories_size(); 
+		int32_t curr_inventories_size = _stuff.inventory().inventory_size(); 
 		if (curr_inventories_size == enum_desc->value_count() - 1) break; 
 		for (int inventory_index = curr_inventories_size; inventory_index < enum_desc->value_count() - 1; ++inventory_index)
 		{
-			auto inventory = _stuff.mutable_inventory()->mutable_inventories()->Add(); //增加新包裹，且初始化数据
+			auto inventory = _stuff.mutable_inventory()->mutable_inventory()->Add(); //增加新包裹，且初始化数据
 			inventory->set_inventory_type((Asset::INVENTORY_TYPE)(inventory_index + 1));
 			//提示信息
 			const pb::EnumValueDescriptor *enum_value = enum_desc->value(inventory_index);
@@ -173,24 +175,39 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 {
 	Asset::EnterRoom* enter_room = dynamic_cast<Asset::EnterRoom*>(message);
 	if (!enter_room) return 1;
-	/*
-	int64_t room_id = RoomInstance.CreateRoom();
-	create_room->mutable_room()->set_room_id(room_id);
 
-	Asset::ROOM_TYPE room_type = create_room->room().room_type();
+	Asset::ROOM_TYPE room_type = enter_room->room().room_type();
 
 	const auto& messages = AssetInstance.GetMessagesByType(Asset::ASSET_TYPE_ROOM);
-	auto it = std::find_if(messages.begin(), messages.end(), 
-			[room_type](pb::Message* message){
+
+	auto it = std::find_if(messages.begin(), messages.end(), [room_type](pb::Message* message){
 				auto room_limit = dynamic_cast<Asset::RoomLimit*>(message);
 				if (!room_limit) return false;
 
 				return room_type == room_limit->room_type();
-			});
+				});
+
+	if (it == messages.end()) return 2;
+	
+	auto room_limit = dynamic_cast<Asset::RoomLimit*>(*it);
+	if (!room_limit) return 5;
+
+	int64_t beans_count = GetBeans();
+
+	int32_t min_limit = room_limit->min_limit();
+	if (min_limit >= 0 && beans_count < min_limit) return 3;
+
+	int32_t max_limit = room_limit->max_limit();
+	if (max_limit >= 0 && beans_count > max_limit) return 4;
 
 
 	switch (room_type)
 	{
+		case Asset::ROOM_TYPE_FRIEND: //好友房
+			{
+
+			}
+			break;
 		case Asset::ROOM_TYPE_XINSHOU:
 			{
 
@@ -211,6 +228,7 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 			return 1; //非法
 	}
 
+	/*
 	Asset::Room asset_room;
 	asset_room.set_room_type(room_type);
 
@@ -218,7 +236,6 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 	room.OnCreated();
 
 	OnCreateRoom(create_room);
-	*/
 
 	int64_t room_id = enter_room->room_id();
 	if (room_id == 0) //随机进入
@@ -248,6 +265,7 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		}
 	}
 	OnEnterRoom(room_id); //通知同房间玩家，同时在房间中初始化该玩家
+	*/
 	return 0;
 }
 
@@ -380,7 +398,7 @@ bool Player::PushBackItem(Asset::INVENTORY_TYPE inventory_type, Item* item)
 	const pb::EnumDescriptor* enum_desc = Asset::INVENTORY_TYPE_descriptor();
 	if (!enum_desc) return false;
 
-	Asset::Inventories_Inventory* inventory = _stuff.mutable_inventory()->mutable_inventories(inventory_type); 
+	Asset::Inventory_Element* inventory = _stuff.mutable_inventory()->mutable_inventory(inventory_type); 
 	if (!inventory) return false;
 
 	auto item_toadd = inventory->mutable_items()->Add();

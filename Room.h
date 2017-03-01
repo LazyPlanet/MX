@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <unordered_map>
 
 #include "Asset.h"
@@ -10,11 +11,13 @@ namespace Adoter
 {
 
 class Player;
+class Game;
 
 class Room : public std::enable_shared_from_this<Room>
 {
 private:
 	std::shared_ptr<Asset::Room> _stuff;
+	std::vector<std::shared_ptr<Game>> _games;
 	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
 public:
 	explicit Room(Asset::Room& room) {  _stuff = std::make_shared<Asset::Room>(room); }
@@ -30,9 +33,11 @@ public:
 
 	bool IsFull() { return _players.size() >= 4; }
 
-	void OnPlayerOperate(std::shared_ptr<Player> player, Asset::GAME_OPER_TYPE oper_type);
+	bool CanStarGame();
 
-	void BroadCast(pb::Message* message, int64_t exclude_player_id);
+	void OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message);
+
+	void BroadCast(pb::Message* message, int64_t exclude_player_id = 0);
 };
 
 /////////////////////////////////////////////////////

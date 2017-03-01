@@ -1,4 +1,5 @@
 #include "Room.h"
+#include "Game.h"
 #include "RedisManager.h"
 
 #include <vector>
@@ -12,11 +13,13 @@ namespace Adoter
 /////////////////////////////////////////////////////
 void Room::EnterRoom(std::shared_ptr<Player> player)
 {
-	if (!player) return; 
+	if (!player || IsFull()) return;
 
-	if (IsFull()) return;
+	_players.emplace(player->GetID(), player); //进入房间
 
-	_players.emplace(player->GetID(), player);
+	auto common_prop = player->MutableCommonProp();
+
+	BroadCast(common_prop, player->GetID());
 }
 
 void Room::LeaveRoom(std::shared_ptr<Player> player)
@@ -26,11 +29,20 @@ void Room::LeaveRoom(std::shared_ptr<Player> player)
 	_players.erase(player->GetID()); //玩家退出房间
 }
 	
-void Room::OnPlayerOperate(std::shared_ptr<Player> player, Asset::GAME_OPER_TYPE oper_type)
+void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* messag)
 {
 	if (!player) return;
 
-	BroadCast(nullptr, player->GetID());
+	BroadCast(messag);
+
+	if (CanStarGame())
+	{
+		auto game = std::make_shared<Game>();
+
+		game->Init(); //洗牌
+
+		game->Start(_players); //开始游戏
+	}
 }
 
 void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
@@ -42,10 +54,20 @@ void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
 		player.second->SendProtocol(message);
 	}
 }
-	
+
 void Room::OnCreated() 
 { 
 	RoomInstance.OnCreateRoom(shared_from_this()); 
+}
+	
+bool Room::CanStarGame()
+{
+	for (auto player : _players)
+	{
+		if (!player.second->IsReady()) return false; //需要所有玩家都是准备状态
+	}
+
+	return true;
 }
 
 /////////////////////////////////////////////////////

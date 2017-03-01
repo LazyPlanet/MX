@@ -52,6 +52,8 @@ public:
 
 	//获取基础属性
 	const Asset::Player& Get() { return _stuff; }
+	const Asset::CommonProp& CommonProp() { return _stuff.common_prop(); }
+	Asset::CommonProp* MutableCommonProp() { return _stuff.mutable_common_prop(); }
 	//获取ID
 	virtual int64_t GetID() { return _stuff.common_prop().player_id(); }
 	virtual void SetID(int64_t player_id) { 
@@ -99,15 +101,15 @@ public:
 	virtual bool Update();
 public:
 	//获取所有包裹
-	const Asset::Inventories& GetInventories()
+	const Asset::Inventory& GetInventory()
 	{
 		return _stuff.inventory();
 	}
 
 	//获取指定包裹
-	const Asset::Inventories_Inventory& GetInventory(Asset::INVENTORY_TYPE type)
+	const Asset::Inventory_Element& GetInventory(Asset::INVENTORY_TYPE type)
 	{
-		return _stuff.inventory().inventories(type);
+		return _stuff.inventory().inventory(type);
 	}	
 	
 	//获取物品
@@ -130,15 +132,17 @@ public:
 
 		if (!CheckHuanledou(count)) return 0;
 
-		_stuff.set_huanledou(_stuff.huanledou() - count);
+		_stuff.mutable_common_prop()->set_huanledou(_stuff.common_prop().huanledou() - count);
 		return count;
 	}
 	//欢乐豆是否足够
 	bool CheckHuanledou(int64_t count)
 	{
-		int64_t curr_count = _stuff.huanledou();
+		int64_t curr_count = _stuff.common_prop().huanledou();
 		return curr_count >= count;
 	}
+	//获取欢乐豆数量
+	int64_t GetBeans() { return _stuff.common_prop().huanledou(); }
 	//消费钻石：返回实际消耗的钻石数
 	int64_t ConsumeDiamond(int64_t count)
 	{
@@ -146,13 +150,13 @@ public:
 
 		if (!CheckDiamond(count)) return 0;
 
-		_stuff.set_diamond(_stuff.diamond() - count);
+		_stuff.mutable_common_prop()->set_diamond(_stuff.common_prop().diamond() - count);
 		return count;
 	}
 	//钻石是否足够
 	bool CheckDiamond(int64_t count)
 	{
-		int64_t curr_count = _stuff.diamond();
+		int64_t curr_count = _stuff.common_prop().diamond();
 		return curr_count >= count;
 	}
 ///////游戏逻辑定义
@@ -164,8 +168,8 @@ public:
 	virtual int32_t CmdGameOperate(pb::Message* message);
 	//获取房间
 	virtual std::shared_ptr<Room> GetRoom() { return _locate_room; }	//获取当前房间
-	virtual void SetRoomID(int64_t room_id) { _stuff.mutable_common_prop()->set_room_id(room_id); }	
-	virtual int32_t GetRoomID() { return this->_stuff.common_prop().room_id(); }
+	virtual void SetRoomID(int64_t room_id) { _stuff.set_room_id(room_id); }	
+	virtual int32_t GetRoomID() { return _stuff.room_id(); }
 	virtual bool HasRoom() { return _locate_room != nullptr; }
 
 	virtual int32_t OnFaPai(std::vector<int32_t>&& cards); //游戏开始之初发牌
