@@ -201,6 +201,8 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 	Asset::EnterRoom* enter_room = dynamic_cast<Asset::EnterRoom*>(message);
 	if (!enter_room) return 1;
 
+	if (_locate_room) return 5;
+
 	Asset::ROOM_TYPE room_type = enter_room->room().room_type();
 
 	const auto& messages = AssetInstance.GetMessagesByType(Asset::ASSET_TYPE_ROOM);
