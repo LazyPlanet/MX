@@ -90,12 +90,14 @@ int32_t Player::CmdLogout(pb::Message* message)
 	return 0;
 }
 	
+/*
 void Player::OnCreatePlayer(int64_t player_id)
 {
 	Asset::CreatePlayer create_player;
 	create_player.set_player_id(player_id);
 	SendProtocol(create_player);
 }
+*/
 
 int32_t Player::CmdEnterGame(pb::Message* message)
 {
@@ -120,9 +122,10 @@ int32_t Player::CmdLeaveRoom(pb::Message* message)
 
 void Player::SendPlayer()
 {
-	Asset::PlayerInfo player_info;
+	Asset::PlayerInformation player_info;
 	player_info.mutable_player()->CopyFrom(this->_stuff);
-	this->SendProtocol(player_info);
+
+	SendProtocol(player_info);
 }
 
 int32_t Player::CmdCreateRoom(pb::Message* message)
@@ -131,17 +134,25 @@ int32_t Player::CmdCreateRoom(pb::Message* message)
 	if (!create_room) return 1;
 
 	int64_t room_id = RoomInstance.CreateRoom();
+	if (!room_id) return 2;
+
 	create_room->mutable_room()->set_room_id(room_id);
 	create_room->mutable_room()->set_room_type(Asset::ROOM_TYPE_FRIEND); //创建房间，其实是好友房
-
-	SendProtocol(create_room);
+	
+	SendProtocol(create_room); 
+	
+	OnCreateRoom(room_id); //创建房间成功，直接将玩家设置到该房间
 
 	return 0;
 }
 
 void Player::OnCreateRoom(int64_t room_id)
 {
+	Asset::Room asset_room;
+	asset_room.set_room_id(room_id);
 
+	_locate_room = std::make_shared<Room>(asset_room);
+	_locate_room->OnCreated();
 }
 
 int32_t Player::CmdGameOperate(pb::Message* message)
@@ -281,6 +292,7 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 	return 0;
 }
 
+/*
 void Player::OnEnterRoom(int64_t room_id)
 {
 	_locate_room = RoomInstance.Get(room_id);
@@ -291,6 +303,7 @@ void Player::OnEnterRoom(int64_t room_id)
 	//向房间玩家发送公共数据
 	BroadCastCommonProp(Asset::MSG_TYPE_AOI_ENTER);
 }
+*/
 
 bool Player::HandleMessage(const Asset::MsgItem& item)
 {

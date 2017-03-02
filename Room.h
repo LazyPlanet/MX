@@ -20,7 +20,7 @@ private:
 	std::vector<std::shared_ptr<Game>> _games;
 	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
 public:
-	explicit Room(Asset::Room& room) {  _stuff = std::make_shared<Asset::Room>(room); }
+	explicit Room(Asset::Room room) {  _stuff = std::make_shared<Asset::Room>(room); }
 
 	virtual int64_t GetID() { return _stuff->room_id(); }
 
