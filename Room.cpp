@@ -22,31 +22,89 @@ void Room::EnterRoom(std::shared_ptr<Player> player)
 	BroadCast(common_prop, player->GetID());
 }
 
+/*
 void Room::LeaveRoom(std::shared_ptr<Player> player)
 {
 	if (!player) return;
 
 	_players.erase(player->GetID()); //玩家退出房间
 }
-	
-void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* messag)
+*/
+
+std::shared_ptr<Player> Room::GetHoster()
+{
+	if (_players.size() <= 0) return nullptr;
+
+	return _players.begin()->second; //房间里面的一个人就是房主
+}
+
+bool Room::IsHoster(int64_t player_id)
+{
+	auto host = GetHoster();
+	if (!host) return false;
+
+	return host->GetID() == player_id;
+}
+
+std::shared_ptr<Player> Room::GetPlayer(int64_t player_id)
+{
+	auto it = _players.find(player_id);
+	if (it == _players.end()) return nullptr;
+
+	return it->second;
+}
+
+bool Room::HasPlayer(int64_t player_id)
+{
+	return _players.find(player_id) != _players.end();
+}
+
+void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
 	if (!player) return;
-
-	BroadCast(messag);
-
-	if (CanStarGame())
+	
+	auto game_operate = dynamic_cast<Asset::GameOperation*>(message);
+	if (!game_operate) return;
+			
+	BroadCast(game_operate); //广播玩家操作
+	
+	switch(game_operate->oper_type())
 	{
-		auto game = std::make_shared<Game>();
+		case Asset::GAME_OPER_TYPE_START: //开始游戏：其实是个准备
+		{
+			if (!CanStarGame()) return;
 
-		game->Init(); //洗牌
+			auto game = std::make_shared<Game>();
 
-		game->Start(_players); //开始游戏
+			game->Init(); //洗牌
+
+			game->Start(_players); //开始游戏
+		}
+		break;
+
+		case Asset::GAME_OPER_TYPE_LEAVE: //离开游戏
+		{
+			_players.erase(player->GetID()); //玩家退出房间
+		}
+		break;
+		
+		case Asset::GAME_OPER_TYPE_KICKOUT: //踢人
+		{
+			_players.erase(game_operate->destination_player_id()); //玩家退出房间
+		}
+		break;
+		
+		default:
+		{
+		}
+		break;
 	}
 }
 
 void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
 {
+	if (!message) return;
+
 	for (auto player : _players)
 	{
 		if (exclude_player_id == player.second->GetID()) continue;

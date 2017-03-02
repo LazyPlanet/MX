@@ -37,7 +37,15 @@ bool Game::Start(std::unordered_map<int64_t, std::shared_ptr<Player>>& players)
 		auto cards = FaPai(card_count);
 		_players[i]->OnFaPai(std::move(cards));  //各个玩家发牌
 	}
+
+	OnStart();
+
 	return true;
+}
+	
+void Game::OnStart()
+{
+
 }
 
 bool Game::Over()

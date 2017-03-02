@@ -27,17 +27,27 @@ public:
 	virtual void SetID(int64_t room_id) { return _stuff->set_room_id(room_id); }
 public:
 	void EnterRoom(std::shared_ptr<Player> player);
-	void LeaveRoom(std::shared_ptr<Player> player);
+
+	//void LeaveRoom(std::shared_ptr<Player> player);
 
 	void OnCreated(); 
 
-	bool IsFull() { return _players.size() >= 4; }
+	bool IsFull() { return _players.size() >= 4; } //房间是否已满
 
-	bool CanStarGame();
+	bool CanStarGame(); //能否开启游戏
 
 	void OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message);
 
 	void BroadCast(pb::Message* message, int64_t exclude_player_id = 0);
+
+	//获取房主
+	std::shared_ptr<Player> GetHoster();
+	//是否是房主
+	bool IsHoster(int64_t player_id);
+	//获取房间中的玩家
+	std::shared_ptr<Player> GetPlayer(int64_t player_id);
+	//房间中是否有XX玩家
+	bool HasPlayer(int64_t player_id);
 };
 
 /////////////////////////////////////////////////////

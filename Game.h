@@ -34,6 +34,7 @@ private:
 public:
 	virtual void Init(); //初始化
 	virtual bool Start(std::unordered_map<int64_t, std::shared_ptr<Player>>& players); //开始游戏
+	virtual void OnStart();
 	virtual bool Over(); //游戏结束
 	virtual std::vector<int32_t> FaPai(size_t card_count); //发牌
 };

@@ -123,7 +123,7 @@ public:
 		return _session;
 	}
 	//发送错误信息
-	void AlterError(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type = Asset::ERROR_TYPE_NORMAL, Asset::ERROR_SHOW_TYPE error_show_type = Asset::ERROR_SHOW_TYPE_CHAT);
+	void AlterMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type = Asset::ERROR_TYPE_NORMAL, Asset::ERROR_SHOW_TYPE error_show_type = Asset::ERROR_SHOW_TYPE_CHAT);
 
 	//消费欢乐豆：返回实际消耗的欢乐豆数
 	int64_t ConsumeHuanledou(int64_t count)

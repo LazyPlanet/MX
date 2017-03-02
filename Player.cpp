@@ -132,6 +132,7 @@ int32_t Player::CmdCreateRoom(pb::Message* message)
 
 	int64_t room_id = RoomInstance.CreateRoom();
 	create_room->mutable_room()->set_room_id(room_id);
+	create_room->mutable_room()->set_room_type(Asset::ROOM_TYPE_FRIEND); //创建房间，其实是好友房
 
 	SendProtocol(create_room);
 
@@ -152,10 +153,21 @@ int32_t Player::CmdGameOperate(pb::Message* message)
 
 	switch(game_operate->oper_type())
 	{
-		case Asset::GAME_OPER_TYPE_START: //开始游戏：其实是个准备
-		case Asset::GAME_OPER_TYPE_LEAVE: //开始游戏：其实是个准备
+		case Asset::GAME_OPER_TYPE_START: //开始游戏：相当于准备
+		case Asset::GAME_OPER_TYPE_LEAVE: //离开游戏：相当于退出房间
 		{
 			_stuff.mutable_player_prop()->set_game_oper_state(game_operate->oper_type());
+		}
+		break;
+
+		case Asset::GAME_OPER_TYPE_KICKOUT: //踢人
+		{
+			if (!_locate_room->IsHoster(GetID())) //不是房主，不能踢人
+			{
+				AlterMessage(Asset::ERROR_ROOM_NO_PERMISSION); //没有权限
+				return 3;
+			}
+
 		}
 		break;
 
@@ -243,7 +255,7 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		auto room = RoomInstance.GetAvailableRoom();
 		if (!room) 
 		{
-			AlterError(Asset::ERROR_ROOM_NOT_AVAILABLE);
+			AlterMessage(Asset::ERROR_ROOM_NOT_AVAILABLE);
 			return 5; //没有合适的房间
 		}
 
@@ -254,13 +266,13 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		auto room = RoomInstance.Get(room_id);
 		if (!room) 
 		{
-			AlterError(Asset::ERROR_ROOM_NOT_FOUNT);
+			AlterMessage(Asset::ERROR_ROOM_NOT_FOUNT);
 			return 2; 
 		}
 
 		if (room->IsFull()) 
 		{
-			AlterError(Asset::ERROR_ROOM_FULL);
+			AlterMessage(Asset::ERROR_ROOM_FULL);
 			return 3;
 		}
 	}
@@ -421,7 +433,7 @@ void Player::OnLeaveRoom()
 	//清理状态
 	_stuff.mutable_player_prop()->clear_game_oper_state();
 	//通知房间
-	GetRoom()->LeaveRoom(shared_from_this());
+	//GetRoom()->LeaveRoom(shared_from_this());
 }
 	
 void Player::BroadCast(Asset::MsgItem& item) 
@@ -430,10 +442,10 @@ void Player::BroadCast(Asset::MsgItem& item)
 	
 }	
 
-void Player::AlterError(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type/*= Asset::ERROR_TYPE_NORMAL*/, 
+void Player::AlterMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type/*= Asset::ERROR_TYPE_NORMAL*/, 
 		Asset::ERROR_SHOW_TYPE error_show_type/* = Asset::ERROR_SHOW_TYPE_CHAT*/)
 {
-	Asset::AlterError message;
+	Asset::AlterMessage message;
 	message.set_error_type(error_type);
 	message.set_error_show_type(error_show_type);
 	message.set_error_code(error_code);
