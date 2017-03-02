@@ -142,7 +142,9 @@ void WorldSession::Start()
 bool WorldSession::Update() 
 { 
 	if (!g_player) return true;
+
 	g_player->Update(); 
+
 	return true;
 }
 

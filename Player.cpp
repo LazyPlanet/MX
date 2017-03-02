@@ -153,6 +153,8 @@ void Player::OnCreateRoom(int64_t room_id)
 
 	_locate_room = std::make_shared<Room>(asset_room);
 	_locate_room->OnCreated();
+
+	_locate_room->EnterRoom(shared_from_this()); //玩家进入房间
 }
 
 int32_t Player::CmdGameOperate(pb::Message* message)
