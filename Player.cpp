@@ -201,58 +201,74 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 	Asset::EnterRoom* enter_room = dynamic_cast<Asset::EnterRoom*>(message);
 	if (!enter_room) return 1;
 
-	if (_locate_room) return 5;
+	if (_locate_room) return 6; //已经在房间
 
 	Asset::ROOM_TYPE room_type = enter_room->room().room_type();
 
-	const auto& messages = AssetInstance.GetMessagesByType(Asset::ASSET_TYPE_ROOM);
 
-	auto it = std::find_if(messages.begin(), messages.end(), [room_type](pb::Message* message){
-				auto room_limit = dynamic_cast<Asset::RoomLimit*>(message);
-				if (!room_limit) return false;
+	auto check = [this, room_type]()->int32_t{
 
-				return room_type == room_limit->room_type();
-				});
+		const auto& messages = AssetInstance.GetMessagesByType(Asset::ASSET_TYPE_ROOM);
 
-	if (it == messages.end()) return 2;
-	
-	auto room_limit = dynamic_cast<Asset::RoomLimit*>(*it);
-	if (!room_limit) return 5;
+		auto it = std::find_if(messages.begin(), messages.end(), [room_type](pb::Message* message){
+			auto room_limit = dynamic_cast<Asset::RoomLimit*>(message);
+			if (!room_limit) return false;
 
-	int64_t beans_count = GetBeans();
+			return room_type == room_limit->room_type();
+		});
 
-	int32_t min_limit = room_limit->min_limit();
-	if (min_limit >= 0 && beans_count < min_limit) return 3;
+		if (it == messages.end()) return 2;
+		
+		auto room_limit = dynamic_cast<Asset::RoomLimit*>(*it);
+		if (!room_limit) return 5;
 
-	int32_t max_limit = room_limit->max_limit();
-	if (max_limit >= 0 && beans_count > max_limit) return 4;
+		int64_t beans_count = GetBeans();
+
+		int32_t min_limit = room_limit->min_limit();
+		if (min_limit >= 0 && beans_count < min_limit) return 3;
+
+		int32_t max_limit = room_limit->max_limit();
+		if (max_limit >= 0 && beans_count > max_limit) return 4;
+	};
 
 
 	switch (room_type)
 	{
 		case Asset::ROOM_TYPE_FRIEND: //好友房
-			{
+		{
+			auto room_id = enter_room->room().room_id(); 
 
-			}
-			break;
+			_locate_room = RoomInstance.Get(room_id);
+			if (!_locate_room) return 7; //非法的房间 
+
+			_locate_room->EnterRoom(shared_from_this()); //玩家进入房间
+
+		}
+		break;
+
 		case Asset::ROOM_TYPE_XINSHOU:
-			{
+		{
 
-			}
-			break;
+		}
+		break;
 		
 		case Asset::ROOM_TYPE_GAOSHOU:
-			{
+		{
 
-			}
-			break;
+		}
+		break;
+
 		case Asset::ROOM_TYPE_DASHI:
-			{
+		{
 
-			}
-			break;
+		}
+		break;
+
 		default:
+		{
 			return 1; //非法
+		}
+		break;
 	}
 
 	/*
@@ -649,7 +665,7 @@ void Player::SendPai(int32_t oper_type)
 
 	for (auto pai : _cards)
 	{
-		notify.mutable_pais()->set_card_type(pai.first);
+		notify.mutable_pais()->set_card_type((Asset::CARD_TYPE)pai.first);
 
 		::google::protobuf::RepeatedField<int32_t> pais(pai.second.begin(), pai.second.end());
 		notify.mutable_pais()->mutable_cards()->CopyFrom(pais);
