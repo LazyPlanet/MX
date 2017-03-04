@@ -83,7 +83,7 @@ public:
 	virtual void OnCreateRoom(int64_t room_id);
 	//进入房间
 	virtual int32_t CmdEnterRoom(pb::Message* message);
-	//virtual void OnEnterRoom(int64_t room_id = 0);
+	virtual bool OnEnterRoom(int64_t room_id = 0);
 	//玩家登录
 	virtual int32_t CmdLogin(pb::Message* message);
 	//玩家登出

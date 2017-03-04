@@ -199,14 +199,14 @@ int32_t Player::CmdGameOperate(pb::Message* message)
 int32_t Player::CmdEnterRoom(pb::Message* message) 
 {
 	Asset::EnterRoom* enter_room = dynamic_cast<Asset::EnterRoom*>(message);
-	if (!enter_room) return 1;
+	if (!enter_room) return Asset::ERROR_INNER; //内部错误
 
-	if (_locate_room) return 6; //已经在房间
+	if (_locate_room) return Asset::ERROR_ROOM_HAS_BEEN_IN; //已经在房间
 
 	Asset::ROOM_TYPE room_type = enter_room->room().room_type();
 
 
-	auto check = [this, room_type]()->int32_t{
+	auto check = [this, room_type]()->Asset::ERROR_CODE {
 
 		const auto& messages = AssetInstance.GetMessagesByType(Asset::ASSET_TYPE_ROOM);
 
@@ -217,18 +217,20 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 			return room_type == room_limit->room_type();
 		});
 
-		if (it == messages.end()) return 2;
+		if (it == messages.end()) return Asset::ERROR_ROOM_TYPE_NOT_FOUND;
 		
 		auto room_limit = dynamic_cast<Asset::RoomLimit*>(*it);
-		if (!room_limit) return 5;
+		if (!room_limit) return Asset::ERROR_ROOM_TYPE_NOT_FOUND;
 
 		int64_t beans_count = GetBeans();
 
 		int32_t min_limit = room_limit->min_limit();
-		if (min_limit >= 0 && beans_count < min_limit) return 3;
+		if (min_limit >= 0 && beans_count < min_limit) return Asset::ERROR_ROOM_BEANS_MIN_LIMIT;
 
 		int32_t max_limit = room_limit->max_limit();
-		if (max_limit >= 0 && beans_count > max_limit) return 4;
+		if (max_limit >= 0 && beans_count > max_limit) return Asset::ERROR_ROOM_BEANS_MAX_LIMIT;
+
+		return Asset::ERROR_SUCCESS;
 	};
 
 
@@ -239,7 +241,7 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 			auto room_id = enter_room->room().room_id(); 
 
 			_locate_room = RoomInstance.Get(room_id);
-			if (!_locate_room) return 7; //非法的房间 
+			if (!_locate_room) return Asset::ERROR_ROOM_NOT_FOUNT; //非法的房间 
 
 			_locate_room->EnterRoom(shared_from_this()); //玩家进入房间
 
@@ -247,19 +249,15 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		break;
 
 		case Asset::ROOM_TYPE_XINSHOU:
-		{
-
-		}
-		break;
-		
 		case Asset::ROOM_TYPE_GAOSHOU:
-		{
-
-		}
-		break;
-
 		case Asset::ROOM_TYPE_DASHI:
 		{
+			auto result = check();
+			if (result == Asset::ERROR_SUCCESS) 
+			{
+				AlterMessage(result);
+				return result;
+			}
 
 		}
 		break;
@@ -312,18 +310,18 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 	return 0;
 }
 
-/*
-void Player::OnEnterRoom(int64_t room_id)
+bool Player::OnEnterRoom(int64_t room_id)
 {
 	_locate_room = RoomInstance.Get(room_id);
-	if (!_locate_room) return; //非法的房间 
 
-	SetRoomID(room_id); //设置当前房间ID
-	GetRoom()->EnterRoom(shared_from_this());
-	//向房间玩家发送公共数据
-	BroadCastCommonProp(Asset::MSG_TYPE_AOI_ENTER);
+	if (!_locate_room) return false; //非法的房间 
+
+	_locate_room->OnCreated();
+
+	_locate_room->EnterRoom(shared_from_this()); //玩家进入房间
+
+	return true;
 }
-*/
 
 bool Player::HandleMessage(const Asset::MsgItem& item)
 {
