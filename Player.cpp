@@ -225,12 +225,12 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 			
 			const auto& pai = pai_operate->pais(0); 
 
-			const auto& pais = _cards[pai.card_type()]; //获取该类型的牌
+			auto& pais = _cards[pai.card_type()]; //获取该类型的牌
 
 			auto it = std::find(pais.begin(), pais.end(), pai.card_value()); //查找第一个满足条件的牌即可
 			if (it == pais.end()) return 6; //没有这张牌
 
-			//pais.erase(it); //打出牌
+			pais.erase(it); //打出牌
 		}
 		break;
 		
