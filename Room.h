@@ -39,6 +39,7 @@ public:
 	void OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message);
 
 	void BroadCast(pb::Message* message, int64_t exclude_player_id = 0);
+	void BroadCast(pb::Message& message, int64_t exclude_player_id = 0);
 
 	//获取房主
 	std::shared_ptr<Player> GetHoster();

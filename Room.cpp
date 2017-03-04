@@ -17,7 +17,10 @@ void Room::EnterRoom(std::shared_ptr<Player> player)
 
 	_players.emplace(player->GetID(), player); //进入房间
 
-	auto common_prop = player->MutableCommonProp();
+	Asset::CommonProperty common_prop;
+	common_prop.set_reason_type(Asset::CommonProperty_SYNC_REASON_TYPE_SYNC_REASON_TYPE_ENTER_ROOM);
+	common_prop.set_player_id(player->GetID());
+	common_prop.mutable_common_prop()->CopyFrom(player->CommonProp());
 
 	BroadCast(common_prop, player->GetID());
 }
@@ -111,6 +114,11 @@ void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
 
 		player.second->SendProtocol(message);
 	}
+}
+	
+void Room::BroadCast(pb::Message& message, int64_t exclude_player_id)
+{
+	BroadCast(&message, exclude_player_id);
 }
 
 void Room::OnCreated() 
