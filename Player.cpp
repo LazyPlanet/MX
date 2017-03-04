@@ -19,6 +19,7 @@ Player::Player()
 	//协议处理回调初始化
 	AddHandler(Asset::META_TYPE_SHARE_CREATE_ROOM, std::bind(&Player::CmdCreateRoom, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_GAME_OPERATION, std::bind(&Player::CmdGameOperate, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_SHARE_PAI_OPERATION, std::bind(&Player::CmdPaiOperate, this, std::placeholders::_1));
 
 	AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
@@ -180,7 +181,6 @@ int32_t Player::CmdGameOperate(pb::Message* message)
 				AlterMessage(Asset::ERROR_ROOM_NO_PERMISSION); //没有权限
 				return 3;
 			}
-
 		}
 		break;
 
@@ -196,15 +196,70 @@ int32_t Player::CmdGameOperate(pb::Message* message)
 	return 0;
 }
 
+int32_t Player::CmdPaiOperate(pb::Message* message)
+{
+	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
+	if (!pai_operate) return 1; 
+	
+	if (!_locate_room) return 2; //还没加入房间
+
+	if (pai_operate->pais().size() <= 0) return 3; //估计是外挂
+
+	//检查玩家是否真的有这些牌
+	for (const auto& pai : pai_operate->pais()) 
+	{
+		const auto& pais = _cards[pai.card_type()];
+
+		auto it = std::find(pais.begin(), pais.end(), pai.card_value());
+		if (it == pais.end()) return 3; //没有这张牌
+
+		if (pais[pai.card_index()] != pai.card_value()) return 4; //Server<->Client 不一致
+	}
+
+	//进行操作
+	switch (pai_operate->oper_type())
+	{
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI: //打牌
+		{
+			if (pai_operate->pais().size() != 1) return 5; //每次只能打一张牌
+			
+			const auto& pai = pai_operate->pais(0); 
+
+			const auto& pais = _cards[pai.card_type()]; //获取该类型的牌
+
+			auto it = std::find(pais.begin(), pais.end(), pai.card_value()); //查找第一个满足条件的牌即可
+			if (it == pais.end()) return 6; //没有这张牌
+
+			//pais.erase(it); //打出牌
+		}
+		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI:
+		{
+
+		}
+		break;
+
+		default:
+		{
+		}
+		break;
+
+	}
+
+	_locate_room->OnPaiOperate(shared_from_this(), message);
+
+	return 0;
+}
+
 int32_t Player::CmdEnterRoom(pb::Message* message) 
 {
 	Asset::EnterRoom* enter_room = dynamic_cast<Asset::EnterRoom*>(message);
-	if (!enter_room) return Asset::ERROR_INNER; //内部错误
+	if (!enter_room) return 1; 
 
-	if (_locate_room) return Asset::ERROR_ROOM_HAS_BEEN_IN; //已经在房间
+	if (_locate_room) return 2; //已经在房间
 
 	Asset::ROOM_TYPE room_type = enter_room->room().room_type();
-
 
 	auto check = [this, room_type]()->Asset::ERROR_CODE {
 
@@ -245,6 +300,7 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 
 			_locate_room->EnterRoom(shared_from_this()); //玩家进入房间
 
+			return 0;
 		}
 		break;
 
@@ -489,6 +545,12 @@ void Player::AlterMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_
 int Player::ZhuaPai()
 {
 	return 0;
+}
+	
+bool Player::CheckPai(const Asset::Pai& pai)
+{
+
+	return true;
 }
 
 //假定牌是排序过的, 且胡牌规则为 n*AAA+m*ABC+DD

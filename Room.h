@@ -37,6 +37,7 @@ public:
 	bool CanStarGame(); //能否开启游戏
 
 	void OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message);
+	void OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
 
 	void BroadCast(pb::Message* message, int64_t exclude_player_id = 0);
 	void BroadCast(pb::Message& message, int64_t exclude_player_id = 0);
@@ -49,6 +50,8 @@ public:
 	std::shared_ptr<Player> GetPlayer(int64_t player_id);
 	//房间中是否有XX玩家
 	bool HasPlayer(int64_t player_id);
+	//检查牌形
+	int32_t CheckPai(const Asset::Pai& pai);
 };
 
 /////////////////////////////////////////////////////
@@ -66,6 +69,9 @@ private:
 	std::unordered_map<int64_t, std::shared_ptr<Room>> _no_password_rooms;
 	//已满房间
 	std::unordered_map<int64_t, std::shared_ptr<Room>> _full_rooms;
+	
+	//房间池
+	std::unordered_map<int64_t, std::shared_ptr<Room>> _room_pool;
 public:
 	static RoomManager& Instance()
 	{

@@ -104,6 +104,35 @@ void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 	}
 }
 
+void Room::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
+{
+	if (!player) return;
+
+	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
+	if (!pai_operate) return; 
+
+	BroadCast(pai_operate); //广播玩家操作
+
+	switch (pai_operate->oper_type())
+	{
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI: //打牌
+		{
+			const auto& pai = pai_operate->pais(0);
+			CheckPai(pai);
+		}
+		break;
+	}
+}
+	
+int32_t Room::CheckPai(const Asset::Pai& pai)
+{
+	for (auto player : _players)
+	{
+		player.second->CheckPai(pai);
+	}
+	return 0;
+}
+
 void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
 {
 	if (!message) return;

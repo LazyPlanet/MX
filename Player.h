@@ -165,7 +165,8 @@ private:
 	std::unordered_map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家具有的麻将
 public:
 	//玩家操作
-	virtual int32_t CmdGameOperate(pb::Message* message);
+	virtual int32_t CmdGameOperate(pb::Message* message); //游戏操作
+	virtual int32_t CmdPaiOperate(pb::Message* message); //牌操作
 	//获取房间
 	virtual std::shared_ptr<Room> GetRoom() { return _locate_room; }	//获取当前房间
 	virtual void SetRoomID(int64_t room_id) { _stuff.set_room_id(room_id); }	
@@ -173,8 +174,10 @@ public:
 	virtual bool HasRoom() { return _locate_room != nullptr; }
 
 	virtual int32_t OnFaPai(std::vector<int32_t>&& cards); //游戏开始之初发牌
-	//发送玩家当前手里的所有牌
-	virtual void SendPai(int32_t oper_type);
+	virtual void SendPai(int32_t oper_type); //发送玩家当前手里的所有牌
+
+	bool CheckPai(const Asset::Pai& pai);
+
 	bool CheckHuPai(const Asset::Pai& pai); //胡牌
 	bool CheckGangPai(const Asset::Pai& pai); //杠牌
 	bool CheckPengPai(const Asset::Pai& pai); //碰牌
