@@ -33,7 +33,7 @@ private:
 	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
 public:
 	virtual void Init(); //初始化
-	virtual bool Start(std::unordered_map<int64_t, std::shared_ptr<Player>>& players); //开始游戏
+	virtual bool Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players); //开始游戏
 	virtual void OnStart();
 	virtual bool Over(); //游戏结束
 	virtual std::vector<int32_t> FaPai(size_t card_count); //发牌
@@ -46,6 +46,7 @@ class GameManager
 {
 private:
 	std::unordered_map<int32_t/*牌索引*/, Asset::Pai/*牌值*/> _cards;
+	std::vector<shared_ptr<Game>> _games;
 public:
 	static GameManager& Instance()
 	{
@@ -61,6 +62,8 @@ public:
 		if (it != _cards.end()) return it->second; 
 		return {};
 	}
+	
+	void OnCreateGame(std::shared_ptr<Game> game);
 };
 
 #define GameInstance GameManager::Instance()

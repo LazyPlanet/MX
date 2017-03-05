@@ -1,9 +1,11 @@
+#include <vector>
+#include <algorithm>
+
+#include <boost/asio.hpp>
+
 #include "Room.h"
 #include "Game.h"
 #include "RedisManager.h"
-
-#include <vector>
-#include <algorithm>
 
 namespace Adoter
 {
@@ -75,13 +77,15 @@ void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 	{
 		case Asset::GAME_OPER_TYPE_START: //开始游戏：其实是个准备
 		{
-			if (!CanStarGame()) return;
+			//if (!CanStarGame()) return;
 
 			auto game = std::make_shared<Game>();
 
 			game->Init(); //洗牌
 
 			game->Start(_players); //开始游戏
+
+			GameInstance.OnCreateGame(game);
 		}
 		break;
 
@@ -118,17 +122,62 @@ void Room::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI: //打牌
 		{
 			const auto& pai = pai_operate->pais(0);
-			CheckPai(pai);
+
+			CheckPai(pai, player->GetID()); //检查各个玩家手里的牌是否满足胡、杠、碰、吃
+		}
+		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GANGPAI: //杠牌
+		{
+			const auto& pai = pai_operate->pais(0);
+			CheckPai(pai); //检查各个玩家手里的牌是否满足胡、杠、碰、吃
+		}
+		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_PENGPAI: //碰牌
+		{
+			const auto& pai = pai_operate->pais(0);
+			CheckPai(pai); //检查各个玩家手里的牌是否满足胡、杠、碰、吃
+		}
+		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_CHIPAI: //吃牌
+		{
+			const auto& pai = pai_operate->pais(0);
+			CheckPai(pai); //检查各个玩家手里的牌是否满足胡、杠、碰、吃
+		}
+		break;
+
+		default:
+		{
+
 		}
 		break;
 	}
 }
 	
-int32_t Room::CheckPai(const Asset::Pai& pai)
+int32_t Room::CheckPai(const Asset::Pai& pai, int64_t from_player_id)
 {
 	for (auto player : _players)
 	{
-		player.second->CheckPai(pai);
+		if (from_player_id == player.second->GetID()) continue;
+
+		auto result = player.second->CheckPai(pai);
+		if (result == Asset::PAI_CHECK_RETURN_NULL) continue;
+
+		Asset::PaiOperationAlter alter;
+		alter.mutable_pai()->CopyFrom(pai);
+
+		_curr_player = player.second; //当前可以进行操作的玩家
+		_curr_player->SendProtocol(alter); //提示给Client
+
+		/*
+		boost::asio::io_service io;
+		boost::asio::deadline_timer timer(io, boost::posix_time::seconds(5));
+
+		timer.async_wait(&print);
+		io.run();
+		*/
 	}
 	return 0;
 }

@@ -4,6 +4,7 @@
 
 #include "Player.h"
 #include "Game.h"
+#include "Player.h"
 #include "Protocol.h"
 #include "CommonUtil.h"
 #include "RedisManager.h"
@@ -156,6 +157,8 @@ void Player::OnCreateRoom(int64_t room_id)
 	_locate_room->OnCreated();
 
 	_locate_room->EnterRoom(shared_from_this()); //玩家进入房间
+
+	RoomInstance.OnCreateRoom(_locate_room); //房间管理
 }
 
 int32_t Player::CmdGameOperate(pb::Message* message)
@@ -247,7 +250,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 
 	}
 
-	_locate_room->OnPaiOperate(shared_from_this(), message);
+	//_game->OnPaiOperate(shared_from_this(), message);
 
 	return 0;
 }
@@ -547,10 +550,13 @@ int Player::ZhuaPai()
 	return 0;
 }
 	
-bool Player::CheckPai(const Asset::Pai& pai)
+Asset::PAI_CHECK_RETURN Player::CheckPai(const Asset::Pai& pai)
 {
-
-	return true;
+	if (CheckHuPai(pai)) return Asset::PAI_CHECK_RETURN_HU;
+	else if (CheckGangPai(pai)) return Asset::PAI_CHECK_RETURN_GANG;
+	else if (CheckPengPai(pai)) return Asset::PAI_CHECK_RETURN_PENG;
+	else if (CheckChiPai(pai)) return Asset::PAI_CHECK_RETURN_CHI;
+	return Asset::PAI_CHECK_RETURN_NULL;
 }
 
 //假定牌是排序过的, 且胡牌规则为 n*AAA+m*ABC+DD
@@ -692,7 +698,7 @@ bool Player::CheckGangPai(const Asset::Pai& pai)
 	return true;
 }
 
-int32_t Player::OnFaPai(std::vector<int32_t>&& cards)
+int32_t Player::OnFaPai(std::vector<int32_t> cards)
 {
 	for (auto card_index : cards)
 	{
@@ -709,19 +715,19 @@ int32_t Player::OnFaPai(std::vector<int32_t>&& cards)
 	
 	if (cards.size() > 1)
 	{
-		SendPai(Asset::CardsNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START); //开局
+		SendPai(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START); //开局
 	}
 	else
 	{
-		SendPai(Asset::CardsNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //发牌
+		SendPai(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //发牌
 	}
 	return 0;
 }
 
 void Player::SendPai(int32_t oper_type)
 {
-	Asset::CardsNotify notify;
-	notify.set_data_type(Asset::CardsNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START);
+	Asset::PaiNotify notify;
+	notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START);
 
 	for (auto pai : _cards)
 	{

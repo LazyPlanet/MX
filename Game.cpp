@@ -22,20 +22,22 @@ void Game::Init()
 
 }
 
-bool Game::Start(std::unordered_map<int64_t, std::shared_ptr<Player>>& players)
+bool Game::Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players)
 {
 	_players = players; //复制下玩家数据
 
-	if (_players.size() != 4) return false; //做下检查，是否满足开局条件
+	//if (_players.size() != 4) return false; //做下检查，是否满足开局条件
 
-	for (size_t i = 0; i < _players.size(); ++i)
+	//for (size_t i = 0; i < _players.size(); ++i)
+	for (auto player : _players)
 	{
-		int32_t card_count = 13; //正常开启，普通玩家牌数量
+		int32_t card_count = 14; //正常开启，普通玩家牌数量
 
-		if (_banker_index % 4 == i) card_count = 14; //庄家牌数量
+		//if (_banker_index % 4 == i) card_count = 14; //庄家牌数量
 		
 		auto cards = FaPai(card_count);
-		_players[i]->OnFaPai(std::move(cards));  //各个玩家发牌
+
+		player.second->OnFaPai(cards);  //各个玩家发牌
 	}
 
 	OnStart();
@@ -102,6 +104,11 @@ bool GameManager::Load()
 
 	//if (_cards.size() != CARDS_COUNT) return false;
 	return true;
+}
+
+void GameManager::OnCreateGame(std::shared_ptr<Game> game)
+{
+	_games.push_back(game);
 }
 
 }

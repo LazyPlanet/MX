@@ -9,7 +9,6 @@
 
 #include "P_Header.h"
 #include "Item.h"
-#include "Room.h"
 #include "Asset.h"
 #include "WorldSession.h"
 #include "MessageDispatcher.h"
@@ -19,6 +18,7 @@ namespace Adoter
 namespace pb = google::protobuf;
 
 class Room;
+class Game;
 
 class Player : public std::enable_shared_from_this<Player>
 {
@@ -162,6 +162,7 @@ public:
 ///////游戏逻辑定义
 private:
 	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
+	std::shared_ptr<Game> _game = nullptr; //当前游戏
 	std::unordered_map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家具有的麻将
 public:
 	//玩家操作
@@ -173,10 +174,10 @@ public:
 	virtual int32_t GetRoomID() { return _stuff.room_id(); }
 	virtual bool HasRoom() { return _locate_room != nullptr; }
 
-	virtual int32_t OnFaPai(std::vector<int32_t>&& cards); //游戏开始之初发牌
+	virtual int32_t OnFaPai(std::vector<int32_t> cards); //游戏开始之初发牌
 	virtual void SendPai(int32_t oper_type); //发送玩家当前手里的所有牌
 
-	bool CheckPai(const Asset::Pai& pai);
+	Asset::PAI_CHECK_RETURN CheckPai(const Asset::Pai& pai);
 
 	bool CheckHuPai(const Asset::Pai& pai); //胡牌
 	bool CheckGangPai(const Asset::Pai& pai); //杠牌
