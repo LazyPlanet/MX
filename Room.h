@@ -19,7 +19,6 @@ private:
 	std::shared_ptr<Asset::Room> _stuff;
 	std::vector<std::shared_ptr<Game>> _games;
 	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家：按照进房间的顺序，东南西北
-	std::shared_ptr<Player> _curr_player = nullptr; //当前可操作的玩家
 public:
 	explicit Room(Asset::Room room) {  _stuff = std::make_shared<Asset::Room>(room); }
 
@@ -38,7 +37,6 @@ public:
 	bool CanStarGame(); //能否开启游戏
 
 	void OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message);
-	void OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
 
 	void BroadCast(pb::Message* message, int64_t exclude_player_id = 0);
 	void BroadCast(pb::Message& message, int64_t exclude_player_id = 0);
@@ -51,8 +49,6 @@ public:
 	std::shared_ptr<Player> GetPlayer(int64_t player_id);
 	//房间中是否有XX玩家
 	bool HasPlayer(int64_t player_id);
-	//检查牌形
-	int32_t CheckPai(const Asset::Pai& pai, int64_t from_player_id = 0);
 };
 
 /////////////////////////////////////////////////////

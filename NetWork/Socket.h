@@ -72,10 +72,13 @@ public:
 	virtual void AsyncSend(const char* buff, size_t size)
 	{
 		boost::asio::async_write(_socket, boost::asio::buffer(buff, size), std::bind(&Socket::OnSend, this, std::placeholders::_1, std::placeholders::_2));
+
+		/*
 		for (int i = 0; i < size; ++i)
 		{
 			std::cout << (int)buff[i] << " ";
 		}
+		*/
 	}
 	virtual void OnSend(const boost::system::error_code& error, std::size_t bytes_transferred)
 	{

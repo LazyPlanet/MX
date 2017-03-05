@@ -174,7 +174,9 @@ public:
 	virtual int32_t GetRoomID() { return _stuff.room_id(); }
 	virtual bool HasRoom() { return _locate_room != nullptr; }
 
-	virtual int32_t OnFaPai(std::vector<int32_t> cards); //游戏开始之初发牌
+	void SetGame(std::shared_ptr<Game> game) { _game = game; }
+
+	virtual int32_t OnFaPai(std::vector<int32_t> cards); //发牌
 	virtual void SendPai(int32_t oper_type); //发送玩家当前手里的所有牌
 
 	Asset::PAI_CHECK_RETURN CheckPai(const Asset::Pai& pai);
@@ -183,12 +185,12 @@ public:
 	bool CheckGangPai(const Asset::Pai& pai); //杠牌
 	bool CheckPengPai(const Asset::Pai& pai); //碰牌
 	bool CheckChiPai(const Asset::Pai& pai); //吃牌
-	int ZhuaPai(); //抓牌
-	//virtual void DaPai(); //打牌
 	bool IsReady() //是否已经在准备状态
 	{
 		return _stuff.player_prop().game_oper_state() == Asset::GAME_OPER_TYPE_START;
 	}
+	//获取玩家座次
+	Asset::POSITION_TYPE GetPosition() { return _stuff.player_prop().position(); }
 };
 
 /////////////////////////////////////////////////////

@@ -204,7 +204,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
 	if (!pai_operate) return 1; 
 	
-	if (!_locate_room) return 2; //还没加入房间
+	if (!_locate_room || !_game) return 2; //还没加入房间或者还没开始游戏
 
 	if (pai_operate->pais().size() <= 0) return 3; //估计是外挂
 
@@ -250,7 +250,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 
 	}
 
-	//_game->OnPaiOperate(shared_from_this(), message);
+	_game->OnPaiOperate(shared_from_this(), message);
 
 	return 0;
 }
@@ -403,6 +403,8 @@ void Player::SendProtocol(pb::Message* message)
 
 void Player::SendProtocol(pb::Message& message)
 {
+	message.PrintDebugString(); //打印出来MESSAGE
+
 	const pb::FieldDescriptor* field = message.GetDescriptor()->FindFieldByName("type_t");
 	if (!field) return;
 	
@@ -545,11 +547,6 @@ void Player::AlterMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_
 /////////////////////////////////////////////////////
 /////游戏逻辑定义
 /////////////////////////////////////////////////////
-int Player::ZhuaPai()
-{
-	return 0;
-}
-	
 Asset::PAI_CHECK_RETURN Player::CheckPai(const Asset::Pai& pai)
 {
 	if (CheckHuPai(pai)) return Asset::PAI_CHECK_RETURN_HU;
@@ -727,14 +724,16 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 void Player::SendPai(int32_t oper_type)
 {
 	Asset::PaiNotify notify;
-	notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START);
+	notify.set_data_type((Asset::PaiNotify_CARDS_DATA_TYPE)oper_type);
 
 	for (auto pai : _cards)
 	{
-		notify.mutable_pais()->set_card_type((Asset::CARD_TYPE)pai.first);
+		auto pais = notify.mutable_pais()->Add();
 
-		::google::protobuf::RepeatedField<int32_t> pais(pai.second.begin(), pai.second.end());
-		notify.mutable_pais()->mutable_cards()->CopyFrom(pais);
+		pais->set_card_type((Asset::CARD_TYPE)pai.first); //牌类型
+
+		::google::protobuf::RepeatedField<int32_t> cards(pai.second.begin(), pai.second.end());
+		pais->mutable_cards()->CopyFrom(cards); //牌值
 	}
 
 	SendProtocol(notify);
