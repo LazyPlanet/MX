@@ -2,6 +2,7 @@
 #include <algorithm>
 
 #include "Game.h"
+#include "Timer.h"
 #include "Asset.h"
 
 namespace Adoter
@@ -68,45 +69,124 @@ bool Game::Over()
 
 bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
-	if (!player || !_room) return false;
-
-	if (_player != nullptr && _player != player) return false;
+	if (_operation_limit.time_out() > GetTime() && _operation_limit.player_id() != player->GetID()) return false; //没到该玩家的操作
 
 	return true;
 }
 
 void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
-	if (!CanPaiOperate(player, message)) return; //没到玩家操作
+	if (!player || !message) return;
 
+	if (!CanPaiOperate(player, message)) 
+	{
+		player->AlterMessage(Asset::ERROR_GAME_NO_PERMISSION); //没有权限，没到玩家操作
+		return; 
+	}
+
+	if (GetTime() < _operation_limit.time_out()) ClearOperation(); //已经超时，清理缓存以及等待玩家操作的状态
+			
 	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
 	if (!pai_operate) return; 
 
 	_room->BroadCast(message); //广播玩家操作
+	
+	const auto& pai = _operation_limit.pai(); //缓存的牌
 
+	//一个人打牌之后，要检查其余每个玩家手中的牌，且等待他们的操作，直到超时
 	switch (pai_operate->oper_type())
 	{
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI: //打牌
 		{
-			const auto& pai = pai_operate->pais(0);
+			const auto& pai = pai_operate->pai(); //玩家发上来的牌
 
-			CheckPai(pai, player->GetID()); //检查各个玩家手里的牌是否满足胡、杠、碰、吃
+			//检查各个玩家手里的牌是否满足胡、杠、碰、吃
+			auto player_id = CheckPai(pai, player->GetID()); 
+
+			if (player_id) //第一个满足要求的玩家
+			{
+				_operation_limit.set_player_id(player_id); //当前可以进行操作的玩家
+				_operation_limit.set_time_out(GetTime() + 8000); //时间：8s后超时
+				_operation_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
+				
+				Asset::PaiOperationAlter alter;
+				alter.mutable_pai()->CopyFrom(pai);
+				GetPlayer(player_id)->SendProtocol(alter);
+			}
+			else //没有玩家需要操作：给当前玩家的下家继续发牌
+			{
+				auto player_next = GetNextPlayer(player_id);
+				if (!player_next) return; 
+				
+				auto cards = FaPai(1); 
+				player_next->OnFaPai(cards);
+			}
+		}
+		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI: //胡牌
+		{
+			bool ret = player->CheckHuPai(_operation_limit.pai());
+			if (!ret) 
+			{
+				player->AlterMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
+				return; 
+			}
+			else
+			{
+				ClearOperation(); //清理缓存以及等待玩家操作的状态
+			}
 		}
 		break;
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GANGPAI: //杠牌
+		{
+			bool ret = player->CheckGangPai(_operation_limit.pai());
+			if (!ret) 
+			{
+				player->AlterMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
+				return; 
+			}
+			else
+			{
+				ClearOperation(); //清理缓存以及等待玩家操作的状态
+			}
+		}
+		break;
+
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_PENGPAI: //碰牌
+		{
+			bool ret = player->CheckPengPai(pai);
+			if (!ret) 
+			{
+				player->AlterMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
+				return; 
+			}
+			else
+			{
+				ClearOperation(); //清理缓存以及等待玩家操作的状态
+			}
+		}
+		break;
+
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_CHIPAI: //吃牌
 		{
-			if (_player->GetID() != player->GetID()) return; //不是该玩家的操作
-			
-			ClearOperation(); //清理玩家操作状态
+			bool ret = player->CheckChiPai(pai);
+			if (!ret) 
+			{
+				player->AlterMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
+				return; 
+			}
+			else
+			{
+				ClearOperation(); //清理缓存以及等待玩家操作的状态
+			}
 		}
 		break;
 
 		default:
 		{
-
+			return; //直接退出
 		}
 		break;
 	}
@@ -116,12 +196,10 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 void Game::ClearOperation()
 {
-	//_timer.cancel();
-
-	_player = nullptr;
+	_operation_limit.Clear(); //清理状态
 }
 	
-int32_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
+int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
 	for (auto player : _players)
 	{
@@ -130,24 +208,13 @@ int32_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		auto result = player.second->CheckPai(pai);
 		if (result == Asset::PAI_CHECK_RETURN_NULL) continue;
 
-		Asset::PaiOperationAlter alter;
-		alter.mutable_pai()->CopyFrom(pai);
-
-		_player = player.second; //当前可以进行操作的玩家
-		_player->SendProtocol(alter); //提示给Client
-
-		//定时器，玩家是否操作超时
-		//boost::asio::io_service io_service;
-		//_timer.expires_from_now(boost::posix_time::seconds(8)); //8秒的操作倒计时
-		//_timer.async_wait(std::bind(&Game::OnOperateTimeOut, shared_from_this()));
-		//io_service.run();
+		return player.second->GetID(); //当前可以进行操作的玩家
 	}
 	return 0;
 }
 
 void Game::OnOperateTimeOut()
 {
-	_player = nullptr;
 }
 
 std::vector<int32_t> Game::FaPai(size_t card_count)
@@ -166,6 +233,13 @@ std::vector<int32_t> Game::FaPai(size_t card_count)
 	}
 	
 	return cards;
+}
+	
+std::shared_ptr<Player> Game::GetNextPlayer(int64_t player_id)
+{
+	if (!_room) return nullptr;
+
+	return _room->GetNextPlayer(player_id);
 }
 
 /////////////////////////////////////////////////////

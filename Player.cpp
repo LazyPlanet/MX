@@ -224,9 +224,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 	{
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI: //打牌
 		{
-			if (pai_operate->pais().size() != 1) return 5; //每次只能打一张牌
-			
-			const auto& pai = pai_operate->pais(0); 
+			const auto& pai = pai_operate->pai(); 
 
 			auto& pais = _cards[pai.card_type()]; //获取该类型的牌
 
@@ -237,8 +235,11 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 		}
 		break;
 		
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI:
+		//其余的操作都转入到Game中处理
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI: //胡牌
 		{
+			//bool ret = CheckHuPai(pai); 
+			//if (!ret) return 7; //估计是挂
 
 		}
 		break;

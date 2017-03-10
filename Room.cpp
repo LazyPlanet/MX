@@ -17,8 +17,13 @@ void Room::EnterRoom(std::shared_ptr<Player> player)
 {
 	if (!player || IsFull()) return;
 
+	if (_players.size() >= (size_t)max_player_count) return;
+
+	_players_with_order[_players.size()] = player; //进入房间：主要用于模仿循环队列
+
 	_players.emplace(player->GetID(), player); //进入房间
 
+	//广播给其他玩家
 	Asset::CommonProperty common_prop;
 	common_prop.set_reason_type(Asset::CommonProperty_SYNC_REASON_TYPE_SYNC_REASON_TYPE_ENTER_ROOM);
 	common_prop.set_player_id(player->GetID());
@@ -51,12 +56,29 @@ bool Room::IsHoster(int64_t player_id)
 	return host->GetID() == player_id;
 }
 
+int32_t Room::GetPlayerOrder(int32_t player_id)
+{
+	for (int player_index = 0; player_index < max_player_count; ++player_index)
+	{
+		if (player_id == _players_with_order[player_index]->GetID()) return player_index;
+	}
+
+	return -1; //返回一个非法的值
+}
+
 std::shared_ptr<Player> Room::GetPlayer(int64_t player_id)
 {
 	auto it = _players.find(player_id);
 	if (it == _players.end()) return nullptr;
 
 	return it->second;
+}
+
+std::shared_ptr<Player> Room::GetPlayerByOrder(int32_t player_index)
+{
+	if (player_index >= max_player_count || player_index < 0) return nullptr;
+
+	return _players_with_order[player_index];
 }
 
 bool Room::HasPlayer(int64_t player_id)
@@ -91,13 +113,13 @@ void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 		case Asset::GAME_OPER_TYPE_LEAVE: //离开游戏
 		{
-			_players.erase(player->GetID()); //玩家退出房间
+			Remove(player->GetID()); //玩家退出房间
 		}
 		break;
 		
 		case Asset::GAME_OPER_TYPE_KICKOUT: //踢人
 		{
-			_players.erase(game_operate->destination_player_id()); //玩家退出房间
+			Remove(game_operate->destination_player_id()); //玩家退出房间
 		}
 		break;
 		
@@ -108,6 +130,20 @@ void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 	}
 }
 
+bool Room::Remove(int64_t player_id)
+{
+	if (_players.find(player_id) == _players.end()) return false; //没有删除成功
+
+	int32_t player_index = GetPlayerOrder(player_id);	
+	if (player_index < 0) return false;
+
+	//删除玩家
+	_players.erase(player_id); 
+	//顺序中删除玩家
+	_players_with_order[player_index] = nullptr;
+
+	return true;
+}
 
 void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
 {
@@ -139,6 +175,20 @@ bool Room::CanStarGame()
 	}
 
 	return true;
+}
+	
+//获取当前玩家的下家
+std::shared_ptr<Player> Room::GetNextPlayer(int64_t player_id)
+{
+	auto player_index = GetPlayerOrder(player_id);
+	if (player_index < 0) return nullptr; //没有这个玩家
+
+	auto player_next_index = player_index + 1;
+	
+	player_next_index = player_next_index % max_player_count; //一圈
+
+	auto player_next = GetPlayerByOrder(player_next_index);
+	return player_next;
 }
 
 /////////////////////////////////////////////////////

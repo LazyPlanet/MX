@@ -15,10 +15,12 @@ class Game;
 
 class Room : public std::enable_shared_from_this<Room>
 {
+	const int32_t max_player_count = 4;
 private:
 	std::shared_ptr<Asset::Room> _stuff;
 	std::vector<std::shared_ptr<Game>> _games;
 	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家：按照进房间的顺序，东南西北
+	std::shared_ptr<Player> _players_with_order[4]; //玩家数据：按照进房间的顺序，0->1->2->3...主要用于控制发牌和出牌顺序
 public:
 	explicit Room(Asset::Room room) {  _stuff = std::make_shared<Asset::Room>(room); }
 
@@ -47,8 +49,15 @@ public:
 	bool IsHoster(int64_t player_id);
 	//获取房间中的玩家
 	std::shared_ptr<Player> GetPlayer(int64_t player_id);
+	std::shared_ptr<Player> GetPlayerByOrder(int32_t player_index);
+	//获取玩家的顺序
+	int32_t GetPlayerOrder(int32_t player_id);
 	//房间中是否有XX玩家
 	bool HasPlayer(int64_t player_id);
+	//删除玩家
+	bool Remove(int64_t player_id);
+	//获取下家
+	std::shared_ptr<Player> GetNextPlayer(int64_t player_id);
 };
 
 /////////////////////////////////////////////////////

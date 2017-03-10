@@ -21,23 +21,19 @@ namespace Adoter
 /////////////////////////////////////////////////////
 class Game : public std::enable_shared_from_this<Game>
 {
-private:
-	std::vector<int64_t> _hupai_players;
-
-	std::list<int32_t> _cards; //随机牌,每次开局更新,索引为GameManager牌中索引
-
 	std::shared_ptr<Room> _room = nullptr; //游戏在哪个房间开启
-	std::shared_ptr<Player> _player = nullptr; //当前可操作的玩家
+private:
+	
+	std::list<int32_t> _cards; //随机牌,每次开局更新,索引为GameManager牌中索引
+	std::vector<int64_t> _hupai_players;
 
 	int32_t _banker_index = 0; //庄家索引
 	int32_t _operation_index = 0; //操作索引
 
+	Asset::PaiOperationLimit _operation_limit; //牌操作限制
 	
 	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
-
-	//boost::asio::deadline_timer _timer;
 public:
-	//Game(){	}
 	virtual void Init(); //初始化
 	virtual bool Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players); //开始游戏
 	virtual void OnStart(); //开始游戏回调
@@ -48,7 +44,12 @@ public:
 	bool CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
 	void OnOperateTimeOut();
 	void ClearOperation();
-	int32_t CheckPai(const Asset::PaiElement& pai, int64_t from_player_id = 0); //检查牌形
+	int64_t CheckPai(const Asset::PaiElement& pai, int64_t from_player_id = 0); //检查牌形：返回待操作的玩家ID
+	
+	//获取下家
+	std::shared_ptr<Player> GetNextPlayer(int64_t player_id);
+	//获取玩家
+	std::shared_ptr<Player> GetPlayer(int64_t player_id) { return _room->GetPlayer(player_id); }
 };
 
 /////////////////////////////////////////////////////
