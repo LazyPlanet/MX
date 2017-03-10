@@ -547,7 +547,7 @@ void Player::AlterMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_
 /////////////////////////////////////////////////////
 /////游戏逻辑定义
 /////////////////////////////////////////////////////
-Asset::PAI_CHECK_RETURN Player::CheckPai(const Asset::Pai& pai)
+Asset::PAI_CHECK_RETURN Player::CheckPai(const Asset::PaiElement& pai)
 {
 	if (CheckHuPai(pai)) return Asset::PAI_CHECK_RETURN_HU;
 	else if (CheckGangPai(pai)) return Asset::PAI_CHECK_RETURN_GANG;
@@ -622,7 +622,7 @@ bool CanHuPai(std::vector<int32_t>& cards, bool use_pair = false)
 	return pair || trips || straight; //一对、刻或者顺子
 }
 
-bool Player::CheckHuPai(const Asset::Pai& pai)
+bool Player::CheckHuPai(const Asset::PaiElement& pai)
 {
 	auto cards = _cards; //复制当前牌
 	cards[pai.card_type()].push_back(pai.card_value());
@@ -646,7 +646,7 @@ bool Player::CheckHuPai(const Asset::Pai& pai)
 	return true;
 }
 
-bool Player::CheckChiPai(const Asset::Pai& pai)
+bool Player::CheckChiPai(const Asset::PaiElement& pai)
 {
 	auto it = _cards.find(pai.card_type());
 	if (it == _cards.end()) return false;
@@ -669,7 +669,7 @@ bool Player::CheckChiPai(const Asset::Pai& pai)
 	return false;
 }
 
-bool Player::CheckPengPai(const Asset::Pai& pai)
+bool Player::CheckPengPai(const Asset::PaiElement& pai)
 {
 	auto it = _cards.find(pai.card_type());
 	if (it == _cards.end()) return false;
@@ -682,7 +682,7 @@ bool Player::CheckPengPai(const Asset::Pai& pai)
 	return true;
 }
 
-bool Player::CheckGangPai(const Asset::Pai& pai)
+bool Player::CheckGangPai(const Asset::PaiElement& pai)
 {
 	auto it = _cards.find(pai.card_type());
 	if (it == _cards.end()) return false;
@@ -710,34 +710,38 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 		std::sort(cards.second.begin(), cards.second.end(), [](int x, int y){ return x < y; }); //由小到大
 	}
 	
+	Asset::PaiNotify notify;
+
 	if (cards.size() > 1)
 	{
-		SendPai(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START); //开局
+		//发送给玩家
+		for (auto pai : _cards)
+		{
+			auto pais = notify.mutable_pais()->Add();
+
+			pais->set_card_type((Asset::CARD_TYPE)pai.first); //牌类型
+
+			::google::protobuf::RepeatedField<int32_t> cards(pai.second.begin(), pai.second.end());
+			pais->mutable_cards()->CopyFrom(cards); //牌值
+		}
+		
+		notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_START); //操作类型：开局
 	}
-	else
+	else if (cards.size() == 1)
 	{
-		SendPai(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //发牌
+		auto card = GameInstance.GetCard(cards[0]);
+
+		notify.mutable_pai()->set_card_type(card.card_type());
+		notify.mutable_pai()->set_card_value(card.card_value());
+
+		notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //操作类型：发牌
 	}
+	
+	SendProtocol(notify); //发送
+
 	return 0;
 }
 
-void Player::SendPai(int32_t oper_type)
-{
-	Asset::PaiNotify notify;
-	notify.set_data_type((Asset::PaiNotify_CARDS_DATA_TYPE)oper_type);
-
-	for (auto pai : _cards)
-	{
-		auto pais = notify.mutable_pais()->Add();
-
-		pais->set_card_type((Asset::CARD_TYPE)pai.first); //牌类型
-
-		::google::protobuf::RepeatedField<int32_t> cards(pai.second.begin(), pai.second.end());
-		pais->mutable_cards()->CopyFrom(cards); //牌值
-	}
-
-	SendProtocol(notify);
-}
 /////////////////////////////////////////////////////
 //玩家通用管理类
 /////////////////////////////////////////////////////

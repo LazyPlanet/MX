@@ -86,7 +86,25 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			
 			/////////////////////////////////////////////////////////////////////////////游戏逻辑处理流程
 			
-			if (Asset::META_TYPE_SHARE_CREATE_PLAYER == meta.type_t()) //创建角色
+			if (Asset::META_TYPE_C2S_LOGIN == meta.type_t()) //账号登陆
+			{
+				Asset::Login* login = dynamic_cast<Asset::Login*>(message);
+				if (!login) return; 
+				
+				/*
+			 	std::shared_ptr<Redis> redis = std::make_shared<Redis>();
+				int64_t player_id = redis->CreatePlayer();
+				if (player_id == 0) return; //创建失败
+
+				g_player = std::make_shared<Player>(player_id, shared_from_this());
+				g_player->Save(); //存盘，防止数据库无数据
+				
+				//返回结果
+				create_player->set_player_id(player_id);
+				g_player->SendProtocol(create_player);
+				*/
+			}
+			else if (Asset::META_TYPE_SHARE_CREATE_PLAYER == meta.type_t()) //创建角色
 			{
 				Asset::CreatePlayer* create_player = dynamic_cast<Asset::CreatePlayer*>(message);
 				if (!create_player) return; 

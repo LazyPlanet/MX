@@ -25,8 +25,8 @@ public:
 	explicit Socket(boost::asio::ip::tcp::socket&& socket) : _socket(std::move(socket)), _closed(false), _closing(false) { }
 	virtual ~Socket() 
 	{
-		std::cout << __func__ <<  _socket.remote_endpoint().address() << std::endl;
-		_socket.close();
+		//std::cout << __func__ <<  _socket.remote_endpoint().address() << std::endl;
+		//_socket.close();
 	}
 	
 	virtual bool Update() {

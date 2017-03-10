@@ -177,14 +177,13 @@ public:
 	void SetGame(std::shared_ptr<Game> game) { _game = game; }
 
 	virtual int32_t OnFaPai(std::vector<int32_t> cards); //发牌
-	virtual void SendPai(int32_t oper_type); //发送玩家当前手里的所有牌
 
-	Asset::PAI_CHECK_RETURN CheckPai(const Asset::Pai& pai);
+	Asset::PAI_CHECK_RETURN CheckPai(const Asset::PaiElement& pai);
 
-	bool CheckHuPai(const Asset::Pai& pai); //胡牌
-	bool CheckGangPai(const Asset::Pai& pai); //杠牌
-	bool CheckPengPai(const Asset::Pai& pai); //碰牌
-	bool CheckChiPai(const Asset::Pai& pai); //吃牌
+	bool CheckHuPai(const Asset::PaiElement& pai); //胡牌
+	bool CheckGangPai(const Asset::PaiElement& pai); //杠牌
+	bool CheckPengPai(const Asset::PaiElement& pai); //碰牌
+	bool CheckChiPai(const Asset::PaiElement& pai); //吃牌
 	bool IsReady() //是否已经在准备状态
 	{
 		return _stuff.player_prop().game_oper_state() == Asset::GAME_OPER_TYPE_START;

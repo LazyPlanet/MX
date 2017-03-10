@@ -116,12 +116,12 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 void Game::ClearOperation()
 {
-	_timer.cancel();
+	//_timer.cancel();
 
 	_player = nullptr;
 }
 	
-int32_t Game::CheckPai(const Asset::Pai& pai, int64_t from_player_id)
+int32_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
 	for (auto player : _players)
 	{
@@ -137,10 +137,10 @@ int32_t Game::CheckPai(const Asset::Pai& pai, int64_t from_player_id)
 		_player->SendProtocol(alter); //提示给Client
 
 		//定时器，玩家是否操作超时
-		boost::asio::io_service io_service;
-		_timer.expires_from_now(boost::posix_time::seconds(8)); //8秒的操作倒计时
-		_timer.async_wait(std::bind(&Game::OnOperateTimeOut, shared_from_this()));
-		io_service.run();
+		//boost::asio::io_service io_service;
+		//_timer.expires_from_now(boost::posix_time::seconds(8)); //8秒的操作倒计时
+		//_timer.async_wait(std::bind(&Game::OnOperateTimeOut, shared_from_this()));
+		//io_service.run();
 	}
 	return 0;
 }
@@ -190,7 +190,7 @@ bool GameManager::Load()
 
 			for (int i = 0; i < cards_count; ++i)
 			{
-				Asset::Pai card;
+				Asset::PaiElement card;
 				card.set_card_type(asset_card->card_type());
 				card.set_card_value(asset_card->cards(i).value());
 

@@ -1,15 +1,15 @@
 #pragma once
 
-#include "P_Header.h"
-#include "Player.h"
-#include "Room.h"
-
 #include <list>
 #include <memory>
 #include <vector>
 #include <numeric>
 #include <algorithm>
 #include <unordered_map>
+
+#include "P_Header.h"
+#include "Player.h"
+#include "Room.h"
 
 namespace Adoter
 {
@@ -35,8 +35,9 @@ private:
 	
 	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
 
-	boost::asio::deadline_timer _timer;
+	//boost::asio::deadline_timer _timer;
 public:
+	//Game(){	}
 	virtual void Init(); //初始化
 	virtual bool Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players); //开始游戏
 	virtual void OnStart(); //开始游戏回调
@@ -47,7 +48,7 @@ public:
 	bool CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
 	void OnOperateTimeOut();
 	void ClearOperation();
-	int32_t CheckPai(const Asset::Pai& pai, int64_t from_player_id = 0); //检查牌形
+	int32_t CheckPai(const Asset::PaiElement& pai, int64_t from_player_id = 0); //检查牌形
 };
 
 /////////////////////////////////////////////////////
@@ -56,7 +57,7 @@ public:
 class GameManager
 {
 private:
-	std::unordered_map<int32_t/*牌索引*/, Asset::Pai/*牌值*/> _cards;
+	std::unordered_map<int32_t/*牌索引*/, Asset::PaiElement/*牌值*/> _cards;
 	std::vector<shared_ptr<Game>> _games;
 public:
 	static GameManager& Instance()
@@ -67,7 +68,7 @@ public:
 
 	bool Load(); //加载麻将牌数据
 
-	Asset::Pai GetCard(int32_t card_index) 
+	Asset::PaiElement GetCard(int32_t card_index) 
 	{
 		auto it = _cards.find(card_index);
 		if (it != _cards.end()) return it->second; 
