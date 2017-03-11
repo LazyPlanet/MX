@@ -8,6 +8,7 @@
 #include "Protocol.h"
 #include "CommonUtil.h"
 #include "RedisManager.h"
+#include "PlayerCommonReward.h"
 
 namespace Adoter
 {
@@ -784,7 +785,6 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 
 	if (cards.size() > 1)
 	{
-		//发送给玩家
 		for (auto pai : _cards)
 		{
 			auto pais = notify.mutable_pais()->Add();

@@ -135,6 +135,13 @@ public:
 		_stuff.mutable_common_prop()->set_huanledou(_stuff.common_prop().huanledou() - count);
 		return count;
 	}
+	//增加欢乐豆
+	int64_t IncreaseHuanledou(int64_t count)
+	{
+		if (count <= 0) return 0;
+
+		_stuff.mutable_common_prop()->set_huanledou(_stuff.common_prop().huanledou() + count);
+	}
 	//欢乐豆是否足够
 	bool CheckHuanledou(int64_t count)
 	{
@@ -152,6 +159,13 @@ public:
 
 		_stuff.mutable_common_prop()->set_diamond(_stuff.common_prop().diamond() - count);
 		return count;
+	}
+	//增加钻石
+	int64_t IncreaseDiamond(int64_t count)
+	{
+		if (count >= 0) return 0;
+
+		_stuff.mutable_common_prop()->set_diamond(_stuff.common_prop().diamond() + count);
 	}
 	//钻石是否足够
 	bool CheckDiamond(int64_t count)
