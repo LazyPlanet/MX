@@ -775,7 +775,7 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 		_cards[card.card_type()].push_back(card.card_value());
 	}
 
-	for (auto cards : _cards) //整理牌
+	for (auto& cards : _cards) //整理牌
 	{
 		std::sort(cards.second.begin(), cards.second.end(), [](int x, int y){ return x < y; }); //由小到大
 	}
