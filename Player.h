@@ -51,7 +51,7 @@ public:
 	}
 
 	//获取基础属性
-	const Asset::Player& Get() { return _stuff; }
+	Asset::Player& Get() { return _stuff; }
 	const Asset::CommonProp& CommonProp() { return _stuff.common_prop(); }
 	Asset::CommonProp* MutableCommonProp() { return _stuff.mutable_common_prop(); }
 	//获取ID
@@ -174,6 +174,9 @@ public:
 		int64_t curr_count = _stuff.common_prop().diamond();
 		return curr_count >= count;
 	}
+	//通用限制
+	bool AddCommonLimit(int64_t global_id);
+	bool IsCommonLimit(int64_t global_id);
 ///////游戏逻辑定义
 private:
 	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
@@ -211,6 +214,7 @@ public:
 	Asset::POSITION_TYPE GetPosition() { return _stuff.player_prop().position(); }
 
 	void SynchronizePai();
+	void ClearCards() {	_cards.clear();	}
 };
 
 /////////////////////////////////////////////////////

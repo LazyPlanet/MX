@@ -1,28 +1,106 @@
 #pragma once
 
+#include <ctime> 
 #include <chrono>
+#include <iostream>
 
-//获取当前时间(单位：ms)
-inline int32_t GetTime()
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include "boost/date_time/posix_time/conversion.hpp"
+
+namespace Adoter
 {
-    using namespace std::chrono;
-    static const system_clock::time_point start_time = system_clock::now();
-    return int32_t(duration_cast<milliseconds>(system_clock::now() - start_time).count());
-}
 
-inline int32_t GetTimeDiff(int32_t old_time, int32_t new_time)
-{
-    if (old_time > new_time)
-        return (0xFFFFFFFF - old_time) + new_time;
-    else
-        return new_time - old_time;
-}
+class CommonTimer {
 
-inline int32_t GetTimeDiffToNow(int32_t old_time)
-{
-    return GetTimeDiff(old_time, GetTime());
-}
+public:
 
+	static CommonTimer& Instance()
+	{
+		static CommonTimer _instance;
+		return _instance;
+	}
+
+	//获取前时间(单位：毫秒)
+	inline int32_t GetTimems()
+	{
+		using namespace std::chrono;
+		static const system_clock::time_point start_time = system_clock::now();
+		return int32_t(duration_cast<milliseconds>(system_clock::now() - start_time).count());
+	}
+
+	//获取当前系统时间(单位：秒)
+	inline std::time_t GetTime()
+	{
+		boost::posix_time::ptime ptime(boost::posix_time::second_clock::local_time()); //universal_time: Get the UTC time.
+		std::time_t time = boost::posix_time::to_time_t(ptime);
+		return time;
+	}
+
+	inline int32_t GetTimeDiff(int32_t old_time, int32_t new_time)
+	{
+		if (old_time > new_time)
+		{
+			return (0xFFFFFFFF - old_time) + new_time;
+		}
+		else
+		{
+			return new_time - old_time;
+		}
+	}
+
+	inline int32_t GetTimeDiffToNow(int32_t old_time)
+	{
+		return GetTimeDiff(old_time, GetTime());
+	}
+
+	inline std::time_t GetDayBegin(std::time_t cur_t)
+	{
+		boost::posix_time::ptime ptime = boost::posix_time::from_time_t(cur_t);
+
+		boost::posix_time::ptime day_begin(ptime.date(), boost::posix_time::time_duration(-8, 0, 0));
+
+		return boost::posix_time::to_time_t(day_begin);
+	}
+	
+	inline bool IsSameDay(std::time_t rhs, std::time_t lhs)
+	{
+		/*
+		boost::gregorian::date rhs_date(rhs);
+		boost::gregorian::date lhs_date(lhs);
+
+		std::cout << rhs_date.year() << std::endl;
+		std::cout << rhs_date.month() << std::endl;
+		std::cout << rhs_date.day() << std::endl;
+		std::cout << rhs_date.day_of_week() << std::endl;
+		return true;
+		*/
+		return GetDayBegin(lhs) == GetDayBegin(lhs);
+	}
+	
+	inline std::time_t GetWeakBegin(std::time_t cur_t)
+	{
+		boost::posix_time::ptime ptime = boost::posix_time::from_time_t(cur_t);
+		
+		auto day_of_week = ptime.date().day_of_week();
+
+		ptime += boost::posix_time::hours(-24 * day_of_week);
+
+		boost::posix_time::ptime week_begin(ptime.date(), boost::posix_time::time_duration(-8, 0, 0));
+
+		auto time = boost::posix_time::to_time_t(week_begin);
+		return time;
+	}
+	
+	inline bool IsSameWeek(std::time_t rhs, std::time_t lhs)
+	{
+		return GetWeakBegin(lhs) == GetWeakBegin(lhs);
+	}
+
+};
+
+#define CommonTimerInstance CommonTimer::Instance()
+
+/*
 struct IntervalTimer
 {
 public:
@@ -176,3 +254,6 @@ private:
     int32_t i_period;
     int32_t i_expireTime;
 };
+*/
+
+}

@@ -35,6 +35,8 @@ bool Game::Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players)
 	//for (size_t i = 0; i < _players.size(); ++i)
 	for (auto player : _players)
 	{
+		player.second->ClearCards(); 
+
 		int32_t card_count = 14; //正常开启，普通玩家牌数量
 
 		//if (_banker_index % 4 == i) card_count = 14; //庄家牌数量
@@ -69,7 +71,7 @@ bool Game::Over()
 
 bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
-	if (_operation_limit.time_out() > GetTime() && _operation_limit.player_id() != player->GetID()) return false; //没到该玩家的操作
+	if (_operation_limit.time_out() > CommonTimerInstance.GetTime() && _operation_limit.player_id() != player->GetID()) return false; //没到该玩家的操作
 
 	return true;
 }
@@ -84,7 +86,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		return; 
 	}
 
-	if (GetTime() < _operation_limit.time_out()) ClearOperation(); //已经超时，清理缓存以及等待玩家操作的状态
+	if (CommonTimerInstance.GetTime() < _operation_limit.time_out()) ClearOperation(); //已经超时，清理缓存以及等待玩家操作的状态
 			
 	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
 	if (!pai_operate) return; 
@@ -106,7 +108,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			if (player_id) //第一个满足要求的玩家
 			{
 				_operation_limit.set_player_id(player_id); //当前可以进行操作的玩家
-				_operation_limit.set_time_out(GetTime() + 8000); //时间：8s后超时
+				_operation_limit.set_time_out(CommonTimerInstance.GetTime() + 8000); //时间：8s后超时
 				_operation_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
 				
 				//发送给Client

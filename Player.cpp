@@ -4,11 +4,13 @@
 
 #include "Player.h"
 #include "Game.h"
+#include "Timer.h"
 #include "Player.h"
 #include "Protocol.h"
 #include "CommonUtil.h"
 #include "RedisManager.h"
 #include "PlayerCommonReward.h"
+#include "PlayerCommonLimit.h"
 
 namespace Adoter
 {
@@ -547,6 +549,16 @@ void Player::AlterMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_
 	message.set_error_show_type(error_show_type);
 	message.set_error_code(error_code);
 	SendProtocol(message);
+}
+
+bool Player::AddCommonLimit(int64_t global_id)
+{
+	return PlayerCommonLimitInstance.AddCommonLimit(shared_from_this(), global_id);
+}
+	
+bool Player::IsCommonLimit(int64_t global_id)
+{
+	return PlayerCommonLimitInstance.IsCommonLimit(shared_from_this(), global_id);
 }
 
 /////////////////////////////////////////////////////

@@ -36,13 +36,13 @@ void WorldUpdateLoop()
 {
 	int32_t curr_time = 0, prev_sleep_time = 0;
 	
-	int32_t prev_time = GetTime();
-	
+	int32_t prev_time = CommonTimerInstance.GetTime();
+
 	while (!WorldInstance.IsStopped())
 	{
-		curr_time = GetTime();
+		curr_time = CommonTimerInstance.GetTime();
 		
-		int32_t diff = GetTimeDiff(prev_time, curr_time);
+		int32_t diff = CommonTimerInstance.GetTimeDiff(prev_time, curr_time);
 		
 		WorldInstance.Update(diff);        
 		
@@ -86,6 +86,7 @@ int main(int argc, const char* argv[])
 		Item* item_potion = new Item_Potion(message);	
 		*/
 	std::cout << "Service starting..." << std::endl;
+
 	try 
 	{
 		//世界初始化，涵盖所有....
