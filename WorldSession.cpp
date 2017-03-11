@@ -91,18 +91,36 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 				Asset::Login* login = dynamic_cast<Asset::Login*>(message);
 				if (!login) return; 
 				
-				/*
-			 	std::shared_ptr<Redis> redis = std::make_shared<Redis>();
-				int64_t player_id = redis->CreatePlayer();
-				if (player_id == 0) return; //创建失败
+			 	auto redis = std::make_shared<Redis>();
+				std::string stuff = redis->GetUser(login->account().username());
 
-				g_player = std::make_shared<Player>(player_id, shared_from_this());
-				g_player->Save(); //存盘，防止数据库无数据
-				
-				//返回结果
-				create_player->set_player_id(player_id);
-				g_player->SendProtocol(create_player);
-				*/
+				Asset::User user;
+
+				if (stuff == "") //没有数据
+				{
+					user.mutable_account()->CopyFrom(login->account());
+
+					///////如果账号下没有角色，创建一个给Client
+
+					int64_t player_id = redis->CreatePlayer();
+					if (player_id == 0) return; //创建失败
+
+					user.mutable_player_list()->Add(player_id);
+
+					auto stuff = user.SerializeAsString();
+					redis->SaveUser(login->account().username(), stuff); //账号数据存盘
+
+					g_player = std::make_shared<Player>(player_id, shared_from_this());
+					g_player->Save(); //存盘，防止数据库无数据
+				}
+				else
+				{
+					user.ParseFromString(stuff);
+				}
+
+				Asset::PlayerList player_list;
+				player_list.mutable_player_list()->CopyFrom(user.player_list());
+				SendProtocol(player_list); //传给Client，带有角色ID
 			}
 			else if (Asset::META_TYPE_SHARE_CREATE_PLAYER == meta.type_t()) //创建角色
 			{
@@ -164,6 +182,29 @@ bool WorldSession::Update()
 	g_player->Update(); 
 
 	return true;
+}
+
+void WorldSession::SendProtocol(pb::Message* message)
+{
+	SendProtocol(*message);
+}
+
+void WorldSession::SendProtocol(pb::Message& message)
+{
+	message.PrintDebugString(); //打印出来MESSAGE
+
+	const pb::FieldDescriptor* field = message.GetDescriptor()->FindFieldByName("type_t");
+	if (!field) return;
+	
+	int type_t = field->default_value_enum()->number();
+	if (!Asset::META_TYPE_IsValid(type_t)) return;	//如果不合法，不检查会宕线
+	
+	Asset::Meta meta;
+	meta.set_type_t((Asset::META_TYPE)type_t);
+	meta.set_stuff(message.SerializeAsString());
+
+	std::string content = meta.SerializeAsString();
+	AsyncSend(content);
 }
 
 void WorldSessionManager::Add(std::shared_ptr<WorldSession> session)

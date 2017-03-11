@@ -39,6 +39,9 @@ public:
 	virtual void Start() override;
 	bool Update() override; 
 	void InitializeHandler(const boost::system::error_code error, const std::size_t bytes_transferred);
+
+	void SendProtocol(pb::Message& message);
+	void SendProtocol(pb::Message* message);
 };
 
 class WorldSessionManager : public SocketManager<WorldSession> 

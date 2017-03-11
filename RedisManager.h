@@ -114,6 +114,41 @@ public:
 
 		return room_id;
 	}
+
+	std::string GetUser(std::string username)
+	{
+		std::string value = "";
+
+		std::string command = "Get user:" + username;
+		redisReply* reply = (redisReply*)redisCommand(_client, command.c_str());
+
+		if (!reply) return value;
+
+		if (reply->type == REDIS_REPLY_NIL) return value;
+		
+		if (reply->type != REDIS_REPLY_STRING) return value;
+
+		value = reply->str;
+		freeReplyObject(reply);
+
+		std::cout << __func__ << " success, username:" << username << std::endl;
+
+		return value;
+	}
+	
+	void SaveUser(std::string username, std::string& stuff)
+	{
+		std::string key = "user:" + username;
+
+		redisReply* reply = (redisReply*)redisCommand(_client, "Set %s %s", key.c_str(), stuff.c_str());
+		if (!reply) return;
+		
+		if (reply->type != REDIS_REPLY_STRING) return;
+
+		freeReplyObject(reply);
+		
+		std::cout << __func__ << " success, user:" << username << std::endl;
+	}
 };
 
 }
