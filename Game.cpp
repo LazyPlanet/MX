@@ -109,9 +109,10 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				_operation_limit.set_time_out(GetTime() + 8000); //时间：8s后超时
 				_operation_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
 				
+				//发送给Client
 				Asset::PaiOperationAlter alter;
 				alter.mutable_pai()->CopyFrom(pai);
-				GetPlayer(player_id)->SendProtocol(alter);
+				if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alter);
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
 			{
@@ -134,7 +135,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				ClearOperation(); //清理缓存以及等待玩家操作的状态
+				//Caculate(); //结算
 			}
 		}
 		break;
@@ -149,6 +150,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
+				player->OnGangPai(_operation_limit.pai());
+
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
 		}
@@ -164,6 +167,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
+				player->OnPengPai(_operation_limit.pai());
+
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
 		}
@@ -179,8 +184,22 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
+				player->OnChiPai(_operation_limit.pai(), message);
+
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
+		}
+		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GIVEUP: //放弃
+		{
+			auto player_next = GetNextPlayer(player->GetID());
+			if (!player_next) return; 
+			
+			auto cards = FaPai(1); //发牌 
+			player_next->OnFaPai(cards);
+
+			ClearOperation(); //清理缓存以及等待玩家操作的状态
 		}
 		break;
 

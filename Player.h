@@ -181,15 +181,21 @@ public:
 	Asset::PAI_CHECK_RETURN CheckPai(const Asset::PaiElement& pai);
 
 	bool CheckHuPai(const Asset::PaiElement& pai); //胡牌
-	bool CheckGangPai(const Asset::PaiElement& pai); //杠牌
-	bool CheckPengPai(const Asset::PaiElement& pai); //碰牌
-	bool CheckChiPai(const Asset::PaiElement& pai); //吃牌
-	bool IsReady() //是否已经在准备状态
-	{
-		return _stuff.player_prop().game_oper_state() == Asset::GAME_OPER_TYPE_START;
-	}
+
+	bool CheckGangPai(const Asset::PaiElement& pai); //是否可以杠牌
+	void OnGangPai(const Asset::PaiElement& pai); //杠牌
+
+	bool CheckPengPai(const Asset::PaiElement& pai); //是否可以碰牌
+	void OnPengPai(const Asset::PaiElement& pai); //碰牌
+
+	bool CheckChiPai(const Asset::PaiElement& pai); //是否可以吃牌
+	void OnChiPai(const Asset::PaiElement& pai, pb::Message* message); //吃牌
+	//是否已经在准备状态 
+	bool IsReady() { return _stuff.player_prop().game_oper_state() == Asset::GAME_OPER_TYPE_START; }
 	//获取玩家座次
 	Asset::POSITION_TYPE GetPosition() { return _stuff.player_prop().position(); }
+
+	void SynchronizePai();
 };
 
 /////////////////////////////////////////////////////

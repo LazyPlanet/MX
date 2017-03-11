@@ -22,7 +22,7 @@ Player::Player()
 	AddHandler(Asset::META_TYPE_SHARE_GAME_OPERATION, std::bind(&Player::CmdGameOperate, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_PAI_OPERATION, std::bind(&Player::CmdPaiOperate, this, std::placeholders::_1));
 
-	AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
+	//AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
 }
@@ -670,6 +670,49 @@ bool Player::CheckChiPai(const Asset::PaiElement& pai)
 	return false;
 }
 
+void Player::OnChiPai(const Asset::PaiElement& pai, pb::Message* message)
+{
+	if (!CheckChiPai(pai) || !message) return;
+
+	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
+	if (!pai_operate) return;
+	
+	std::vector<Asset::PaiElement> cards;
+
+	cards.push_back(pai);
+
+	if (pai_operate->pais().size() != 2) return; 
+	
+	auto it = _cards.find(pai.card_type());
+	if (it == _cards.end()) return;
+		
+	for (const auto& p : pai_operate->pais())	
+	{
+		if (pai.card_type() != p.card_type()) return; //牌类型不一致
+
+		cards.push_back(p);
+	}
+
+	std::sort(cards.begin(), cards.end(), [](const Asset::PaiElement& rv, const Asset::PaiElement& lv) {
+			return rv.card_value() < lv.card_value();
+		});
+
+	if (cards[1].card_value() - cards[0].card_value() != 1 || 
+			cards[2].card_value() - cards[1].card_value() != 1) return; //不是顺子
+
+	auto first = std::find(it->second.begin(), it->second.end(), cards[1].card_value());
+	if (first == it->second.end()) return; //理论上不会出现
+	
+	it->second.erase(first); //删除
+	
+	auto second = std::find(it->second.begin(), it->second.end(), cards[2].card_value());
+	if (second == it->second.end()) return; //理论上不会出现
+
+	it->second.erase(second); //删除
+
+	SynchronizePai();
+}
+
 bool Player::CheckPengPai(const Asset::PaiElement& pai)
 {
 	auto it = _cards.find(pai.card_type());
@@ -683,6 +726,19 @@ bool Player::CheckPengPai(const Asset::PaiElement& pai)
 	return true;
 }
 
+void Player::OnPengPai(const Asset::PaiElement& pai)
+{
+	if (!CheckPengPai(pai)) return;
+	
+	auto it = _cards.find(pai.card_type());
+	if (it == _cards.end()) return; //理论上不会如此
+	
+	int32_t card_value = pai.card_value();
+	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除，TODO:玩家手里有3张牌，但是选择了碰牌...
+	
+	SynchronizePai();
+}
+
 bool Player::CheckGangPai(const Asset::PaiElement& pai)
 {
 	auto it = _cards.find(pai.card_type());
@@ -694,6 +750,19 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai)
 	if (3 != count) return false;
 	
 	return true;
+}
+	
+void Player::OnGangPai(const Asset::PaiElement& pai)
+{
+	if (!CheckGangPai(pai)) return;
+
+	auto it = _cards.find(pai.card_type());
+	if (it == _cards.end()) return; //理论上不会如此
+	
+	int32_t card_value = pai.card_value();
+	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
+	
+	SynchronizePai();
 }
 
 int32_t Player::OnFaPai(std::vector<int32_t> cards)
@@ -711,7 +780,7 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 		std::sort(cards.second.begin(), cards.second.end(), [](int x, int y){ return x < y; }); //由小到大
 	}
 	
-	Asset::PaiNotify notify;
+	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
 
 	if (cards.size() > 1)
 	{
@@ -741,6 +810,25 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 	SendProtocol(notify); //发送
 
 	return 0;
+}
+	
+void Player::SynchronizePai()
+{
+	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
+
+	for (auto pai : _cards)
+	{
+		auto pais = notify.mutable_pais()->Add();
+
+		pais->set_card_type((Asset::CARD_TYPE)pai.first); //牌类型
+
+		::google::protobuf::RepeatedField<int32_t> cards(pai.second.begin(), pai.second.end());
+		pais->mutable_cards()->CopyFrom(cards); //牌值
+	}
+	
+	notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_SYNC); //操作类型：同步数据
+	
+	SendProtocol(notify); //发送
 }
 
 /////////////////////////////////////////////////////
