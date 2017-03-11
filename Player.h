@@ -113,8 +113,8 @@ public:
 	}	
 	
 	//获取物品
-	bool GainItem(Item* item);
-	bool GainItem(int64_t global_item_id);
+	bool GainItem(Item* item, int32_t count = 1);
+	bool GainItem(int64_t global_item_id, int32_t count = 1);
 	//存放物品
 	bool PushBackItem(Asset::INVENTORY_TYPE inventory_type, Item* item);
 
@@ -149,7 +149,8 @@ public:
 		return curr_count >= count;
 	}
 	//获取欢乐豆数量
-	int64_t GetBeans() { return _stuff.common_prop().huanledou(); }
+	int64_t GetHuanledou() { return _stuff.common_prop().huanledou(); }
+
 	//消费钻石：返回实际消耗的钻石数
 	int64_t ConsumeDiamond(int64_t count)
 	{

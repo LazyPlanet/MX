@@ -27,27 +27,28 @@ public:
 
 		for (const auto& reward : common_reward->rewards())
 		{
+			int32_t count = reward.count();
+			int64_t common_limit_id = reward.common_limit_id();
+
 			switch (reward.reward_type())
 			{
 				case Asset::CommonReward_REWARD_TYPE_REWARD_TYPE_DIAMOND:
 				{
-					int32_t count = reward.count();
-					int64_t common_limit_id = reward.common_limit_id();
-
-					//g_player->Consum
+					player->IncreaseDiamond(count);
 
 				}
 				break;
 
 				case Asset::CommonReward_REWARD_TYPE_REWARD_TYPE_HUANLEDOU:
 				{
-
+					player->IncreaseHuanledou(count);
 				}
 				break;
 				
 				case Asset::CommonReward_REWARD_TYPE_REWARD_TYPE_ITEM:
 				{
 
+					player->GainItem(reward.item_id(), count);
 				}
 				break;
 

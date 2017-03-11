@@ -31,7 +31,7 @@ public:
 	explicit Item(Asset::Item_Item& item);
 
 	//获取通用属性
-	virtual const Asset::Item_CommonProp& GetCommonProp() { return _common_prop; }
+	virtual Asset::Item_CommonProp& GetCommonProp() { return _common_prop; }
 	//获取物品类型
 	virtual Asset::ASSET_TYPE GetType() { return this->_stuff->type_t(); }
 	//是否可使用	

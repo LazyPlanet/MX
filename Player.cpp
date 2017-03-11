@@ -282,7 +282,7 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		auto room_limit = dynamic_cast<Asset::RoomLimit*>(*it);
 		if (!room_limit) return Asset::ERROR_ROOM_TYPE_NOT_FOUND;
 
-		int64_t beans_count = GetBeans();
+		int64_t beans_count = GetHuanledou();
 
 		int32_t min_limit = room_limit->min_limit();
 		if (min_limit >= 0 && beans_count < min_limit) return Asset::ERROR_ROOM_BEANS_MIN_LIMIT;
@@ -478,7 +478,7 @@ bool Player::HandleProtocol(int32_t type_t, pb::Message* message)
 	return true;
 }
 
-bool Player::GainItem(int64_t global_item_id)
+bool Player::GainItem(int64_t global_item_id, int32_t count)
 {
 	pb::Message* asset_item = AssetInstance.Get(global_item_id); //此处取出来的必然为合法ITEM.
 	if (!asset_item) return false;
@@ -488,15 +488,17 @@ bool Player::GainItem(int64_t global_item_id)
 	return true;
 }
 
-bool Player::GainItem(Item* item)
+bool Player::GainItem(Item* item, int32_t count)
 {
 	if (!item) return false;
 
-	const Asset::Item_CommonProp& common_prop = item->GetCommonProp(); 
+	Asset::Item_CommonProp& common_prop = item->GetCommonProp(); 
+	common_prop.set_count(count);
+
 	if (!PushBackItem(common_prop.inventory(), item)) return false;
 	return true;
 }
-
+	
 bool Player::PushBackItem(Asset::INVENTORY_TYPE inventory_type, Item* item)
 {
 	if (!item) return false;
@@ -509,6 +511,7 @@ bool Player::PushBackItem(Asset::INVENTORY_TYPE inventory_type, Item* item)
 
 	auto item_toadd = inventory->mutable_items()->Add();
 	item_toadd->CopyFrom(item->GetCommonProp());
+
 	return true;
 }
 
