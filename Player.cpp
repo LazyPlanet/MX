@@ -673,6 +673,14 @@ int32_t Player::CmdGetReward(pb::Message* message)
 
 	return 0;
 }
+
+void Player::SyncCommonProperty()
+{
+	Asset::CommonProperty common_prop;
+	common_prop.set_reason_type(Asset::CommonProperty_SYNC_REASON_TYPE_SYNC_REASON_TYPE_SELF);
+	common_prop.set_player_id(GetID());
+	common_prop.mutable_common_prop()->CopyFrom(GetCommonProp());
+}
 /////////////////////////////////////////////////////
 /////游戏逻辑定义
 /////////////////////////////////////////////////////

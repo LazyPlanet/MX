@@ -53,7 +53,10 @@ public:
 	//获取基础属性
 	Asset::Player& Get() { return _stuff; }
 	const Asset::CommonProp& CommonProp() { return _stuff.common_prop(); }
+	const Asset::CommonProp& GetCommonProp() { return _stuff.common_prop(); }
 	Asset::CommonProp* MutableCommonProp() { return _stuff.mutable_common_prop(); }
+	//发送玩家基础属性
+	void SyncCommonProperty();
 	//获取ID
 	virtual int64_t GetID() { return _stuff.common_prop().player_id(); }
 	virtual void SetID(int64_t player_id) { 
@@ -133,6 +136,9 @@ public:
 		if (!CheckHuanledou(count)) return 0;
 
 		_stuff.mutable_common_prop()->set_huanledou(_stuff.common_prop().huanledou() - count);
+		
+		SyncCommonProperty();
+		
 		return count;
 	}
 	//增加欢乐豆
@@ -141,6 +147,9 @@ public:
 		if (count <= 0) return 0;
 
 		_stuff.mutable_common_prop()->set_huanledou(_stuff.common_prop().huanledou() + count);
+		
+		SyncCommonProperty();
+		
 		return count;
 	}
 	//欢乐豆是否足够
@@ -160,6 +169,9 @@ public:
 		if (!CheckDiamond(count)) return 0;
 
 		_stuff.mutable_common_prop()->set_diamond(_stuff.common_prop().diamond() - count);
+		
+		SyncCommonProperty();
+		
 		return count;
 	}
 	//增加钻石
@@ -168,6 +180,9 @@ public:
 		if (count >= 0) return 0;
 
 		_stuff.mutable_common_prop()->set_diamond(_stuff.common_prop().diamond() + count);
+
+		SyncCommonProperty();
+		
 		return count;
 	}
 	//钻石是否足够
