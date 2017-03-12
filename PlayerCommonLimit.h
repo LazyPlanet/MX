@@ -24,7 +24,7 @@ public:
 	{
 		if (!player || global_id == 0) return false; 
 
-		auto common_limit = player->Get().mutable_common_limit(); //玩家所有通用限制数据
+		auto common_limit = player->GetMutableCommonLimit(); //玩家所有通用限制数据
 
 		auto it = std::find_if(common_limit->elements().begin(), common_limit->elements().end(), [global_id](const Asset::PlayerCommonLimit_Element& limit){
 					return global_id == limit.common_limit_id();
@@ -42,7 +42,15 @@ public:
 	//是否限制内
 	bool IsCommonLimit(std::shared_ptr<Player> player, int64_t global_id)
 	{
-		if (!player || global_id == 0) return false; 
+		if (!player || global_id == 0) return false; //没有限制
+		
+		auto common_limit = player->GetMutableCommonLimit(); //玩家所有通用限制数据
+
+		auto it = std::find_if(common_limit->elements().begin(), common_limit->elements().end(), [global_id](const Asset::PlayerCommonLimit_Element& limit){
+					return global_id == limit.common_limit_id();
+				});
+
+		if (it == common_limit->elements().end()) return false; //没有限制
 
 		return true;
 	}
@@ -68,13 +76,13 @@ public:
 				{
 					if (CommonTimerInstance.IsSameDay(time_stamp, current_time)) return false; //是一天，显然不用更新
 
-					if (Asset::CommonLimit_COOL_DOWN_CLEAR_TYPE_COOL_DOWN_CLEAR_TYPE_ZERO_TIME) //零点刷新
+					if (clear_type == Asset::CommonLimit_COOL_DOWN_CLEAR_TYPE_COOL_DOWN_CLEAR_TYPE_ZERO_TIME) //按照零点刷新
 					{
-
+						return true;
 					}
-					else if (Asset::CommonLimit_COOL_DOWN_CLEAR_TYPE_COOL_DOWN_CLEAR_TYPE_WHEN_OPER) //上一次更新时间
+					else if (clear_type == Asset::CommonLimit_COOL_DOWN_CLEAR_TYPE_COOL_DOWN_CLEAR_TYPE_WHEN_OPER) //按照上一次更新时间刷新
 					{
-
+						if (current_time >= time_stamp + 24 * 3600) return true; //24小时
 					}
 
 				}
@@ -82,7 +90,16 @@ public:
 				
 				case Asset::CommonLimit_COOL_DOWN_TYPE_COOL_DOWN_TYPE_WEEK:
 				{
+					if (CommonTimerInstance.IsSameWeek(time_stamp, current_time)) return false; //是同一周，显然不用更新
 
+					if (clear_type == Asset::CommonLimit_COOL_DOWN_CLEAR_TYPE_COOL_DOWN_CLEAR_TYPE_ZERO_TIME) //按照零点刷新
+					{
+						return true;
+					}
+					else if (clear_type == Asset::CommonLimit_COOL_DOWN_CLEAR_TYPE_COOL_DOWN_CLEAR_TYPE_WHEN_OPER) //按照上一次更新时间刷新
+					{
+						if (current_time >= time_stamp + 7 * 24 * 3600) return true; //7天
+					}
 				}
 				break;
 				
@@ -116,7 +133,7 @@ public:
 		
 		bool updated = false;
 		int32_t current_time = CommonTimerInstance.GetTime();
-		auto common_limit = player->Get().mutable_common_limit(); //玩家所有通用限制数据
+		auto common_limit = player->GetMutableCommonLimit(); //玩家所有通用限制数据
 
 		for (const auto& element : common_limit->elements())
 		{

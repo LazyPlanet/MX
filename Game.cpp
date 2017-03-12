@@ -108,7 +108,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			if (player_id) //第一个满足要求的玩家
 			{
 				_operation_limit.set_player_id(player_id); //当前可以进行操作的玩家
-				_operation_limit.set_time_out(CommonTimerInstance.GetTime() + 8000); //时间：8s后超时
+				_operation_limit.set_time_out(CommonTimerInstance.GetTime() + 8); //时间：8s后超时
 				_operation_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
 				
 				//发送给Client

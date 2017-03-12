@@ -95,6 +95,40 @@ public:
 	{
 		return GetWeakBegin(lhs) == GetWeakBegin(lhs);
 	}
+	
+	//
+	//获取当月的第一天, 即: X月1号
+	//
+	inline std::time_t GetMonthBegin(std::time_t cur_t)
+	{
+		boost::posix_time::ptime ptime = boost::posix_time::from_time_t(cur_t);
+		
+		boost::posix_time::ptime month_begin(boost::gregorian::date(ptime.date().year(), ptime.date().month(), 1), boost::posix_time::time_duration(-8, 0, 0));
+
+		auto time = boost::posix_time::to_time_t(month_begin);
+		return time;
+	}
+	
+	//
+	//获取下个月的该天
+	//
+	//比如: 当前为1月10号,该函数返回2月10号
+	//
+	//特别的是: (1) 如果当前为1月31号,该函数则返回2月28号或29号;
+	//
+	//			(2) 当前时间2005年2月28号,该函数返回的是3月31号;
+	//
+	inline std::time_t GetNextMonth(std::time_t cur_t)
+	{
+		boost::posix_time::ptime ptime = boost::posix_time::from_time_t(cur_t);
+		
+		boost::gregorian::months single(1);
+		
+		boost::posix_time::ptime next_month(ptime.date() + single, ptime.time_of_day());
+
+		auto time = boost::posix_time::to_time_t(next_month);
+		return time;
+	}
 
 };
 

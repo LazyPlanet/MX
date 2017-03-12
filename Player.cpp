@@ -453,6 +453,7 @@ bool Player::Update()
 	if (_heart_count % 6000 == 0) //1MIN
 	{
 		std::cout << "===================Time has gone 1min, i am id:" << GetID() << std::endl;
+		CommonLimitUpdate(); //通用限制,定时更新
 	}
 	return true;
 }
@@ -561,6 +562,37 @@ bool Player::IsCommonLimit(int64_t global_id)
 	return PlayerCommonLimitInstance.IsCommonLimit(shared_from_this(), global_id);
 }
 
+bool Player::CommonLimitUpdate()
+{
+	bool updated = PlayerCommonLimitInstance.Update(shared_from_this());
+	if (updated) SyncCommonLimit();
+
+	return updated;
+}
+
+void Player::SyncCommonLimit()
+{
+	Asset::SyncCommonLimit proto;
+	proto.mutable_common_limit()->CopyFrom(_stuff.common_limit());
+
+	SendProtocol(proto);
+}
+
+bool Player::DeliverReward(int64_t global_id)
+{
+	bool delivered = PlayerCommonReward.DeliverReward(shared_from_this(), global_id);
+	if (delivered) SyncCommonReward(global_id);
+	
+	return delivered;
+}
+
+void Player::SyncCommonReward(int64_t common_reward_id)
+{
+	Asset::SyncCommonReward proto;
+	proto.set_common_reward_id(common_reward_id);
+
+	SendProtocol(proto);
+}
 /////////////////////////////////////////////////////
 /////游戏逻辑定义
 /////////////////////////////////////////////////////

@@ -11,10 +11,17 @@ namespace pb = google::protobuf;
 
 class PlayerCommonReward : public std::enable_shared_from_this<PlayerCommonReward> 
 {
-	Asset::CommonReward _reward;
+	//Asset::CommonReward _reward;
 public:
+	/*
 	PlayerCommonReward(const Asset::CommonReward& reward){
 		_reward.CopyFrom(reward);
+	}*/
+	
+	static PlayerCommonReward& Instance()
+	{
+		static PlayerCommonReward _instance;
+		return _instance;
 	}
 
 	bool DeliverReward(std::shared_ptr<Player> player, int64_t global_id)
@@ -27,8 +34,10 @@ public:
 
 		for (const auto& reward : common_reward->rewards())
 		{
-			int32_t count = reward.count();
 			int64_t common_limit_id = reward.common_limit_id();
+			if (player->IsCommonLimit(common_limit_id)) return false; //该奖励已经超过领取限制
+
+			int32_t count = reward.count();
 
 			switch (reward.reward_type())
 			{
@@ -57,10 +66,14 @@ public:
 				}
 				break;
 			}
+			
+			player->AddCommonLimit(common_limit_id); 
 		}
 		return true;
 	}
 
 };
+
+#define PlayerCommonReward PlayerCommonReward::Instance()
 
 }

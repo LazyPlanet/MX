@@ -141,6 +141,7 @@ public:
 		if (count <= 0) return 0;
 
 		_stuff.mutable_common_prop()->set_huanledou(_stuff.common_prop().huanledou() + count);
+		return count;
 	}
 	//欢乐豆是否足够
 	bool CheckHuanledou(int64_t count)
@@ -167,6 +168,7 @@ public:
 		if (count >= 0) return 0;
 
 		_stuff.mutable_common_prop()->set_diamond(_stuff.common_prop().diamond() + count);
+		return count;
 	}
 	//钻石是否足够
 	bool CheckDiamond(int64_t count)
@@ -175,8 +177,20 @@ public:
 		return curr_count >= count;
 	}
 	//通用限制
+	const Asset::PlayerCommonLimit& GetCommonLimit() {
+		return _stuff.common_limit();
+	}
+	
+	Asset::PlayerCommonLimit* GetMutableCommonLimit() {
+		return _stuff.mutable_common_limit();
+	}
 	bool AddCommonLimit(int64_t global_id);
 	bool IsCommonLimit(int64_t global_id);
+	bool CommonLimitUpdate();
+	void SyncCommonLimit();
+	//通用奖励
+	bool DeliverReward(int64_t global_id);
+	void SyncCommonReward(int64_t common_reward_id);
 ///////游戏逻辑定义
 private:
 	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
