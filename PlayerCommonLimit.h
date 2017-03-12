@@ -30,11 +30,18 @@ public:
 					return global_id == limit.common_limit_id();
 				});
 
-		if (it != common_limit->elements().end()) return true; //已经存在
-
-		auto element = common_limit->mutable_elements()->Add();
-		element->set_common_limit_id(global_id);
-		element->set_time_stamp(CommonTimerInstance.GetTime());
+		if (it != common_limit->elements().end()) 
+		{
+			auto mutable_it = const_cast<Asset::PlayerCommonLimit_Element*>(&(*it));
+			mutable_it->set_count(it->count() + 1);
+		}
+		else
+		{
+			auto element = common_limit->mutable_elements()->Add();
+			element->set_common_limit_id(global_id);
+			element->set_time_stamp(CommonTimerInstance.GetTime());
+			element->set_count(1);
+		}
 
 		return true;
 	}
@@ -44,15 +51,26 @@ public:
 	{
 		if (!player || global_id == 0) return false; //没有限制
 		
-		auto common_limit = player->GetMutableCommonLimit(); //玩家所有通用限制数据
+		auto player_common_limit = player->GetMutableCommonLimit(); //玩家所有通用限制数据
 
-		auto it = std::find_if(common_limit->elements().begin(), common_limit->elements().end(), [global_id](const Asset::PlayerCommonLimit_Element& limit){
+		auto it = std::find_if(player_common_limit->elements().begin(), player_common_limit->elements().end(), 
+				[global_id](const Asset::PlayerCommonLimit_Element& limit){
 					return global_id == limit.common_limit_id();
 				});
 
-		if (it == common_limit->elements().end()) return false; //没有限制
+		if (it == player_common_limit->elements().end()) return false; //没有限制
+			
+		int32_t count = it->count();
 
-		return true;
+		auto message = AssetInstance.Get(it->common_limit_id());
+		if (!message) return false; //如果没有就不限制
+
+		auto common_limit = dynamic_cast<Asset::CommonLimit*>(message);
+		if (!common_limit) return false; 
+
+		if (count >= common_limit->max_count()) return true;
+
+		return false;
 	}
 	
 	//返回是否更新
