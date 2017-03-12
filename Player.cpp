@@ -187,7 +187,7 @@ int32_t Player::CmdGameOperate(pb::Message* message)
 		{
 			if (!_locate_room->IsHoster(GetID())) //不是房主，不能踢人
 			{
-				AlterMessage(Asset::ERROR_ROOM_NO_PERMISSION); //没有权限
+				AlertMessage(Asset::ERROR_ROOM_NO_PERMISSION); //没有权限
 				return 3;
 			}
 		}
@@ -321,7 +321,7 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 			auto result = check();
 			if (result == Asset::ERROR_SUCCESS) 
 			{
-				AlterMessage(result);
+				AlertMessage(result);
 				return result;
 			}
 
@@ -350,7 +350,7 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		auto room = RoomInstance.GetAvailableRoom();
 		if (!room) 
 		{
-			AlterMessage(Asset::ERROR_ROOM_NOT_AVAILABLE);
+			AlertMessage(Asset::ERROR_ROOM_NOT_AVAILABLE);
 			return 5; //没有合适的房间
 		}
 
@@ -361,13 +361,13 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		auto room = RoomInstance.Get(room_id);
 		if (!room) 
 		{
-			AlterMessage(Asset::ERROR_ROOM_NOT_FOUNT);
+			AlertMessage(Asset::ERROR_ROOM_NOT_FOUNT);
 			return 2; 
 		}
 
 		if (room->IsFull()) 
 		{
-			AlterMessage(Asset::ERROR_ROOM_FULL);
+			AlertMessage(Asset::ERROR_ROOM_FULL);
 			return 3;
 		}
 	}
@@ -545,10 +545,10 @@ void Player::BroadCast(Asset::MsgItem& item)
 	
 }	
 
-void Player::AlterMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type/*= Asset::ERROR_TYPE_NORMAL*/, 
+void Player::AlertMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type/*= Asset::ERROR_TYPE_NORMAL*/, 
 		Asset::ERROR_SHOW_TYPE error_show_type/* = Asset::ERROR_SHOW_TYPE_CHAT*/)
 {
-	Asset::AlterMessage message;
+	Asset::AlertMessage message;
 	message.set_error_type(error_type);
 	message.set_error_show_type(error_show_type);
 	message.set_error_code(error_code);
@@ -621,7 +621,7 @@ int32_t Player::CmdGetReward(pb::Message* message)
 			int64_t common_limit_id = bonus->common_limit_id();
 			if (IsCommonLimit(common_limit_id)) 
 			{
-				AlterMessage(Asset::ERROR_REWARD_HAS_GOT);
+				AlertMessage(Asset::ERROR_REWARD_HAS_GOT);
 				return 6;
 			}
 			
@@ -646,14 +646,14 @@ int32_t Player::CmdGetReward(pb::Message* message)
 			int32_t huanledou_below = allowance->huanledou_below(); 
 			if (huanledou_below > 0 && huanledou_below < GetHuanledou())
 			{
-				AlterMessage(Asset::ERROR_HUANLEDOU_LIMIT); //欢乐豆数量不满足
+				AlertMessage(Asset::ERROR_HUANLEDOU_LIMIT); //欢乐豆数量不满足
 				return 8;
 			}
 
 			int64_t common_limit_id = allowance->common_limit_id();
 			if (IsCommonLimit(common_limit_id)) 
 			{
-				AlterMessage(Asset::ERROR_REWARD_HAS_GOT);
+				AlertMessage(Asset::ERROR_REWARD_HAS_GOT);
 				return 6;
 			}
 			

@@ -82,7 +82,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 	if (!CanPaiOperate(player, message)) 
 	{
-		player->AlterMessage(Asset::ERROR_GAME_NO_PERMISSION); //没有权限，没到玩家操作
+		player->AlertMessage(Asset::ERROR_GAME_NO_PERMISSION); //没有权限，没到玩家操作
 		return; 
 	}
 
@@ -112,9 +112,9 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				_operation_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
 				
 				//发送给Client
-				Asset::PaiOperationAlter alter;
-				alter.mutable_pai()->CopyFrom(pai);
-				if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alter);
+				Asset::PaiOperationAlert alert;
+				alert.mutable_pai()->CopyFrom(pai);
+				if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert);
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
 			{
@@ -132,7 +132,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			bool ret = player->CheckHuPai(_operation_limit.pai());
 			if (!ret) 
 			{
-				player->AlterMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
+				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
 				return; 
 			}
 			else
@@ -147,7 +147,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			bool ret = player->CheckGangPai(_operation_limit.pai());
 			if (!ret) 
 			{
-				player->AlterMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
+				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
 				return; 
 			}
 			else
@@ -164,7 +164,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			bool ret = player->CheckPengPai(pai);
 			if (!ret) 
 			{
-				player->AlterMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
+				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
 				return; 
 			}
 			else
@@ -181,7 +181,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			bool ret = player->CheckChiPai(pai);
 			if (!ret) 
 			{
-				player->AlterMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
+				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
 				return; 
 			}
 			else
