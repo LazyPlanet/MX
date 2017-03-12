@@ -200,6 +200,7 @@ public:
 	//玩家操作
 	virtual int32_t CmdGameOperate(pb::Message* message); //游戏操作
 	virtual int32_t CmdPaiOperate(pb::Message* message); //牌操作
+	virtual int32_t CmdGetReward(pb::Message* message); //领取奖励
 	//获取房间
 	virtual std::shared_ptr<Room> GetRoom() { return _locate_room; }	//获取当前房间
 	virtual void SetRoomID(int64_t room_id) { _stuff.set_room_id(room_id); }	

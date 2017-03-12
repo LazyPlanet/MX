@@ -31,7 +31,7 @@ bool World::Load()
 	}
 
 	pb::Message* message = AssetInstance.Get(458753); //唯一写死ID
-	g_const = dynamic_cast<Asset::CommonConst*>(message); 
+	g_const = dynamic_cast<const Asset::CommonConst*>(message); 
 	if (!g_const) 
 	{
 		LOG(ERROR, "g_const is null.");

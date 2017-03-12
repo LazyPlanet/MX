@@ -15,6 +15,8 @@
 namespace Adoter
 {
 
+extern const Asset::CommonConst* g_const;
+
 Player::Player()
 {
 	//协议默认处理函数
@@ -28,6 +30,7 @@ Player::Player()
 	//AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_C2S_GET_REWARD, std::bind(&Player::CmdGetReward, this, std::placeholders::_1));
 }
 
 Player::Player(int64_t player_id, std::shared_ptr<WorldSession> session) : Player()/*委派构造函数*/
@@ -592,6 +595,83 @@ void Player::SyncCommonReward(int64_t common_reward_id)
 	proto.set_common_reward_id(common_reward_id);
 
 	SendProtocol(proto);
+}
+
+int32_t Player::CmdGetReward(pb::Message* message)
+{
+	Asset::GetReward* get_reward = dynamic_cast<Asset::GetReward*>(message);
+	if (!get_reward) return 1;
+
+	int64_t reward_id = get_reward->reward_id();
+	if (reward_id <= 0) return 2;
+
+	switch (get_reward->reason())
+	{
+		case Asset::GetReward_GET_REWARD_REASON_GET_REWARD_REASON_DAILY_BONUS: //每日登陆奖励
+		{
+			int64_t daily_bonus_id = g_const->daily_bonus_id();
+			if (reward_id != daily_bonus_id) return 3; //Client和Server看到的数据不一致
+			
+			auto message = AssetInstance.Get(daily_bonus_id);
+			if (!message) return 4;
+
+			auto bonus = dynamic_cast<Asset::DailyBonus*>(message);
+			if (!bonus) return 5;
+
+			int64_t common_limit_id = bonus->common_limit_id();
+			if (IsCommonLimit(common_limit_id)) 
+			{
+				AlterMessage(Asset::ERROR_REWARD_HAS_GOT);
+				return 6;
+			}
+			
+			bool ret = DeliverReward(bonus->common_reward_id()); //发奖
+			if (!ret) return 7;
+		
+			AddCommonLimit(common_limit_id);
+		}
+		break;
+		
+		case Asset::GetReward_GET_REWARD_REASON_GET_REWARD_REASON_DAILY_ALLOWANCE: //每日补助奖励
+		{
+			int64_t daily_allowance_id = g_const->daily_allowance_id();
+			if (reward_id != daily_allowance_id) return 3; //Client和Server看到的数据不一致
+			
+			auto message = AssetInstance.Get(daily_allowance_id);
+			if (!message) return 4;
+
+			auto allowance = dynamic_cast<Asset::DailyAllowance*>(message);
+			if (!allowance) return 5;
+
+			int32_t huanledou_below = allowance->huanledou_below(); 
+			if (huanledou_below > 0 && huanledou_below < GetHuanledou())
+			{
+				AlterMessage(Asset::ERROR_HUANLEDOU_LIMIT); //欢乐豆数量不满足
+				return 8;
+			}
+
+			int64_t common_limit_id = allowance->common_limit_id();
+			if (IsCommonLimit(common_limit_id)) 
+			{
+				AlterMessage(Asset::ERROR_REWARD_HAS_GOT);
+				return 6;
+			}
+			
+			bool ret = DeliverReward(allowance->common_reward_id()); //发奖
+			if (!ret) return 7;
+		
+			AddCommonLimit(common_limit_id);
+		}
+		break;
+
+		default:
+		{
+
+		}
+		break;
+	}
+
+	return 0;
 }
 /////////////////////////////////////////////////////
 /////游戏逻辑定义

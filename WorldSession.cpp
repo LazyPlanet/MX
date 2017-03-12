@@ -83,7 +83,8 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 				Close();
 				return;		//非法协议
 			}
-			
+		
+			message->PrintDebugString(); //打印出来MESSAGE
 			/////////////////////////////////////////////////////////////////////////////游戏逻辑处理流程
 			
 			if (Asset::META_TYPE_C2S_LOGIN == meta.type_t()) //账号登陆
