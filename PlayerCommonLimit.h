@@ -84,7 +84,6 @@ public:
 					{
 						if (current_time >= time_stamp + 24 * 3600) return true; //24小时
 					}
-
 				}
 				break;
 				
@@ -135,8 +134,10 @@ public:
 		int32_t current_time = CommonTimerInstance.GetTime();
 		auto common_limit = player->GetMutableCommonLimit(); //玩家所有通用限制数据
 
-		for (const auto& element : common_limit->elements())
+		for (int i = 0; i < common_limit->elements().size(); ++i)
 		{
+			const auto& element = common_limit->elements(i);
+
 			int64_t common_limit_id = element.common_limit_id();
 			int32_t time_stamp = element.time_stamp();
 			
@@ -144,6 +145,9 @@ public:
 
 			if (ret) //删除
 			{
+				common_limit->mutable_elements()->SwapElements(i, common_limit->elements().size() - 1);
+				common_limit->mutable_elements()->RemoveLast();
+
 				updated = true;
 			}
 		}
