@@ -17,7 +17,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 {
 	try
 	{
-		std::cout << "------------------------------" << _socket.remote_endpoint().address() << std::endl;
+		std::cout << "------------------------------" << _socket.remote_endpoint().address() << " bytes_transferred:" << bytes_transferred << std::endl;
 
 		if (error)
 		{

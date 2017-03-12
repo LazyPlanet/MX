@@ -3,6 +3,7 @@
 #include "Room.h"
 #include "Log.h"
 #include "Game.h"
+//#include "Activity.h"
 
 namespace Adoter
 {
@@ -23,13 +24,26 @@ bool World::Load()
 		LOG(ERROR, "AssetInstance load error.");
 		return false;
 	}
-	//其他初始化
+//////////////////////////////////////////////////
+//不依赖顺序的数据初始化
+//////////////////////////////////////////////////
+	//游戏初始化
 	if (!GameInstance.Load()) 
 	{
 		LOG(ERROR, "GameInstance load error.");
 		return false;
 	}
-
+/*
+	//活动初始化
+	if (!ActivityInstance.Load()) 
+	{
+		LOG(ERROR, "GameInstance load error.");
+		return false;
+	}
+*/
+//////////////////////////////////////////////////
+//游戏内初始化
+//////////////////////////////////////////////////
 	pb::Message* message = AssetInstance.Get(458753); //唯一写死ID
 	g_const = dynamic_cast<const Asset::CommonConst*>(message); 
 	if (!g_const) 
