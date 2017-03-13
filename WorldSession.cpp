@@ -50,6 +50,13 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 				*/
 			Asset::Meta meta;
 			bool result = meta.ParseFromArray(_buffer.data(), bytes_transferred);
+
+			for (int i = 0; i < bytes_transferred; ++i)
+			{
+				std::cout << (int)_buffer[i] << " ";
+			}
+			std::cout << std::endl;
+
 			if (!result) 
 			{
 				std::cout << __func__ << ":Meta parse error." << std::endl;	

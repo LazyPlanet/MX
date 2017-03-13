@@ -102,6 +102,8 @@ public:
 	virtual void SendPlayer();
 	//玩家心跳周期为10MS，如果该函数返回FALSE则表示掉线
 	virtual bool Update();
+	//购买商品
+	virtual bool CmdBuySomething(pb::Message* message);
 public:
 	//获取所有包裹
 	const Asset::Inventory& GetInventory()
@@ -160,6 +162,8 @@ public:
 	}
 	//获取欢乐豆数量
 	int64_t GetHuanledou() { return _stuff.common_prop().huanledou(); }
+	//获取钻石数量
+	int64_t GetDiamond() { return _stuff.common_prop().diamond(); }
 
 	//消费钻石：返回实际消耗的钻石数
 	int64_t ConsumeDiamond(int64_t count)

@@ -5,6 +5,7 @@
 #include "Player.h"
 #include "Game.h"
 #include "Timer.h"
+#include "Mall.h"
 #include "Player.h"
 #include "Protocol.h"
 #include "CommonUtil.h"
@@ -26,6 +27,7 @@ Player::Player()
 	AddHandler(Asset::META_TYPE_SHARE_CREATE_ROOM, std::bind(&Player::CmdCreateRoom, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_GAME_OPERATION, std::bind(&Player::CmdGameOperate, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_PAI_OPERATION, std::bind(&Player::CmdPaiOperate, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_SHARE_BUY_SOMETHING, std::bind(&Player::CmdBuySomething, this, std::placeholders::_1));
 
 	//AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
@@ -680,6 +682,22 @@ void Player::SyncCommonProperty()
 	common_prop.set_reason_type(Asset::CommonProperty_SYNC_REASON_TYPE_SYNC_REASON_TYPE_SELF);
 	common_prop.set_player_id(GetID());
 	common_prop.mutable_common_prop()->CopyFrom(GetCommonProp());
+}
+
+bool Player::CmdBuySomething(pb::Message* message)
+{
+	auto some_thing = dynamic_cast<Asset::BuySomething*>(message);
+	if (some_thing) return false;
+
+	int64_t mall_id = some_thing->mall_id();
+	if (mall_id <= 0) return false;
+
+	auto ret = MallInstance.BuySomething(shared_from_this(), mall_id);
+	some_thing->set_result(ret);
+
+	SendProtocol(some_thing); //返回给Client
+
+	return true;
 }
 /////////////////////////////////////////////////////
 /////游戏逻辑定义
