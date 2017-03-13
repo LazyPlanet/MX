@@ -69,11 +69,25 @@ bool Game::Over()
 	return true;
 }
 
+/////////////////////////////////////////////////////
+//
+//玩家可操作的状态只有2种，顺序不可变：
+//
+//(1) 碰、杠、胡牌；
+//
+//(2) 轮到玩家；
+//
+/////////////////////////////////////////////////////
+	
 bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
-	if (_operation_limit.time_out() > CommonTimerInstance.GetTime() && _operation_limit.player_id() != player->GetID()) return false; //没到该玩家的操作
+	if (_operation_limit.time_out() < CommonTimerInstance.GetTime() 
+			&& _operation_limit.player_id() == player->GetID()) return true; //玩家操作：碰、杠、胡牌
 
-	return true;
+	auto player_index = GetPlayerOrder(player->GetID());
+	if (_curr_player_index == player_index) return true; //轮到该玩家
+
+	return false;
 }
 
 void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
@@ -114,6 +128,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				//发送给Client
 				Asset::PaiOperationAlert alert;
 				alert.mutable_pai()->CopyFrom(pai);
+
 				if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert);
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
@@ -123,6 +138,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				
 				auto cards = FaPai(1); 
 				player_next->OnFaPai(cards);
+
+				_curr_player_index = (_curr_player_index + 1) % 4;
 			}
 		}
 		break;
@@ -153,6 +170,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			else
 			{
 				player->OnGangPai(_operation_limit.pai());
+				
+				_curr_player_index = GetPlayerOrder(player->GetID()); //重置当前玩家索引
 
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
@@ -170,6 +189,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			else
 			{
 				player->OnPengPai(_operation_limit.pai());
+				
+				_curr_player_index = GetPlayerOrder(player->GetID()); //重置当前玩家索引
 
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
@@ -187,6 +208,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			else
 			{
 				player->OnChiPai(_operation_limit.pai(), message);
+				
+				_curr_player_index = (_curr_player_index + 1) % 4; //下家吃牌
 
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
@@ -201,6 +224,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			auto cards = FaPai(1); //发牌 
 			player_next->OnFaPai(cards);
 
+			_curr_player_index = (_curr_player_index + 1) % 4; //下家吃牌
+
 			ClearOperation(); //清理缓存以及等待玩家操作的状态
 		}
 		break;
@@ -211,8 +236,6 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		}
 		break;
 	}
-
-	_operation_index = _operation_index % 4;
 }
 
 void Game::ClearOperation()
@@ -220,18 +243,43 @@ void Game::ClearOperation()
 	_operation_limit.Clear(); //清理状态
 }
 	
+/////////////////////////////////////////////////////
+//
+//检查各个玩家能否对该牌进行操作
+//
+//返回可操作玩家的索引
+//
+/////////////////////////////////////////////////////
+
 int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
-	for (auto player : _players)
+	int32_t player_index = GetPlayerOrder(from_player_id); //当前玩家索引
+	if (player_index == -1) return 0; //理论上不会出现
+
+	assert(_curr_player_index == player_index); //理论上一定相同
+
+	int32_t next_player_index = (_curr_player_index + 1) % 4;
+
+	int64_t rtn_player_id = 0; //返回可操作的玩家ID
+
+	for (int32_t i = next_player_index; i < 4; ++i)
 	{
-		if (from_player_id == player.second->GetID()) continue;
+		auto cur_index = next_player_index % 4;
 
-		auto result = player.second->CheckPai(pai);
-		if (result == Asset::PAI_CHECK_RETURN_NULL) continue;
+		auto player = GetPlayerByOrder(cur_index);
+		if (!player) return rtn_player_id; //理论上不会出现
 
-		return player.second->GetID(); //当前可以进行操作的玩家
+		if (from_player_id == player->GetID()) continue; //自己不能对自己的牌进行操作
+
+		auto result = player->CheckPai(pai);
+		if (result == Asset::PAI_CHECK_RETURN_NULL) continue; //不能吃、碰、杠和胡牌
+
+		if (result == Asset::PAI_CHECK_RETURN_CHI && cur_index != next_player_index) continue; //吃牌只能是下家
+
+		rtn_player_id = player->GetID(); //只获取可操作的玩家ID
 	}
-	return 0;
+
+	return rtn_player_id;
 }
 
 void Game::OnOperateTimeOut()
@@ -261,6 +309,20 @@ std::shared_ptr<Player> Game::GetNextPlayer(int64_t player_id)
 	if (!_room) return nullptr;
 
 	return _room->GetNextPlayer(player_id);
+}
+
+int32_t Game::GetPlayerOrder(int32_t player_id)
+{
+	if (!_room) return -1;
+
+	return _room->GetPlayerOrder(player_id);
+}
+
+std::shared_ptr<Player> Game::GetPlayerByOrder(int32_t player_index)
+{
+	if (!_room) return nullptr;
+
+	return _room->GetPlayerByOrder(player_index);
 }
 
 /////////////////////////////////////////////////////

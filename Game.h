@@ -28,7 +28,7 @@ private:
 	std::vector<int64_t> _hupai_players;
 
 	int32_t _banker_index = 0; //庄家索引
-	int32_t _operation_index = 0; //操作索引
+	int32_t _curr_player_index = 0; //当前在操作的玩家索引
 
 	Asset::PaiOperationLimit _operation_limit; //牌操作限制
 	
@@ -50,6 +50,9 @@ public:
 	std::shared_ptr<Player> GetNextPlayer(int64_t player_id);
 	//获取玩家
 	std::shared_ptr<Player> GetPlayer(int64_t player_id) { return _room->GetPlayer(player_id); }
+	std::shared_ptr<Player> GetPlayerByOrder(int32_t player_index);
+	//获取玩家的顺序
+	int32_t GetPlayerOrder(int32_t player_id);
 };
 
 /////////////////////////////////////////////////////
