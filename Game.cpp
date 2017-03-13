@@ -81,8 +81,8 @@ bool Game::Over()
 	
 bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
-	if (_operation_limit.time_out() < CommonTimerInstance.GetTime() 
-			&& _operation_limit.player_id() == player->GetID()) return true; //玩家操作：碰、杠、胡牌
+	if (_oper_limit.time_out() < CommonTimerInstance.GetTime() 
+			&& _oper_limit.player_id() == player->GetID()) return true; //玩家操作：碰、杠、胡牌
 
 	auto player_index = GetPlayerOrder(player->GetID());
 	if (_curr_player_index == player_index) return true; //轮到该玩家
@@ -100,14 +100,14 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		return; 
 	}
 
-	if (CommonTimerInstance.GetTime() < _operation_limit.time_out()) ClearOperation(); //已经超时，清理缓存以及等待玩家操作的状态
+	if (CommonTimerInstance.GetTime() < _oper_limit.time_out()) ClearOperation(); //已经超时，清理缓存以及等待玩家操作的状态
 			
 	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
 	if (!pai_operate) return; 
 
 	_room->BroadCast(message); //广播玩家操作
 	
-	const auto& pai = _operation_limit.pai(); //缓存的牌
+	const auto& pai = _oper_limit.pai(); //缓存的牌
 
 	//一个人打牌之后，要检查其余每个玩家手中的牌，且等待他们的操作，直到超时
 	switch (pai_operate->oper_type())
@@ -121,14 +121,13 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 			if (player_id) //第一个满足要求的玩家
 			{
-				_operation_limit.set_player_id(player_id); //当前可以进行操作的玩家
-				_operation_limit.set_time_out(CommonTimerInstance.GetTime() + 8); //时间：8s后超时
-				_operation_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
+				_oper_limit.set_player_id(player_id); //当前可操作玩家
+				_oper_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
+				_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 8); //8秒后超时
 				
 				//发送给Client
 				Asset::PaiOperationAlert alert;
 				alert.mutable_pai()->CopyFrom(pai);
-
 				if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert);
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
@@ -146,7 +145,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI: //胡牌
 		{
-			bool ret = player->CheckHuPai(_operation_limit.pai());
+			bool ret = player->CheckHuPai(_oper_limit.pai());
 			if (!ret) 
 			{
 				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
@@ -161,7 +160,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GANGPAI: //杠牌
 		{
-			bool ret = player->CheckGangPai(_operation_limit.pai());
+			bool ret = player->CheckGangPai(_oper_limit.pai());
 			if (!ret) 
 			{
 				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
@@ -169,7 +168,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				player->OnGangPai(_operation_limit.pai());
+				player->OnGangPai(_oper_limit.pai());
 				
 				_curr_player_index = GetPlayerOrder(player->GetID()); //重置当前玩家索引
 
@@ -188,7 +187,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				player->OnPengPai(_operation_limit.pai());
+				player->OnPengPai(_oper_limit.pai());
 				
 				_curr_player_index = GetPlayerOrder(player->GetID()); //重置当前玩家索引
 
@@ -207,7 +206,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				player->OnChiPai(_operation_limit.pai(), message);
+				player->OnChiPai(_oper_limit.pai(), message);
 				
 				_curr_player_index = (_curr_player_index + 1) % 4; //下家吃牌
 
@@ -240,7 +239,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 void Game::ClearOperation()
 {
-	_operation_limit.Clear(); //清理状态
+	_oper_limit.Clear(); //清理状态
 }
 	
 /////////////////////////////////////////////////////

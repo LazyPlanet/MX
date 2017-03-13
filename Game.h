@@ -30,7 +30,7 @@ private:
 	int32_t _banker_index = 0; //庄家索引
 	int32_t _curr_player_index = 0; //当前在操作的玩家索引
 
-	Asset::PaiOperationLimit _operation_limit; //牌操作限制
+	Asset::PaiOperationLimit _oper_limit; //牌操作限制
 	
 	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
 public:
