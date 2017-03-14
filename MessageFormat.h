@@ -1,40 +1,3 @@
-// Protocol Buffers - Google's data interchange format
-// Copyright 2008 Google Inc.  All rights reserved.
-// http://code.google.com/p/protobuf/
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//     * Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//     * Redistributions in binary form must reproduce the above
-// copyright notice, this list of conditions and the following disclaimer
-// in the documentation and/or other materials provided with the
-// distribution.
-//     * Neither the name of Google Inc. nor the names of its
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-// Author: jschorr@google.com (Joseph Schorr)
-//  Based on original Protocol Buffers design by
-//  Sanjay Ghemawat, Jeff Dean, and others.
-//
-// Utilities for printing and parsing protocol messages in a human-readable,
-// text-based format.
-
 #ifndef GOOGLE_PROTOBUF_TEXT_FORMAT_H__
 #define GOOGLE_PROTOBUF_TEXT_FORMAT_H__
 
@@ -59,7 +22,7 @@ namespace io {
 // of messages.
 //
 // This class is really a namespace that contains only static methods.
-class LIBPROTOBUF_EXPORT TextFormat {
+class MessageFormat {
  public:
   // Outputs a textual representation of the given message to the given
   // output stream.
@@ -92,7 +55,7 @@ class LIBPROTOBUF_EXPORT TextFormat {
   // You can derive from this FieldValuePrinter if you want to have
   // fields to be printed in a different way and register it at the
   // Printer.
-  class LIBPROTOBUF_EXPORT FieldValuePrinter {
+  class FieldValuePrinter {
    public:
     FieldValuePrinter();
     virtual ~FieldValuePrinter();
@@ -124,22 +87,22 @@ class LIBPROTOBUF_EXPORT TextFormat {
 
   // Class for those users which require more fine-grained control over how
   // a protobuffer message is printed out.
-  class LIBPROTOBUF_EXPORT Printer {
+  class Printer {
    public:
     Printer();
     ~Printer();
 
-    // Like TextFormat::Print
+    // Like MessageFormat::Print
     bool Print(const Message& message, io::ZeroCopyOutputStream* output) const;
-    // Like TextFormat::PrintUnknownFields
+    // Like MessageFormat::PrintUnknownFields
     bool PrintUnknownFields(const UnknownFieldSet& unknown_fields,
                             io::ZeroCopyOutputStream* output) const;
-    // Like TextFormat::PrintToString
+    // Like MessageFormat::PrintToString
     bool PrintToString(const Message& message, string* output) const;
-    // Like TextFormat::PrintUnknownFieldsToString
+    // Like MessageFormat::PrintUnknownFieldsToString
     bool PrintUnknownFieldsToString(const UnknownFieldSet& unknown_fields,
                                     string* output) const;
-    // Like TextFormat::PrintFieldValueToString
+    // Like MessageFormat::PrintFieldValueToString
     void PrintFieldValueToString(const Message& message,
                                  const FieldDescriptor* field,
                                  int index,
@@ -294,10 +257,10 @@ class LIBPROTOBUF_EXPORT TextFormat {
                                         const FieldDescriptor* field,
                                         Message* message);
 
-  // Interface that TextFormat::Parser can use to find extensions.
+  // Interface that MessageFormat::Parser can use to find extensions.
   // This class may be extended in the future to find more information
   // like fields, etc.
-  class LIBPROTOBUF_EXPORT Finder {
+  class Finder {
    public:
     virtual ~Finder();
 
@@ -320,7 +283,7 @@ class LIBPROTOBUF_EXPORT TextFormat {
 
   // Data structure which is populated with the locations of each field
   // value parsed from the text.
-  class LIBPROTOBUF_EXPORT ParseInfoTree {
+  class ParseInfoTree {
    public:
     ParseInfoTree();
     ~ParseInfoTree();
@@ -338,7 +301,7 @@ class LIBPROTOBUF_EXPORT TextFormat {
 
    private:
     // Allow the text format parser to record information into the tree.
-    friend class TextFormat;
+    friend class MessageFormat;
 
     // Records the starting location of a single value for a field.
     void RecordLocation(const FieldDescriptor* field, ParseLocation location);
@@ -360,18 +323,18 @@ class LIBPROTOBUF_EXPORT TextFormat {
   };
 
   // For more control over parsing, use this class.
-  class LIBPROTOBUF_EXPORT Parser {
+  class Parser {
    public:
     Parser();
     ~Parser();
 
-    // Like TextFormat::Parse().
+    // Like MessageFormat::Parse().
     bool Parse(io::ZeroCopyInputStream* input, Message* output);
-    // Like TextFormat::ParseFromString().
+    // Like MessageFormat::ParseFromString().
     bool ParseFromString(const string& input, Message* output);
-    // Like TextFormat::Merge().
+    // Like MessageFormat::Merge().
     bool Merge(io::ZeroCopyInputStream* input, Message* output);
-    // Like TextFormat::MergeFromString().
+    // Like MessageFormat::MergeFromString().
     bool MergeFromString(const string& input, Message* output);
 
     // Set where to report parse errors.  If NULL (the default), errors will
@@ -407,7 +370,7 @@ class LIBPROTOBUF_EXPORT TextFormat {
       allow_case_insensitive_field_ = allow;
     }
 
-    // Like TextFormat::ParseFieldValueFromString
+    // Like MessageFormat::ParseFieldValueFromString
     bool ParseFieldValueFromString(const string& input,
                                    const FieldDescriptor* field,
                                    Message* output);
@@ -422,7 +385,7 @@ class LIBPROTOBUF_EXPORT TextFormat {
     // representations (see text_format.cc for implementation).
     class ParserImpl;
 
-    // Like TextFormat::Merge().  The provided implementation is used
+    // Like MessageFormat::Merge().  The provided implementation is used
     // to do the parsing.
     bool MergeUsingImpl(io::ZeroCopyInputStream* input,
                         Message* output,
@@ -442,8 +405,8 @@ class LIBPROTOBUF_EXPORT TextFormat {
 
 
  private:
-  // Hack: ParseInfoTree declares TextFormat as a friend which should extend
-  // the friendship to TextFormat::Parser::ParserImpl, but unfortunately some
+  // Hack: ParseInfoTree declares MessageFormat as a friend which should extend
+  // the friendship to MessageFormat::Parser::ParserImpl, but unfortunately some
   // old compilers (e.g. GCC 3.4.6) don't implement this correctly. We provide
   // helpers for ParserImpl to call methods of ParseInfoTree.
   static inline void RecordLocation(ParseInfoTree* info_tree,
@@ -452,17 +415,17 @@ class LIBPROTOBUF_EXPORT TextFormat {
   static inline ParseInfoTree* CreateNested(ParseInfoTree* info_tree,
                                             const FieldDescriptor* field);
 
-  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(TextFormat);
+  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(MessageFormat);
 };
 
-inline void TextFormat::RecordLocation(ParseInfoTree* info_tree,
+inline void MessageFormat::RecordLocation(ParseInfoTree* info_tree,
                                        const FieldDescriptor* field,
                                        ParseLocation location) {
   info_tree->RecordLocation(field, location);
 }
 
 
-inline TextFormat::ParseInfoTree* TextFormat::CreateNested(
+inline MessageFormat::ParseInfoTree* MessageFormat::CreateNested(
     ParseInfoTree* info_tree, const FieldDescriptor* field) {
   return info_tree->CreateNested(field);
 }

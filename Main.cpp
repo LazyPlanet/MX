@@ -14,6 +14,7 @@
 #include "Timer.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "MXLog.h"
 
 const int const_world_sleep = 50;
 
@@ -86,6 +87,11 @@ int main(int argc, const char* argv[])
 		Item* item_potion = new Item_Potion(message);	
 		*/
 	std::cout << "Service starting..." << std::endl;
+
+	auto message = make_unique<Asset::LogMessage>();
+	message->set_level(Asset::LOG_LEVEL_INFO);
+
+	MXLogInstance.Print(message.get());
 
 	try 
 	{

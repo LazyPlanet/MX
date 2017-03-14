@@ -31,3 +31,31 @@ message MsgItems {
 	repeated MsgItem items = 1;
 }
 
+//日志类型
+enum LOG_TYPE {
+	LOG_TYPE_BEGIN = 1; //开始
+	LOG_TYPE_NORMAL = 2; //通用
+	LOG_TYPE_SYSTEM = 3; //系统
+	LOG_TYPE_RECHARGE = 4; //充值
+
+}
+
+//日志级别
+enum LOG_LEVEL {
+	LOG_LEVEL_DISABLED = 1; //禁止
+	LOG_LEVEL_INFO = 2; 
+	LOG_LEVEL_ACTION = 3; 
+	LOG_LEVEL_TRACE = 4; 
+	LOG_LEVEL_WARNNING = 5; 
+	LOG_LEVEL_ERROR = 6; 
+	LOG_LEVEL_FATAL = 7; 
+}
+
+//日志信息
+message LogMessage {
+	optional int64 message_id = 1; 
+	optional bytes time = 2; //时间：2017-02-20 10:20:10.123456789
+	optional LOG_TYPE type = 3; //日志类型：比如消费、购买物品
+	optional LOG_LEVEL level = 4; //日志级别：严重、动作
+	optional bytes content = 5; //内容：对应各个日志类型不同的Message
+}

@@ -33,3 +33,9 @@ export PROTOBUF_DIR=/export/lazy/ServerService/ThirdParty/protobuf-2.6.0/output
 ./bootstrap.sh --with-libraries=date_time   
 ./bootstrap.sh --with-libraries=filesystem
 ./b2
+
+ThirdParty
+	-behavior  
+	-boost_1_63_0  
+	-hiredis  
+	-protobuf-2.6.1
