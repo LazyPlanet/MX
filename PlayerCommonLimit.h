@@ -68,9 +68,9 @@ public:
 		auto common_limit = dynamic_cast<Asset::CommonLimit*>(message);
 		if (!common_limit) return false; 
 
-		if (count >= common_limit->max_count()) return true;
+		if (count < common_limit->max_count()) return false;
 
-		return false;
+		return true;
 	}
 	
 	//返回是否更新
