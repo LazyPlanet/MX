@@ -75,7 +75,6 @@ public:
 				player->ConsumeHuanledou(huanledou); //消耗欢乐豆
 
 				player->GainItem(mall->item_id(), mall->count()); //获取物品
-
 			}
 			break;
 			

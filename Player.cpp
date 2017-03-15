@@ -498,7 +498,7 @@ bool Player::GainItem(int64_t global_item_id, int32_t count)
 
 bool Player::GainItem(Item* item, int32_t count)
 {
-	if (!item) return false;
+	if (!item || count <= 0) return false;
 
 	Asset::Item_CommonProp& common_prop = item->GetCommonProp(); 
 	common_prop.set_count(count);

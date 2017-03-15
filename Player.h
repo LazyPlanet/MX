@@ -117,6 +117,11 @@ public:
 		return _stuff.inventory().inventory(type);
 	}	
 	
+	Asset::Inventory_Element* GetMutableInventory(Asset::INVENTORY_TYPE type)
+	{
+		return _stuff.mutable_inventory()->mutable_inventory(type);
+	}	
+	
 	//获取物品
 	bool GainItem(Item* item, int32_t count = 1);
 	bool GainItem(int64_t global_item_id, int32_t count = 1);
