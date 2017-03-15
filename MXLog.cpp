@@ -125,6 +125,7 @@ void MXLog::Print(Asset::LogMessage* message)
 	{
 		fprintf(logfile, "%s|%ld|%s|%s\n", curr_time.c_str(), _server_id, _server_name.c_str(), output.c_str());
 		fflush(logfile); //写入文件
+		//fclose(logfile);
 	}
 }
 
