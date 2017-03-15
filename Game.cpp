@@ -331,8 +331,6 @@ bool GameManager::Load()
 {
 	std::unordered_set<pb::Message*> messages = AssetInstance.GetMessagesByType(Asset::ASSET_TYPE_MJ_CARD);
 
-	std::cout << "Load MJ Size:" << messages.size() << std::endl; 
-
 	for (auto message : messages)
 	{
 		Asset::MJCard* asset_card = dynamic_cast<Asset::MJCard*>(message); 
