@@ -61,7 +61,7 @@ T ConfigManager::GetValueDefault(std::string const& name, T def) const
     catch (boost::property_tree::ptree_bad_path)
     {
 		 //LOG(ERROR, "Missing Name %s in config file %s, add \"%s = %s\" to this file",
-         //   name.c_str(), _filename.c_str(), name.c_str(), std::to_string(def).c_str());
+		//		 name.c_str(), _filename.c_str(), name.c_str(), std::to_string(def).c_str());
     }
     catch (boost::property_tree::ptree_bad_data)
     {

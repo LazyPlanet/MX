@@ -1471,12 +1471,12 @@ void MessageFormat::Printer::PrintField(const Message& message,
           printer->PrintMessageEnd(
               sub_message, field_index, count, single_line_mode_));
     } else {
-      generator.Print(": ");
+      generator.Print(":");
       // Write the field value.
 	  //´òÓ¡×Ö¶ÎÖµ
       PrintFieldValue(message, reflection, field, field_index, generator);
       if (single_line_mode_) {
-        generator.Print(" ");
+        generator.Print("|");
       } else {
         generator.Print("\n");
       }

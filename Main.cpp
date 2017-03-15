@@ -15,6 +15,7 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "MXLog.h"
+#include "Log.h"
 
 const int const_world_sleep = 50;
 
@@ -92,6 +93,8 @@ int main(int argc, const char* argv[])
 	message->set_level(Asset::LOG_LEVEL_INFO);
 
 	MXLogInstance.Print(message.get());
+
+	LOG(ERROR, "%s %s", "hello", "world");
 
 	try 
 	{

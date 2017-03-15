@@ -22,6 +22,8 @@ namespace pb = google::protobuf;
 class MXLog : public std::enable_shared_from_this<MXLog> 
 {
 	std::string _dir; //存储路径
+	int64_t _server_id; //服务器ID
+	std::string _server_name; //服务器名称
 
 public:
 
