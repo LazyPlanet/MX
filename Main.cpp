@@ -90,8 +90,6 @@ int main(int argc, const char* argv[])
 	std::cout << "Service starting..." << std::endl;
 
 	auto message = make_unique<Asset::LogMessage>();
-	message->set_level(Asset::LOG_LEVEL_INFO);
-
 	MXLogInstance.Print(message.get());
 
 	LOG(ERROR, "%s %s", "hello", "world");

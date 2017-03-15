@@ -1,10 +1,10 @@
 #include <mutex>
 #include <algorithm>
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
 #include "Config.h"
-#include "Log.h"
 
 using namespace boost::property_tree;
 
@@ -16,17 +16,16 @@ bool ConfigManager::LoadInitial(std::string const& file, std::vector<std::string
 
     try
     {
-        ptree fullTree;
-        ini_parser::read_ini(file, fullTree);
+		boost::property_tree::ptree fulltree;
+        ini_parser::read_ini(file, fulltree);
 
-        if (fullTree.empty())
+        if (fulltree.empty())
         {
             error = "empty file (" + file + ")";
             return false;
         }
 
-        //Since we're using only one section per config file, we skip the section and have direct property access
-        _config = fullTree.begin()->second;
+        _config = fulltree.begin()->second;
     }
     catch (ini_parser::ini_parser_error const& e)
     {

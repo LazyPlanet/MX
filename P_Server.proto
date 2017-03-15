@@ -42,20 +42,20 @@ enum LOG_TYPE {
 
 //日志级别
 enum LOG_LEVEL {
-	INFO = 1; 
-	ACTION = 2; 
-	TRACE = 3; 
-	WARNNING = 4; 
-	ERROR = 5; 
-	FATAL = 6; 
+	FATAL = 1; 
+	ERROR = 2; 
+	WARNNING = 3; 
+	TRACE = 4; 
+	ACTION = 5; 
+	INFO = 6; 
+	MAX_LOG_LEVEL = 7; 
 }
 
 //日志信息
 message LogMessage {
-	optional int64 message_id = 1; 
+	optional int64 player_id = 1; //玩家ID
 	optional int64 server_id = 2; //服务器ID
 	optional bytes server_name = 3; //服务器名称
 	optional LOG_TYPE type = 4; //日志类型：比如消费、购买物品
 	optional LOG_LEVEL level = 5; //日志级别：严重、动作
-	optional bytes content = 6; //内容：对应各个日志类型不同的Message
 }

@@ -8,6 +8,27 @@
 
 namespace Adoter
 {
+
+enum ColorTypes
+{
+    BLACK,
+    RED,
+    GREEN,
+    BROWN,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    GREY,
+    YELLOW,
+    LRED,
+    LGREEN,
+    LBLUE,
+    LMAGENTA,
+    LCYAN,
+    WHITE,
+	MAX_COLORS
+};
+
 namespace pb = google::protobuf;
 
 	template<typename T, typename ...Args>
@@ -27,13 +48,26 @@ class MXLog : public std::enable_shared_from_this<MXLog>
 
 public:
 
+	MXLog(){ }
+	MXLog(int32_t id, std::string const& name, Asset::LOG_LEVEL level);
+
 	static MXLog& Instance()
 	{
 		static MXLog _instance;
 		return _instance;
 	}
 
-	void Print(Asset::LogMessage* message);
+    void InitColors(const std::string& init_str);
+
+	void Print(Asset::LogMessage* message); //日志输出
+	void ConsolePrint(Asset::LogMessage* message); //控制台输出
+    
+private:
+	void SetColor(bool stdout_stream, ColorTypes color);
+	void ResetColor(bool stdout_stream);
+
+	bool _colored; //控制台日志是否具有颜色
+	ColorTypes _colors[Asset::MAX_LOG_LEVEL];
 };
 
 #define MXLogInstance MXLog::Instance()
