@@ -6,18 +6,19 @@
 
 #include "Config.h"
 
-using namespace boost::property_tree;
+namespace Adoter
+{
 
-bool ConfigManager::LoadInitial(std::string const& file, std::vector<std::string> args, std::string& error)
+bool ConfigManager::LoadInitial(std::string const& file, std::string& error)
 {
     std::lock_guard<std::mutex> lock(_config_lock);
 
-    _filename = file, _args = args;
+    _filename = file;
 
     try
     {
 		boost::property_tree::ptree fulltree;
-        ini_parser::read_ini(file, fulltree);
+		boost::property_tree::ini_parser::read_ini(file, fulltree);
 
         if (fulltree.empty())
         {
@@ -27,7 +28,7 @@ bool ConfigManager::LoadInitial(std::string const& file, std::vector<std::string
 
         _config = fulltree.begin()->second;
     }
-    catch (ini_parser::ini_parser_error const& e)
+    catch (boost::property_tree::ini_parser::ini_parser_error const& e)
     {
         if (e.line() == 0)
             error = e.message() + " (" + e.filename() + ")";
@@ -47,15 +48,15 @@ ConfigManager& ConfigManager::Instance()
 
 bool ConfigManager::Reload(std::string& error)
 {
-    return LoadInitial(_filename, std::move(_args), error);
+    return LoadInitial(_filename, error);
 }
 
 template<class T>
-T ConfigManager::GetValueDefault(std::string const& name, T def) const
+T ConfigManager::GetValue(std::string const& name, T def) const
 {
     try
     {
-        return _config.get<T>(ptree::path_type(name, '/'));
+        return _config.get<T>(boost::property_tree::ptree::path_type(name, '/'));
     }
     catch (boost::property_tree::ptree_bad_path)
     {
@@ -72,11 +73,11 @@ T ConfigManager::GetValueDefault(std::string const& name, T def) const
 }
 
 template<>
-std::string ConfigManager::GetValueDefault<std::string>(std::string const& name, std::string def) const
+std::string ConfigManager::GetValue<std::string>(std::string const& name, std::string def) const
 {
     try
     {
-        return _config.get<std::string>(ptree::path_type(name, '/'));
+        return _config.get<std::string>(boost::property_tree::ptree::path_type(name, '/'));
     }
     catch (boost::property_tree::ptree_bad_path)
     {
@@ -92,28 +93,28 @@ std::string ConfigManager::GetValueDefault<std::string>(std::string const& name,
     return def;
 }
 
-std::string ConfigManager::GetStringDefault(std::string const& name, const std::string& def) const
+std::string ConfigManager::GetString(std::string const& name, const std::string& def) const
 {
-    std::string val = GetValueDefault(name, def);
+    std::string val = GetValue(name, def);
     val.erase(std::remove(val.begin(), val.end(), '"'), val.end());
     return val;
 }
 
-bool ConfigManager::GetBoolDefault(std::string const& name, bool def) const
+bool ConfigManager::GetBool(std::string const& name, bool def) const
 {
-    std::string val = GetValueDefault(name, std::string(def ? "1" : "0"));
+    std::string val = GetValue(name, std::string(def ? "1" : "0"));
     val.erase(std::remove(val.begin(), val.end(), '"'), val.end());
     return (val == "1" || val == "true" || val == "TRUE" || val == "yes" || val == "YES");
 }
 
-int ConfigManager::GetIntDefault(std::string const& name, int def) const
+int ConfigManager::GetInt(std::string const& name, int def) const
 {
-    return GetValueDefault(name, def);
+    return GetValue(name, def);
 }
 
-float ConfigManager::GetFloatDefault(std::string const& name, float def) const
+float ConfigManager::GetFloat(std::string const& name, float def) const
 {
-    return GetValueDefault(name, def);
+    return GetValue(name, def);
 }
 
 std::string const& ConfigManager::GetFilename()
@@ -128,9 +129,11 @@ std::list<std::string> ConfigManager::GetKeysByString(std::string const& name)
 
     std::list<std::string> keys;
 
-    for (const ptree::value_type& child : _config)
+    for (const boost::property_tree::ptree::value_type& child : _config)
         if (child.first.compare(0, name.length(), name) == 0)
             keys.push_back(child.first);
 
     return keys;
+}
+
 }

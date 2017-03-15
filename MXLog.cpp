@@ -10,10 +10,14 @@
 //#include <google/protobuf/message.h>
 
 #include "MXLog.h"
+#include "Player.h"
+#include "Config.h"
 #include "MessageFormat.h"
 
 namespace Adoter
 {
+
+extern std::shared_ptr<Player> g_player;
 
 void vutf8printf(FILE* out, const char *str, va_list* ap)
 {
@@ -22,7 +26,6 @@ void vutf8printf(FILE* out, const char *str, va_list* ap)
 
 void utf8printf(FILE* out, const char *str, ...)
 {
-
 	va_list ap;
 	va_start(ap, str);
 	vutf8printf(out, str, &ap);
@@ -32,6 +35,8 @@ void utf8printf(FILE* out, const char *str, ...)
 void MXLog::Print(Asset::LogMessage* message)
 {
 	if (!message) return;
+
+	if (g_player) message->set_player_id(g_player->GetID());
 
 	//时间
 	boost::posix_time::ptime ptime(boost::posix_time::second_clock::local_time());
@@ -65,7 +70,7 @@ void MXLog::Print(Asset::LogMessage* message)
 	auto level_name = level_value->name();
 	std::transform(level_name.begin(), level_name.end(), level_name.begin(), ::tolower);
 
-	auto level = message->level();
+	//auto level = message->level();
 
 	/*
 	switch (level)
@@ -111,11 +116,11 @@ void MXLog::Print(Asset::LogMessage* message)
 	}
 }
 
-MXLog::MXLog(int32_t id, std::string const& name, Asset::LOG_LEVEL level) : _colored(false)
+MXLog::MXLog() : _colored(false)
 {
     for (int32_t i = 0; i < Asset::MAX_LOG_LEVEL; ++i) _colors[i] = ColorTypes(MAX_COLORS);
 
-    //InitColors(extraArgs[0]);
+    InitColors("1 2");
 }
 
 void MXLog::InitColors(std::string const& str)
@@ -209,8 +214,11 @@ void MXLog::ResetColor(bool stdout_stream)
 void MXLog::ConsolePrint(Asset::LogMessage* message)
 {
 	if (!message) return;
+	
+	if (g_player) message->set_player_id(g_player->GetID());
 
-	//时间
+	/////时间
+	//
 	boost::posix_time::ptime ptime(boost::posix_time::second_clock::local_time());
 	std::string curr_time = boost::posix_time::to_iso_extended_string(ptime);
 
@@ -251,7 +259,7 @@ void MXLog::ConsolePrint(Asset::LogMessage* message)
 
 	std::transform(output.begin(), output.end(), output.begin(), ::tolower);
 
-    bool stdout_stream = message->level() == Asset::ERROR && message->level() == Asset::FATAL;
+    bool stdout_stream = message->level() != Asset::ERROR && message->level() != Asset::FATAL;
 
     if (_colored)
     {
@@ -262,6 +270,19 @@ void MXLog::ConsolePrint(Asset::LogMessage* message)
     else
 	{
 		utf8printf(stdout_stream ? stdout : stderr, "%s|%ld|%s|%s\n", curr_time.c_str(), _server_id, _server_name.c_str(), output.c_str());
+	}
+}
+
+void MXLog::Load()
+{
+	_dir = ConfigInstance.GetString("LogDirectory", "");
+
+	if (!_dir.empty())
+	{
+		if ((_dir.at(_dir.length() - 1) != '/') && (_dir.at(_dir.length() - 1) != '\\'))
+		{
+			_dir.push_back('/');
+		}
 	}
 }
 

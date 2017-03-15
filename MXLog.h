@@ -48,14 +48,15 @@ class MXLog : public std::enable_shared_from_this<MXLog>
 
 public:
 
-	MXLog(){ }
-	MXLog(int32_t id, std::string const& name, Asset::LOG_LEVEL level);
+	MXLog();
 
 	static MXLog& Instance()
 	{
 		static MXLog _instance;
 		return _instance;
 	}
+
+	void Load();
 
     void InitColors(const std::string& init_str);
 

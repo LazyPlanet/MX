@@ -16,6 +16,7 @@
 #include "WorldSession.h"
 #include "MXLog.h"
 #include "Log.h"
+#include "Config.h"
 
 const int const_world_sleep = 50;
 
@@ -89,13 +90,34 @@ int main(int argc, const char* argv[])
 		*/
 	std::cout << "Service starting..." << std::endl;
 
-	auto message = make_unique<Asset::LogMessage>();
-	MXLogInstance.Print(message.get());
+	if (argc != 2) return 2; //参数不对
 
-	LOG(ERROR, "%s %s", "hello", "world");
+	/*
+	for (int i = 0; i < argc; ++i)
+	{
+		std::cout << argv[i] << std::endl;
+	}
+	*/
+
+	auto message = make_unique<Asset::LogMessage>();
+	MXLogInstance.ConsolePrint(message.get());
 
 	try 
 	{
+		//系统配置读取
+		std::string error;
+		if (!ConfigInstance.LoadInitial(argv[1], error))
+		{
+			printf("Load %s error: %s", argv[1], error.c_str()); //控制台的日志可以直接用该函数
+			return 3;
+		}
+	
+		//日志系统配置
+		MXLogInstance.Load();
+
+
+/////////////////////////////////////////////////////游戏逻辑初始化
+
 		//世界初始化，涵盖所有....
 		if (!WorldInstance.Load()) return 1;
 
@@ -112,8 +134,18 @@ int main(int argc, const char* argv[])
 
 		//boost::asio::signal_set signals(_io_service, SIGINT, SIGTERM);
 		//signals.async_wait(SignalHandler);
+		//
 
-		WorldSessionInstance.StartNetwork(_io_service, "0.0.0.0", 50000, 5);
+		std::string server_ip = ConfigInstance.GetString("ServerIP", "0.0.0.0");
+		if (server_ip.empty()) return 4;
+		
+		int32_t server_port = ConfigInstance.GetInt("ServerPort", 50000);
+		if (server_port <= 0 || server_port > 0xffff) return 5;
+		
+		int32_t thread_count = ConfigInstance.GetInt("ThreadCount", 5);
+		if (thread_count <= 0) return 6;
+
+		WorldSessionInstance.StartNetwork(_io_service, server_ip, server_port, thread_count);
 
 		//世界循环
 		WorldUpdateLoop();
