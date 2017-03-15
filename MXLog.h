@@ -56,7 +56,7 @@ public:
 		return _instance;
 	}
 
-	void Load();
+	void Load(); //加载日志配置
 
     void InitColors(const std::string& init_str);
 

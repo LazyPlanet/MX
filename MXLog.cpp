@@ -106,8 +106,20 @@ void MXLog::Print(Asset::LogMessage* message)
 	std::cout << curr_time << "|" << output << std::endl;
 
 	//std::string subfix = level_name.replace(level_name.begin(), level_name.begin() + 10, "");        
+	//文件名称
 	std::string filename = "mx." + level_name;
-	std::string fullname(_dir + filename);
+	std::string sub_dir = boost::gregorian::to_iso_extended_string(ptime.date());
+	std::string fullname(_dir + sub_dir + "/"+ filename);
+
+	boost::filesystem::path dir(_dir + sub_dir);
+
+	if (!boost::filesystem::exists(dir))
+	{
+		if (boost::filesystem::create_directory(dir))
+		{
+			std::cout << "Success" << "\n";
+		}
+	}
 
 	if (FILE* logfile = fopen(fullname.c_str(), "aw"))
 	{
@@ -275,7 +287,7 @@ void MXLog::ConsolePrint(Asset::LogMessage* message)
 
 void MXLog::Load()
 {
-	_dir = ConfigInstance.GetString("LogDirectory", "");
+	_dir = ConfigInstance.GetString("LogDirectory", "logs");
 
 	if (!_dir.empty())
 	{

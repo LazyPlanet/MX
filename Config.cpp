@@ -9,7 +9,7 @@
 namespace Adoter
 {
 
-bool ConfigManager::LoadInitial(std::string const& file, std::string& error)
+bool ConfigManager::LoadInitial(std::string const& file)
 {
     std::lock_guard<std::mutex> lock(_config_lock);
 
@@ -22,7 +22,7 @@ bool ConfigManager::LoadInitial(std::string const& file, std::string& error)
 
         if (fulltree.empty())
         {
-            error = "empty file (" + file + ")";
+            printf("%s:empty file (%s)", __func__, file.c_str());
             return false;
         }
 
@@ -31,9 +31,15 @@ bool ConfigManager::LoadInitial(std::string const& file, std::string& error)
     catch (boost::property_tree::ini_parser::ini_parser_error const& e)
     {
         if (e.line() == 0)
-            error = e.message() + " (" + e.filename() + ")";
+		{
+            printf("%s:message:%s filename:%s", __func__, e.message().c_str(), e.filename().c_str());
+		}
         else
-            error = e.message() + " (" + e.filename() + ":" + std::to_string(e.line()) + ")";
+		{
+            printf("%s:message:%s filename:%s error line:%ld", __func__, e.message().c_str(), e.filename().c_str(), e.line());
+
+		}
+
         return false;
     }
 
@@ -48,7 +54,7 @@ ConfigManager& ConfigManager::Instance()
 
 bool ConfigManager::Reload(std::string& error)
 {
-    return LoadInitial(_filename, error);
+    return LoadInitial(_filename);
 }
 
 template<class T>

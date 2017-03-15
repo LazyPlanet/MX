@@ -18,7 +18,7 @@ class ConfigManager
     ~ConfigManager() = default;
 
 public:
-    bool LoadInitial(std::string const& file, std::string& error);
+    bool LoadInitial(std::string const& file);
 
     static ConfigManager& Instance();
 

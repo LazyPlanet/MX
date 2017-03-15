@@ -99,21 +99,21 @@ int main(int argc, const char* argv[])
 	}
 	*/
 
-	auto message = make_unique<Asset::LogMessage>();
-	MXLogInstance.ConsolePrint(message.get());
-
 	try 
 	{
 		//系统配置读取
-		std::string error;
-		if (!ConfigInstance.LoadInitial(argv[1], error))
+		if (!ConfigInstance.LoadInitial(argv[1]))
 		{
-			printf("Load %s error: %s", argv[1], error.c_str()); //控制台的日志可以直接用该函数
+			printf("Load %s error, please check the file.", argv[1]); //控制台的日志可以直接用该函数
 			return 3;
 		}
 	
 		//日志系统配置
 		MXLogInstance.Load();
+	
+		auto message = make_unique<Asset::LogMessage>();
+		MXLogInstance.Print(message.get());
+
 
 
 /////////////////////////////////////////////////////游戏逻辑初始化
