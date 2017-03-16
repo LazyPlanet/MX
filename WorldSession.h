@@ -6,7 +6,10 @@
 #include <memory>
 #include <iostream>
 #include <unordered_map>
+#include <unordered_set>
+
 #include <boost/asio.hpp>
+
 #include "Socket.h"
 
 namespace Adoter
@@ -31,17 +34,22 @@ public:
 	//std::shared_ptr<Player> g_player = nullptr; //全局玩家定义，唯一的一个Player对象
 	typedef std::function<int32_t(Message*)> CallBack;
 public:
-	virtual ~WorldSession() { }
 	WorldSession(boost::asio::ip::tcp::socket&& socket);
 	WorldSession(WorldSession const& right) = delete;    
 	WorldSession& operator=(WorldSession const& right) = delete;
 	
 	virtual void Start() override;
-	bool Update() override; 
+	virtual bool Update() override; 
+	virtual void OnClose() override;
+
 	void InitializeHandler(const boost::system::error_code error, const std::size_t bytes_transferred);
 
 	void SendProtocol(pb::Message& message);
 	void SendProtocol(pb::Message* message);
+
+private:
+	Asset::Account _account;
+	std::unordered_set<int64_t> _player_list;
 };
 
 class WorldSessionManager : public SocketManager<WorldSession> 

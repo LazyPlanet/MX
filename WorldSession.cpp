@@ -1,6 +1,7 @@
 #include "WorldSession.h"
 #include "RedisManager.h"
 #include "Player.h"
+#include "MXLog.h"
 
 namespace Adoter
 {
@@ -18,6 +19,8 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 	try
 	{
 		std::cout << "------------------------------" << _socket.remote_endpoint().address() << " bytes_transferred:" << bytes_transferred << std::endl;
+
+		if ("222.249.232.10" == _socket.remote_endpoint().address().to_string()) return;
 
 		if (error)
 		{
@@ -61,10 +64,12 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 
 			if (!result) 
 			{
-				std::cout << __func__ << ":Meta parse error." << std::endl;	
+				std::cout << __func__ << ":Meta parse error, line:" << __LINE__ << std::endl;	
 				Close();
 				return;		//非法协议
 			}
+			
+			meta.PrintDebugString(); //打印出来Message.
 			
 			/////////////////////////////////////////////////////////////////////////////打印收到协议提示信息
 		
@@ -77,18 +82,21 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			const std::string& enum_name = enum_value->name();
 			std::cout << "Received message type is: " << enum_name.c_str() << std::endl;
 			
-			google::protobuf::Message* message = ProtocolInstance.GetMessage(meta.type_t());	
-			if (!message) 
+			google::protobuf::Message* msg = ProtocolInstance.GetMessage(meta.type_t());	
+			if (!msg) 
 			{
 				std::cout << __func__ << ":Could not found message of type:" << meta.type_t() << std::endl;
 				Close();
 				return;		//非法协议
 			}
+
+			auto message = msg->New();
 			
-			result = message->ParseFromString(meta.stuff());
+			//result = message->ParseFromString(meta.stuff());
+			result = message->ParseFromArray(meta.stuff().c_str(), meta.stuff().size());
 			if (!result) 
 			{
-				std::cout << __func__ << ":Messge parse error." << std::endl;	
+				std::cout << __func__ << ":Messge parse error, line:" << __LINE__ << std::endl;	
 				Close();
 				return;		//非法协议
 			}
@@ -129,6 +137,16 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					user.ParseFromString(stuff);
 				}
 
+				///////清理状态
+				_account.Clear(); _player_list.clear();
+				//账号信息
+				_account.CopyFrom(login->account());
+				//玩家数据
+				for (auto player_id : user.player_list())
+				{
+					_player_list.emplace(player_id);
+				}
+				///////发送给Client当前的角色信息
 				Asset::PlayerList player_list;
 				player_list.mutable_player_list()->CopyFrom(user.player_list());
 				SendProtocol(player_list); //传给Client，带有角色ID
@@ -156,8 +174,15 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 				const Asset::EnterGame* enter_game = dynamic_cast<Asset::EnterGame*>(message);
 				if (!enter_game) return; 
 
+				if (_player_list.find(enter_game->player_id()) == _player_list.end())
+				{
+					Close();
+					return; //账号下没有该角色数据
+				}
+
 				if (!g_player) g_player = std::make_shared<Player>(enter_game->player_id(), shared_from_this());
 				g_player->OnEnterGame(); //加载数据
+				g_player->SetOnline(true); //在线状态
 			}
 			else
 			{
@@ -188,11 +213,17 @@ void WorldSession::Start()
 	
 bool WorldSession::Update() 
 { 
-	if (!g_player) return true;
+	if (!g_player) return true; //长时间未能上线
 
 	g_player->Update(); 
 
 	return true;
+}
+
+void WorldSession::OnClose()
+{
+	g_player->SetOnline(false);
+	g_player.reset(); //关闭连接
 }
 
 void WorldSession::SendProtocol(pb::Message* message)

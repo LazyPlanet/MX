@@ -74,7 +74,7 @@ public:
 		std::cout << rhs_date.day_of_week() << std::endl;
 		return true;
 		*/
-		return GetDayBegin(lhs) == GetDayBegin(lhs);
+		return GetDayBegin(lhs) == GetDayBegin(rhs);
 	}
 	
 	inline std::time_t GetWeakBegin(std::time_t cur_t)

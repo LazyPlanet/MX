@@ -104,6 +104,9 @@ public:
 	virtual bool Update();
 	//购买商品
 	virtual bool CmdBuySomething(pb::Message* message);
+	//在线状态
+	void SetOnline(bool online) { _stuff.mutable_player_prop()->set_online(online);	}
+	bool IsOnline() { return _stuff.player_prop().online(); }
 public:
 	//获取所有包裹
 	const Asset::Inventory& GetInventory()

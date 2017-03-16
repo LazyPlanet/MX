@@ -73,5 +73,12 @@ private:
 
 #define MXLogInstance MXLog::Instance()
 
+#define LP(message) MXLog::Instance().Print(Asset::LogMessage* message)
+
+#define LOG(level, message) \
+if (!message) return; \
+message->set_level(level); \
+MXLog::Instance().Print(message);
+
 }
 

@@ -1,7 +1,6 @@
 #include "World.h"
 #include "Protocol.h"
 #include "Room.h"
-#include "Log.h"
 #include "Game.h"
 //#include "Activity.h"
 
@@ -15,13 +14,13 @@ bool World::Load()
 	//协议初始化：必须最先初始化
 	if (!ProtocolInstance.Load()) 
 	{
-		LOG(ERROR, "ProtocolInstance load error.");
+		//LOG(ERROR, "ProtocolInstance load error.");
 		return false;
 	}
 	//数据初始化：必须最先初始化
 	if (!AssetInstance.Load()) 
 	{
-		LOG(ERROR, "AssetInstance load error.");
+		//LOG(ERROR, "AssetInstance load error.");
 		return false;
 	}
 //////////////////////////////////////////////////
@@ -30,7 +29,7 @@ bool World::Load()
 	//游戏初始化
 	if (!GameInstance.Load()) 
 	{
-		LOG(ERROR, "GameInstance load error.");
+		//LOG(ERROR, "GameInstance load error.");
 		return false;
 	}
 /*
@@ -48,7 +47,7 @@ bool World::Load()
 	g_const = dynamic_cast<const Asset::CommonConst*>(message); 
 	if (!g_const) 
 	{
-		LOG(ERROR, "g_const is null.");
+		//LOG(ERROR, "g_const is null.");
 		return false;
 	}
 

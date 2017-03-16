@@ -91,7 +91,7 @@ protected:
 	std::atomic<bool> _closed;    
 	std::atomic<bool> _closing;
 	//接收缓存
-	std::array<char, 4096> _buffer;
+	std::array<unsigned char, 4096> _buffer;
 };
 
 template <class SOCKET_TYPE> //各种类型的SOCKET，比如Session

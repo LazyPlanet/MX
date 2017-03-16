@@ -15,7 +15,6 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "MXLog.h"
-#include "Log.h"
 #include "Config.h"
 
 const int const_world_sleep = 50;
