@@ -31,7 +31,7 @@ Player::Player()
 
 	//AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
-	AddHandler(Asset::META_TYPE_C2S_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_SHARE_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_GET_REWARD, std::bind(&Player::CmdGetReward, this, std::placeholders::_1));
 }
 
@@ -310,8 +310,14 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 			_locate_room = RoomInstance.Get(room_id);
 			if (!_locate_room) return Asset::ERROR_ROOM_NOT_FOUNT; //非法的房间 
 
-			_locate_room->EnterRoom(shared_from_this()); //玩家进入房间
+			auto ret = _locate_room->EnterRoom(shared_from_this()); //玩家进入房间
+			if (ret != Asset::ERROR_SUCCESS)
+			{
+				AlertMessage(ret);
+				return ret;
+			}
 
+			SendProtocol(message);
 			return 0;
 		}
 		break;

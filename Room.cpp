@@ -13,11 +13,9 @@ namespace Adoter
 /////////////////////////////////////////////////////
 //房间
 /////////////////////////////////////////////////////
-void Room::EnterRoom(std::shared_ptr<Player> player)
+Asset::ERROR_CODE Room::EnterRoom(std::shared_ptr<Player> player)
 {
-	if (!player || IsFull()) return;
-
-	if (_players.size() >= (size_t)max_player_count) return;
+	if (!player || IsFull()) return Asset::ERROR_ROOM_IS_FULL;
 
 	_players_with_order[_players.size()] = player; //进入房间：主要用于模仿循环队列
 
@@ -30,6 +28,7 @@ void Room::EnterRoom(std::shared_ptr<Player> player)
 	common_prop.mutable_common_prop()->CopyFrom(player->CommonProp());
 
 	BroadCast(common_prop, player->GetID());
+	return Asset::ERROR_SUCCESS;
 }
 
 /*
