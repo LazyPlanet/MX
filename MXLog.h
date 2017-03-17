@@ -36,12 +36,6 @@ enum ColorTypes
 
 namespace pb = google::protobuf;
 
-	template<typename T, typename ...Args>
-	std::unique_ptr<T> make_unique(Args&& ...args)
-	{
-			return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-	}
-
 ////////////////////////////////////////////////////////////////////////////////
 // 日志管理系统
 ////////////////////////////////////////////////////////////////////////////////

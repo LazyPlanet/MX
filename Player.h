@@ -80,7 +80,7 @@ public:
 	//virtual void OnCreatePlayer(int64_t player_id);
 	//进入游戏
 	//virtual int32_t CmdEnterGame(pb::Message* message);
-	//virtual int32_t OnEnterGame();
+	virtual int32_t OnEnterGame();
 	//创建房间
 	virtual int32_t CmdCreateRoom(pb::Message* message);
 	virtual void OnCreateRoom(int64_t room_id);
@@ -88,9 +88,9 @@ public:
 	virtual int32_t CmdEnterRoom(pb::Message* message);
 	virtual bool OnEnterRoom(int64_t room_id = 0);
 	//玩家登录
-	virtual int32_t CmdLogin(pb::Message* message);
+	virtual int32_t OnLogin(pb::Message* message);
 	//玩家登出
-	virtual int32_t CmdLogout(pb::Message* message);
+	virtual int32_t OnLogout(pb::Message* message);
 	//离开房间
 	virtual int32_t CmdLeaveRoom(pb::Message* message);
 	virtual void OnLeaveRoom();

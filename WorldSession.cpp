@@ -1,5 +1,6 @@
 #include "WorldSession.h"
 #include "RedisManager.h"
+#include "CommonUtil.h"
 #include "Player.h"
 #include "MXLog.h"
 
@@ -159,7 +160,6 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 
 				if (!g_player) g_player = std::make_shared<Player>(enter_game->player_id(), shared_from_this());
 				g_player->OnEnterGame(); //加载数据
-				g_player->SetOnline(true); //在线状态
 			}
 			else
 			{

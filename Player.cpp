@@ -77,27 +77,30 @@ int32_t Player::Save()
 {
 	//存入数据库
 	std::string stuff = this->_stuff.SerializeAsString();
-	std::shared_ptr<Redis> redis = std::make_shared<Redis>();
+
+	auto redis = make_unique<Redis>();
+
 	redis->SavePlayer(GetID(), stuff);
 
 	return 0;
 }
 
-int32_t Player::CmdLogin(pb::Message* message)
+int32_t Player::OnLogin(pb::Message* message)
 {
 	if (Load()) return 1;
 
-	SendPlayer(); //发送数据给客户端
+	SendPlayer(); //发送数据给Client
 
 	return 0;
 }
 
-int32_t Player::CmdLogout(pb::Message* message)
+int32_t Player::OnLogout(pb::Message* message)
 {
 	//非存盘数据
 	this->_stuff.mutable_player_prop()->Clear(); 
-	Save();	//存盘
-	OnLeaveRoom(); //房间处理
+	//存档数据库
+	Save();	
+
 	return 0;
 }
 	
@@ -114,6 +117,7 @@ int32_t Player::CmdEnterGame(pb::Message* message)
 	OnEnterGame();
 	return 0;
 }
+*/
 
 int32_t Player::OnEnterGame() 
 {
@@ -123,7 +127,6 @@ int32_t Player::OnEnterGame()
 	
 	return 0;
 }
-*/
 
 int32_t Player::CmdLeaveRoom(pb::Message* message)
 {
