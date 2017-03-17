@@ -254,6 +254,7 @@ public:
 	bool IsReady() { return _stuff.player_prop().game_oper_state() == Asset::GAME_OPER_TYPE_START; }
 	//获取玩家座次
 	Asset::POSITION_TYPE GetPosition() { return _stuff.player_prop().position(); }
+	void SetPosition(Asset::POSITION_TYPE position) { return _stuff.mutable_player_prop()->set_position(position); }
 
 	void SynchronizePai();
 	void ClearCards() {	_cards.clear();	}

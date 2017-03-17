@@ -42,6 +42,8 @@ public:
 
 	void BroadCast(pb::Message* message, int64_t exclude_player_id = 0);
 	void BroadCast(pb::Message& message, int64_t exclude_player_id = 0);
+	
+	void SyncRoom(); //房间数据
 
 	//获取房主
 	std::shared_ptr<Player> GetHoster();

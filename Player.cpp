@@ -317,7 +317,9 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 				return ret;
 			}
 
-			SendProtocol(message);
+			enter_room->set_position(GetPosition());
+
+			SendProtocol(enter_room);
 			return 0;
 		}
 		break;

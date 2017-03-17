@@ -21,6 +21,8 @@ Asset::ERROR_CODE Room::EnterRoom(std::shared_ptr<Player> player)
 
 	_players.emplace(player->GetID(), player); //进入房间
 
+	player->SetPosition((Asset::POSITION_TYPE)_players.size());
+
 	//广播给其他玩家
 	Asset::CommonProperty common_prop;
 	common_prop.set_reason_type(Asset::CommonProperty_SYNC_REASON_TYPE_SYNC_REASON_TYPE_ENTER_ROOM);
@@ -28,6 +30,9 @@ Asset::ERROR_CODE Room::EnterRoom(std::shared_ptr<Player> player)
 	common_prop.mutable_common_prop()->CopyFrom(player->CommonProp());
 
 	BroadCast(common_prop, player->GetID());
+
+	SyncRoom(); //同步当前房间内玩家数据
+
 	return Asset::ERROR_SUCCESS;
 }
 
@@ -159,6 +164,20 @@ void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
 void Room::BroadCast(pb::Message& message, int64_t exclude_player_id)
 {
 	BroadCast(&message, exclude_player_id);
+}
+	
+void Room::SyncRoom()
+{
+	Asset::RoomInformation message;
+	
+	for (auto player : _players)
+	{
+		auto p = message.mutable_player_list()->Add();
+		p->set_position(player.second->GetPosition());
+		p->mutable_common_prop()->CopyFrom(player.second->CommonProp());
+	}
+
+	BroadCast(message);
 }
 
 void Room::OnCreated() 
