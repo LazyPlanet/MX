@@ -30,37 +30,8 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 		}
 		else
 		{
-				/*
-				{
-					std::cout << "发送数据给:" << _socket.remote_endpoint().address() << std::endl;
-					Asset::S_CreateRoom enter_game;
-					enter_game.set_type_t(Asset::META_TYPE_S2C_CREATE_ROOM);
-					enter_game.mutable_room()->set_room_id(100000);
-
-					Asset::Meta smeta;
-					smeta.set_type_t(Asset::META_TYPE_C2S_CREATE_ROOM);
-					smeta.set_stuff(enter_game.SerializeAsString());
-
-					std::string content = smeta.SerializeAsString();
-					AsyncSend(content.c_str(), content.size());
-					const char* buff = content.c_str();
-					for (size_t i = 0; i < content.size(); ++i)
-					{
-						std::cout << buff[i] << " ";
-					}	
-					std::cout << std::endl;
-				}
-				*/
 			Asset::Meta meta;
 			bool result = meta.ParseFromArray(_buffer.data(), bytes_transferred);
-
-			/*
-			for (int i = 0; i < bytes_transferred; ++i)
-			{
-				std::cout << (int)_buffer[i] << " ";
-			}
-			std::cout << std::endl;
-			*/
 
 			if (!result) 
 			{
