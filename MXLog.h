@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <stdarg.h>
 
 #include "P_Header.h"
 
@@ -73,10 +74,10 @@ private:
 
 #define MXLogInstance MXLog::Instance()
 
-#define LP(message) MXLog::Instance().Print(message)
+#define P(message) MXLog::Instance().Print(message)
 
 #define LOG(level, message) if (!message) return; \
-message->set_level(Asset::##level); \
+message->set_level(Asset::level); \
 MXLog::Instance().Print(message);
 
 }

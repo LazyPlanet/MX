@@ -91,13 +91,6 @@ int main(int argc, const char* argv[])
 
 	if (argc != 2) return 2; //参数不对
 
-	/*
-	for (int i = 0; i < argc; ++i)
-	{
-		std::cout << argv[i] << std::endl;
-	}
-	*/
-
 	try 
 	{
 		//系统配置读取
@@ -110,11 +103,6 @@ int main(int argc, const char* argv[])
 		//日志系统配置
 		MXLogInstance.Load();
 	
-		auto message = make_unique<Asset::LogMessage>();
-		MXLogInstance.Print(message.get());
-
-
-
 /////////////////////////////////////////////////////游戏逻辑初始化
 
 		//世界初始化，涵盖所有....

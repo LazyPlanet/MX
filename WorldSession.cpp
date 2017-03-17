@@ -18,7 +18,11 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 {
 	try
 	{
-		std::cout << "------------------------------" << _socket.remote_endpoint().address() << " bytes_transferred:" << bytes_transferred << std::endl;
+		auto message = make_unique<Asset::LogMessage>();
+		message->set_client_ip(_socket.remote_endpoint().address().to_string());
+		LOG(ACTION, message.get());
+
+		//std::cout << "------------------------------" << _socket.remote_endpoint().address() << " bytes_transferred:" << bytes_transferred << std::endl;
 
 		if ("222.249.232.10" == _socket.remote_endpoint().address().to_string()) return;
 

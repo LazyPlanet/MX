@@ -11,6 +11,7 @@
 #include <boost/asio.hpp>
 
 #include "Socket.h"
+#include "P_Header.h"
 
 namespace Adoter
 {

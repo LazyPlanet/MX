@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <string>
-#include <stdarg.h>
 
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/posix_time/conversion.hpp"
@@ -29,7 +28,6 @@ void utf8printf(FILE* out, const char *str, ...)
 	va_list ap;
 	va_start(ap, str);
 	vutf8printf(out, str, &ap);
-	va_end(ap);
 }
 
 void MXLog::Print(Asset::LogMessage* message)
