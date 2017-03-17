@@ -79,8 +79,8 @@ public:
 	virtual void BroadCast(Asset::MsgItem& item);
 	//virtual void OnCreatePlayer(int64_t player_id);
 	//进入游戏
-	virtual int32_t CmdEnterGame(pb::Message* message);
-	virtual int32_t OnEnterGame();
+	//virtual int32_t CmdEnterGame(pb::Message* message);
+	//virtual int32_t OnEnterGame();
 	//创建房间
 	virtual int32_t CmdCreateRoom(pb::Message* message);
 	virtual void OnCreateRoom(int64_t room_id);
@@ -228,10 +228,12 @@ public:
 	virtual int32_t CmdGameOperate(pb::Message* message); //游戏操作
 	virtual int32_t CmdPaiOperate(pb::Message* message); //牌操作
 	virtual int32_t CmdGetReward(pb::Message* message); //领取奖励
+	virtual int32_t CmdLoadScene(pb::Message* message); //加载场景
+	void OnEnterScene();
 	//获取房间
 	virtual std::shared_ptr<Room> GetRoom() { return _locate_room; }	//获取当前房间
-	virtual void SetRoomID(int64_t room_id) { _stuff.set_room_id(room_id); }	
-	virtual int32_t GetRoomID() { return _stuff.room_id(); }
+	virtual void SetRoomID(int64_t room_id) { _stuff.mutable_player_prop()->set_room_id(room_id); }	
+	virtual int32_t GetRoomID() { return _stuff.player_prop().room_id(); }
 	virtual bool HasRoom() { return _locate_room != nullptr; }
 
 	void SetGame(std::shared_ptr<Game> game) { _game = game; }

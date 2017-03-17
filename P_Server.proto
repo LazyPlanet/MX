@@ -37,7 +37,8 @@ enum LOG_TYPE {
 	NORMAL = 2; //通用
 	SYSTEM = 3; //系统
 	RECHARGE = 4; //充值
-
+	COMMON_LIMIT = 5; //通用限制 
+	COMMON_REWARD = 6; //通用奖励
 }
 
 //日志级别
@@ -65,5 +66,7 @@ message LogMessage {
 	optional LOG_TYPE type = 4; //日志类型：比如消费、购买物品
 	optional LOG_LEVEL level = 5; //日志级别：严重、动作
 	optional string client_ip = 6; //Client地址
+	optional int64 common_limit = 7; //通用限制
+	optional int64 common_reward = 8; //通用奖励
 	optional string content = 20; //内容
 }

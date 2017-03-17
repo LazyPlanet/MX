@@ -28,11 +28,12 @@ Player::Player()
 	AddHandler(Asset::META_TYPE_SHARE_GAME_OPERATION, std::bind(&Player::CmdGameOperate, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_PAI_OPERATION, std::bind(&Player::CmdPaiOperate, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_BUY_SOMETHING, std::bind(&Player::CmdBuySomething, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_SHARE_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
 
 	//AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
-	AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
-	AddHandler(Asset::META_TYPE_SHARE_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
+	//AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_C2S_GET_REWARD, std::bind(&Player::CmdGetReward, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_C2S_LOAD_SCENE, std::bind(&Player::CmdLoadScene, this, std::placeholders::_1));
 }
 
 Player::Player(int64_t player_id, std::shared_ptr<WorldSession> session) : Player()/*委派构造函数*/
@@ -107,7 +108,6 @@ void Player::OnCreatePlayer(int64_t player_id)
 	create_player.set_player_id(player_id);
 	SendProtocol(create_player);
 }
-*/
 
 int32_t Player::CmdEnterGame(pb::Message* message)
 {
@@ -123,6 +123,7 @@ int32_t Player::OnEnterGame()
 	
 	return 0;
 }
+*/
 
 int32_t Player::CmdLeaveRoom(pb::Message* message)
 {
@@ -164,7 +165,7 @@ void Player::OnCreateRoom(int64_t room_id)
 	_locate_room = std::make_shared<Room>(asset_room);
 	_locate_room->OnCreated();
 
-	_locate_room->EnterRoom(shared_from_this()); //玩家进入房间
+	_locate_room->Enter(shared_from_this()); //玩家进入房间
 
 	RoomInstance.OnCreateRoom(_locate_room); //房间管理
 }
@@ -307,17 +308,12 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		{
 			auto room_id = enter_room->room().room_id(); 
 
-			_locate_room = RoomInstance.Get(room_id);
-			if (!_locate_room) return Asset::ERROR_ROOM_NOT_FOUNT; //非法的房间 
+			auto locate_room = RoomInstance.Get(room_id);
+			if (!locate_room) return Asset::ERROR_ROOM_NOT_FOUNT; //非法的房间 
 
-			auto ret = _locate_room->EnterRoom(shared_from_this()); //玩家进入房间
-			if (ret != Asset::ERROR_SUCCESS)
-			{
-				AlertMessage(ret);
-				return ret;
-			}
+			auto ret = locate_room->TryEnter(shared_from_this()); //玩家进入房间
 
-			enter_room->set_position(GetPosition());
+			enter_room->set_error_code(ret); //是否可以进入场景//房间
 
 			SendProtocol(enter_room);
 			return 0;
@@ -394,7 +390,7 @@ bool Player::OnEnterRoom(int64_t room_id)
 
 	_locate_room->OnCreated();
 
-	_locate_room->EnterRoom(shared_from_this()); //玩家进入房间
+	_locate_room->Enter(shared_from_this()); //玩家进入房间
 
 	return true;
 }
@@ -706,6 +702,53 @@ bool Player::CmdBuySomething(pb::Message* message)
 	SendProtocol(some_thing); //返回给Client
 
 	return true;
+}
+
+int32_t Player::CmdLoadScene(pb::Message* message)
+{
+	Asset::LoadScene* load_scene = dynamic_cast<Asset::LoadScene*>(message);
+	if (!load_scene) return 1;
+
+	switch (load_scene->load_type())
+	{
+		case Asset::LOAD_SCENE_TYPE_START: //加载开始
+		{
+			_stuff.mutable_player_prop()->set_load_type(Asset::LOAD_SCENE_TYPE_START);
+			
+			_stuff.mutable_player_prop()->set_room_id(load_scene->scene_id()); //状态
+		}
+		break;
+		
+		case Asset::LOAD_SCENE_TYPE_SUCCESS: //加载成功
+		{
+			if (_stuff.player_prop().load_type() != Asset::LOAD_SCENE_TYPE_START) return 2;
+
+			_stuff.mutable_player_prop()->Clear(); //状态
+
+			SendPlayer(); //发送数据给客户端
+
+			auto room_id = _stuff.player_prop().room_id();
+			
+			_locate_room = RoomInstance.Get(room_id);
+			if (!_locate_room) return 3; //非法的房间 
+
+			_locate_room->Enter(shared_from_this()); //玩家进入房间
+		}
+		break;
+		
+		default:
+		{
+
+		}
+		break;
+	}
+
+	return 0;
+}
+
+void Player::OnEnterScene()
+{
+	SendPlayer(); //发送数据给客户端
 }
 /////////////////////////////////////////////////////
 /////游戏逻辑定义

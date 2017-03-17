@@ -13,15 +13,25 @@ namespace Adoter
 /////////////////////////////////////////////////////
 //房间
 /////////////////////////////////////////////////////
-Asset::ERROR_CODE Room::EnterRoom(std::shared_ptr<Player> player)
+
+Asset::ERROR_CODE Room::TryEnter(std::shared_ptr<Player> player)
 {
 	if (!player || IsFull()) return Asset::ERROR_ROOM_IS_FULL;
+
+	return Asset::ERROR_SUCCESS;
+}
+
+void Room::Enter(std::shared_ptr<Player> player)
+{
+	if (TryEnter(player) != Asset::ERROR_SUCCESS) return; //进入房间之前都需要做此检查，理论上不会出现
 
 	_players_with_order[_players.size()] = player; //进入房间：主要用于模仿循环队列
 
 	_players.emplace(player->GetID(), player); //进入房间
 
 	player->SetPosition((Asset::POSITION_TYPE)_players.size());
+
+	/*
 
 	//广播给其他玩家
 	Asset::CommonProperty common_prop;
@@ -31,9 +41,8 @@ Asset::ERROR_CODE Room::EnterRoom(std::shared_ptr<Player> player)
 
 	BroadCast(common_prop, player->GetID());
 
+	*/
 	SyncRoom(); //同步当前房间内玩家数据
-
-	return Asset::ERROR_SUCCESS;
 }
 
 /*

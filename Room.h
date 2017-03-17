@@ -28,7 +28,8 @@ public:
 
 	virtual void SetID(int64_t room_id) { return _stuff->set_room_id(room_id); }
 public:
-	Asset::ERROR_CODE EnterRoom(std::shared_ptr<Player> player);
+	Asset::ERROR_CODE TryEnter(std::shared_ptr<Player> player);
+	void Enter(std::shared_ptr<Player> player);
 
 	//void LeaveRoom(std::shared_ptr<Player> player);
 

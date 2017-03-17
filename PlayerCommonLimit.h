@@ -154,7 +154,7 @@ public:
 
 		const size_t size = common_limit->elements().size();
 
-		for (int i = 0; i < size; ++i)
+		for (size_t i = 0; i < size; ++i)
 		{
 			const auto& element = common_limit->elements(i);
 
