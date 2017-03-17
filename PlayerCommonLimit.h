@@ -152,7 +152,9 @@ public:
 		int32_t current_time = CommonTimerInstance.GetTime();
 		auto common_limit = player->GetMutableCommonLimit(); //玩家所有通用限制数据
 
-		for (int i = 0; i < common_limit->elements().size(); ++i)
+		const size_t size = common_limit->elements().size();
+
+		for (int i = 0; i < size; ++i)
 		{
 			const auto& element = common_limit->elements(i);
 
@@ -161,7 +163,7 @@ public:
 			
 			bool ret = check(common_limit_id, time_stamp, current_time); //检查是否可以清除
 
-			if (ret) //删除
+			if (ret) //删除，不用检查后面交换上的元素，下次心跳更新即可
 			{
 				common_limit->mutable_elements()->SwapElements(i, common_limit->elements().size() - 1);
 				common_limit->mutable_elements()->RemoveLast();
