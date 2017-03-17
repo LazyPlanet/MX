@@ -4,10 +4,6 @@
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/posix_time/conversion.hpp"
 
-//#include <google/protobuf/stubs/common.h>
-//#include <google/protobuf/descriptor.h>
-//#include <google/protobuf/message.h>
-
 #include "MXLog.h"
 #include "Player.h"
 #include "Config.h"
@@ -28,6 +24,13 @@ void utf8printf(FILE* out, const char *str, ...)
 	va_list ap;
 	va_start(ap, str);
 	vutf8printf(out, str, &ap);
+}
+
+void CP(const char *str, ...)
+{
+	va_list ap;
+	va_start(ap, str);
+	vutf8printf(stdout, str, &ap);
 }
 
 void MXLog::Print(Asset::LogMessage* message)

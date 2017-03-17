@@ -18,18 +18,16 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 {
 	try
 	{
-		auto message = make_unique<Asset::LogMessage>();
-		message->set_client_ip(_socket.remote_endpoint().address().to_string());
-		LOG(ACTION, message.get());
-
-		//std::cout << "------------------------------" << _socket.remote_endpoint().address() << " bytes_transferred:" << bytes_transferred << std::endl;
+		auto log = make_unique<Asset::LogMessage>();
+		log->set_client_ip(_socket.remote_endpoint().address().to_string());
+		LOG(ACTION, log.get());
 
 		if ("222.249.232.10" == _socket.remote_endpoint().address().to_string()) return;
 
 		if (error)
 		{
 			Close();
-			std::cout << "Remote client disconnect, RemoteIp:" << _socket.remote_endpoint().address() << std::endl;
+			CP("Remote client disconnect, RemoteIp:%s", _socket.remote_endpoint().address().to_string().c_str());
 			return;
 		}
 		else
@@ -39,7 +37,9 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 
 			if (!result) 
 			{
-				std::cout << __func__ << ":Meta parse error, line:" << __LINE__ << std::endl;	
+				log->set_content("Meta parse error, line:" + __LINE__);
+				LOG(ERROR, log.get());
+
 				Close();
 				return;		//非法协议
 			}
@@ -60,8 +60,8 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			google::protobuf::Message* msg = ProtocolInstance.GetMessage(meta.type_t());	
 			if (!msg) 
 			{
-				std::cout << __func__ << ":Could not found message of type:" << meta.type_t() << std::endl;
 				Close();
+				CP("Could not found message of type:%d", meta.type_t());
 				return;		//非法协议
 			}
 
@@ -71,7 +71,9 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			result = message->ParseFromArray(meta.stuff().c_str(), meta.stuff().size());
 			if (!result) 
 			{
-				std::cout << __func__ << ":Messge parse error, line:" << __LINE__ << std::endl;	
+				log->set_content("Meta parse error, line:" + __LINE__);
+				LOG(ERROR, log.get());
+
 				Close();
 				return;		//非法协议
 			}
@@ -90,7 +92,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 
 				Asset::User user;
 
-				if (stuff == "") //没有数据
+				if (stuff.empty()) //没有数据
 				{
 					user.mutable_account()->CopyFrom(login->account());
 
@@ -163,7 +165,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			{
 				if (!g_player) 
 				{
-					std::cerr << "Player has not inited. " << std::endl;
+					CP("Player has not inited");
 					return; //未初始化的Player
 				}
 				//其他协议的调用规则
@@ -173,7 +175,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << __func__ << ":Exception: " << e.what() << std::endl;
+		CP("Exception:%d", e.what());
 		//g_player->Logout(nullptr); //网络断开，释放对象
 		return;
 	}
