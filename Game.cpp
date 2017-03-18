@@ -36,12 +36,13 @@ bool Game::Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players)
 	{
 		player.second->ClearCards(); 
 
-		int32_t card_count = 14; //正常开启，普通玩家牌数量
+		int32_t card_count = 13; //正常开启，普通玩家牌数量
 
-		if (_banker_index % 4 == i) card_count = 14; //庄家牌数量
+		if (_banker_index % 4 == GetPlayerOrder(player.second->GetID())) card_count = 14; //庄家牌数量
 		
 		auto cards = FaPai(card_count);
 
+		std::cout << "player:" << player.second->GetID() << std::endl;
 		for (auto card : cards)
 			std::cout << card << " ";
 		std::cout << std::endl;
