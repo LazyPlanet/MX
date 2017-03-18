@@ -117,15 +117,12 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					user.ParseFromString(stuff);
 				}
 
-				///////清理状态
-				_account.Clear(); _player_list.clear();
+				//清理状态
+				_player_list.clear();
 				//账号信息
 				_account.CopyFrom(login->account());
 				//玩家数据
-				for (auto player_id : user.player_list())
-				{
-					_player_list.emplace(player_id);
-				}
+				for (auto player_id : user.player_list()) _player_list.emplace(player_id);
 				///////发送给Client当前的角色信息
 				Asset::PlayerList player_list;
 				player_list.mutable_player_list()->CopyFrom(user.player_list());
