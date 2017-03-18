@@ -50,8 +50,10 @@ public:
 		return it->second;
 	}
 
-	//获取基础属性
+	//获取玩家数据
 	Asset::Player& Get() { return _stuff; }
+	std::string GetString();
+	//获取基础属性
 	const Asset::CommonProp& CommonProp() { return _stuff.common_prop(); }
 	const Asset::CommonProp& GetCommonProp() { return _stuff.common_prop(); }
 	Asset::CommonProp* MutableCommonProp() { return _stuff.mutable_common_prop(); }

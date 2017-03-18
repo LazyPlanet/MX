@@ -7,6 +7,11 @@
 namespace Adoter
 {
 
+WorldSession::~WorldSession()
+{
+    KillOutPlayer();
+}
+
 WorldSession::WorldSession(boost::asio::ip::tcp::socket&& socket) : Socket(std::move(socket))
 {
 }
@@ -117,16 +122,26 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					user.ParseFromString(stuff);
 				}
 
-				//清理状态
-				_player_list.clear();
+				///////清理状态
+				_account.Clear(); _player_list.clear();
 				//账号信息
 				_account.CopyFrom(login->account());
 				//玩家数据
-				for (auto player_id : user.player_list()) _player_list.emplace(player_id);
+				for (auto player_id : user.player_list())
+				{
+					_player_list.emplace(player_id);
+				}
 				///////发送给Client当前的角色信息
 				Asset::PlayerList player_list;
 				player_list.mutable_player_list()->CopyFrom(user.player_list());
 				SendProtocol(player_list); //传给Client，带有角色ID
+			}
+			else if (Asset::META_TYPE_C2S_LOGOUT == meta.type_t()) //账号登出
+			{
+				Asset::Logout* logout = dynamic_cast<Asset::Logout*>(message);
+				if (!logout) return; 
+
+				KillOutPlayer();
 			}
 			else if (Asset::META_TYPE_SHARE_CREATE_PLAYER == meta.type_t()) //创建角色
 			{
@@ -179,6 +194,27 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 	}
 	//递归持续接收	
 	AsyncReceiveWithCallback(&WorldSession::InitializeHandler);
+}
+
+void WorldSession::KillOutPlayer()
+{
+	if (g_player) 
+	{
+		auto log = make_unique<Asset::LogMessage>();
+		log->set_player_id(g_player->GetID());
+		log->set_type(Asset::PLAYER_INFO);
+		log->set_content(g_player->GetString());
+
+        LOG(INFO, log.get()); //记录日志
+
+		g_player->OnLogout(nullptr);
+
+		g_player.reset();
+
+		g_player = nullptr;
+	}
+
+	Close();
 }
 
 void WorldSession::Start()

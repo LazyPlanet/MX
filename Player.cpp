@@ -12,6 +12,7 @@
 #include "RedisManager.h"
 #include "PlayerCommonReward.h"
 #include "PlayerCommonLimit.h"
+#include "MessageFormat.h"
 
 namespace Adoter
 {
@@ -83,6 +84,18 @@ int32_t Player::Save()
 	redis->SavePlayer(GetID(), stuff);
 
 	return 0;
+}
+	
+std::string Player::GetString()
+{
+	::google::protobuf::MessageFormat::Printer printer;
+	printer.SetSingleLineMode(true); //整行打印
+	printer.SetUseUtf8StringEscaping(true);
+
+	std::string output;
+	printer.PrintToString(_stuff, &output);
+
+	return output;
 }
 
 int32_t Player::OnLogin(pb::Message* message)

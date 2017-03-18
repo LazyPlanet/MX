@@ -112,7 +112,7 @@ void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 	{
 		case Asset::GAME_OPER_TYPE_START: //开始游戏：其实是个准备
 		{
-			//if (!CanStarGame()) return;
+			if (!CanStarGame()) return;
 
 			auto game = std::make_shared<Game>();
 

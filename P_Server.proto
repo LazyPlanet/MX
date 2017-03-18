@@ -43,6 +43,7 @@ enum LOG_TYPE {
 	INCREASE_DIAMOND = 8; //增加钻石
 	CONSUME_HUANLEDOU = 9; //消耗欢乐豆
 	INCREASE_HUANLEDOU = 10; //增加欢乐豆
+	PLAYER_INFO = 11; //玩家数据
 }
 
 //日志级别
