@@ -1290,7 +1290,8 @@ namespace {
 class FieldValuePrinterUtf8Escaping : public MessageFormat::FieldValuePrinter {
  public:
   virtual string PrintString(const string& val) const {
-    return StrCat("\"", strings::Utf8SafeCEscape(val), "\"");
+    //return StrCat("\"", strings::Utf8SafeCEscape(val), "\"");
+    return StrCat("", strings::Utf8SafeCEscape(val), "");
   }
   virtual string PrintBytes(const string& val) const {
     return MessageFormat::FieldValuePrinter::PrintString(val);

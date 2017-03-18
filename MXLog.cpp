@@ -12,7 +12,7 @@
 namespace Adoter
 {
 
-extern std::shared_ptr<Player> g_player;
+//extern std::shared_ptr<Player> g_player;
 
 void vutf8printf(FILE* out, const char *str, va_list* ap)
 {
@@ -37,7 +37,7 @@ void MXLog::Print(Asset::LogMessage* message)
 {
 	if (!message) return;
 
-	if (g_player) message->set_player_id(g_player->GetID());
+	//if (g_player) message->set_player_id(g_player->GetID());
 
 	//时间
 	boost::posix_time::ptime ptime(boost::posix_time::second_clock::local_time());
@@ -229,7 +229,7 @@ void MXLog::ConsolePrint(Asset::LogMessage* message)
 {
 	if (!message) return;
 	
-	if (g_player) message->set_player_id(g_player->GetID());
+	//if (g_player) message->set_player_id(g_player->GetID());
 
 	/////时间
 	//

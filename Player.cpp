@@ -419,7 +419,9 @@ void Player::SendProtocol(pb::Message* message)
 
 void Player::SendProtocol(pb::Message& message)
 {
+	std::cout << "发送数据：";
 	message.PrintDebugString(); //打印出来MESSAGE
+	std::cout << std::endl;
 
 	const pb::FieldDescriptor* field = message.GetDescriptor()->FindFieldByName("type_t");
 	if (!field) return;

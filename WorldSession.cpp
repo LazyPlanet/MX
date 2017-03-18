@@ -7,10 +7,6 @@
 namespace Adoter
 {
 
-//////////////////////////////////////////////////////////////////////////////////////
-std::shared_ptr<Player> g_player = nullptr; //全局玩家定义，唯一的一个Player对象
-//////////////////////////////////////////////////////////////////////////////////////
-
 WorldSession::WorldSession(boost::asio::ip::tcp::socket&& socket) : Socket(std::move(socket))
 {
 }
@@ -45,7 +41,9 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 				return;		//非法协议
 			}
 			
+			std::cout << "接收数据：";
 			meta.PrintDebugString(); //打印出来Message.
+			std::cout << std::endl;
 			
 			/////////////////////////////////////////////////////////////////////////////打印收到协议提示信息
 		
@@ -100,7 +98,11 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					///////如果账号下没有角色，创建一个给Client
 
 					int64_t player_id = redis->CreatePlayer();
-					if (player_id == 0) return; //创建失败
+					if (player_id == 0) 
+					{
+						CP("Create player failed.");
+						return; //创建失败
+					}
 
 					user.mutable_player_list()->Add(player_id);
 
@@ -131,6 +133,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			}
 			else if (Asset::META_TYPE_SHARE_CREATE_PLAYER == meta.type_t()) //创建角色
 			{
+				return;
 				Asset::CreatePlayer* create_player = dynamic_cast<Asset::CreatePlayer*>(message);
 				if (!create_player) return; 
 				
@@ -147,14 +150,13 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			}
 			else if (Asset::META_TYPE_C2S_ENTER_GAME == meta.type_t()) //进入游戏
 			{
-				if (g_player) return; //已经在登录状态
-
 				const Asset::EnterGame* enter_game = dynamic_cast<Asset::EnterGame*>(message);
 				if (!enter_game) return; 
 
 				if (_player_list.find(enter_game->player_id()) == _player_list.end())
 				{
 					Close();
+					CP("Player has not found.");
 					return; //账号下没有该角色数据
 				}
 
@@ -175,8 +177,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 	}
 	catch (std::exception& e)
 	{
-		CP("Exception:%d", e.what());
-		//g_player->Logout(nullptr); //网络断开，释放对象
+		Close();
 		return;
 	}
 	//递归持续接收	
@@ -199,8 +200,8 @@ bool WorldSession::Update()
 
 void WorldSession::OnClose()
 {
-	g_player->SetOnline(false);
 	g_player.reset(); //关闭连接
+	g_player = nullptr; //清除
 }
 
 void WorldSession::SendProtocol(pb::Message* message)

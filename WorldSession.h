@@ -32,7 +32,7 @@ class Player;
 class WorldSession : public Socket<WorldSession>
 {
 public:
-	//std::shared_ptr<Player> g_player = nullptr; //全局玩家定义，唯一的一个Player对象
+	std::shared_ptr<Player> g_player = nullptr; //全局玩家定义，唯一的一个Player对象
 	typedef std::function<int32_t(Message*)> CallBack;
 public:
 	WorldSession(boost::asio::ip::tcp::socket&& socket);
