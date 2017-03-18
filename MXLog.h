@@ -76,7 +76,7 @@ private:
 #define P(message) MXLog::Instance().Print(message)
 
 //按级别日志
-#define LOG(level, message) if (!message) return; \
+#define LOG(level, message) \
 message->set_level(Asset::level); \
 MXLog::Instance().Print(message); \
 

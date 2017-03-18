@@ -437,6 +437,7 @@ void Player::SendProtocol(pb::Message& message)
 	GetSession()->AsyncSend(content);
 }
 
+/*
 void Player::SendResponse(pb::Message* message)
 {
 	if (!message) return;
@@ -458,7 +459,7 @@ void Player::SendResponse(pb::Message* message)
 void Player::SendToRoomers(pb::Message& message) 
 {
 }
-
+*/
 //玩家心跳周期为10MS，如果该函数返回FALSE则表示掉线
 bool Player::Update()
 {

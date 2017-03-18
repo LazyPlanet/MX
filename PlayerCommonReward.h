@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "P_Header.h"
+#include "MXLog.h"
 
 namespace Adoter
 {
@@ -66,6 +67,11 @@ public:
 				}
 				break;
 			}
+
+			auto message = make_unique<Asset::LogMessage>();
+			message->set_common_reward(global_id); //奖励
+			message->set_common_limit(common_limit_id); //限制
+			LOG(TRACE, message.get()); //日志
 			
 			player->AddCommonLimit(common_limit_id); 
 		}

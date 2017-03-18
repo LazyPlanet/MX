@@ -43,6 +43,10 @@ public:
 			element->set_count(1);
 		}
 
+		auto message = make_unique<Asset::LogMessage>();
+		message->set_common_limit(global_id); //限制
+		LOG(TRACE, message.get()); //日志
+
 		return true;
 	}
 
@@ -167,6 +171,11 @@ public:
 			{
 				common_limit->mutable_elements()->SwapElements(i, common_limit->elements().size() - 1);
 				common_limit->mutable_elements()->RemoveLast();
+
+				auto message = make_unique<Asset::LogMessage>();
+				message->set_common_limit(common_limit_id); //限制
+				message->set_content("clear it");
+				LOG(TRACE, message.get()); //日志
 
 				updated = true;
 			}

@@ -74,8 +74,8 @@ public:
 	virtual bool HandleProtocol(int32_t type_t, pb::Message* message);
 	virtual void SendProtocol(pb::Message& message);
 	virtual void SendProtocol(pb::Message* message);
-	virtual void SendResponse(pb::Message* message);
-	virtual void SendToRoomers(pb::Message& message); //向房间里玩家发送协议数据，发送到客户端
+	//virtual void SendResponse(pb::Message* message);
+	//virtual void SendToRoomers(pb::Message& message); //向房间里玩家发送协议数据，发送到客户端
 	virtual void BroadCast(Asset::MsgItem& item);
 	//virtual void OnCreatePlayer(int64_t player_id);
 	//进入游戏
