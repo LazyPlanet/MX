@@ -4,6 +4,7 @@
 #include "Game.h"
 #include "Timer.h"
 #include "Asset.h"
+#include "MXLog.h"
 
 namespace Adoter
 {
@@ -28,27 +29,29 @@ void Game::Init()
 
 bool Game::Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players)
 {
-	_players = players; //复制下玩家数据
+	if (MAX_PLAYER_COUNT != players.size()) return false; //做下检查，是否满足开局条件
 
-	if (_players.size() != 4) return false; //做下检查，是否满足开局条件
+	int player_index = 0;
 
-	for (auto player : _players)
+	for (auto player : players)
 	{
-		player.second->ClearCards(); 
+		_players[player_index++] = player.second; //复制成员
+	}
+
+	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+	{
+		auto player = _players[i];
+
+		player->ClearCards(); 
 
 		int32_t card_count = 13; //正常开启，普通玩家牌数量
 
-		if (_banker_index % 4 == GetPlayerOrder(player.second->GetID())) card_count = 14; //庄家牌数量
-		
+		if (_banker_index % 4 == i) card_count = 14; //庄家牌数量
+
 		auto cards = FaPai(card_count);
 
-		std::cout << "player:" << player.second->GetID() << std::endl;
-		for (auto card : cards)
-			std::cout << card << " ";
-		std::cout << std::endl;
-
-		player.second->OnFaPai(cards);  //各个玩家发牌
-		player.second->SetGame(shared_from_this());
+		player->OnFaPai(cards);  //各个玩家发牌
+		player->SetGame(shared_from_this());
 	}
 
 	OnStart();
@@ -65,7 +68,7 @@ bool Game::Over()
 {
 	_hupai_players.push_back(1);
 	++_banker_index; //换庄家
-	for (auto player : _players) player.second->SetGame(nullptr);
+	//for (auto player : _players) player.second->SetGame(nullptr);
 	return true;
 }
 
@@ -82,11 +85,20 @@ bool Game::Over()
 bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
 	if (_oper_limit.time_out() < CommonTimerInstance.GetTime() 
-			&& _oper_limit.player_id() == player->GetID()) return true; //玩家操作：碰、杠、胡牌
+			&& _oper_limit.player_id() == player->GetID()) 
+	{
+		CP("%s:line:%d\n", __func__, __LINE__);
+		return true; //玩家操作：碰、杠、胡牌
+	}
 
 	auto player_index = GetPlayerOrder(player->GetID());
-	if (_curr_player_index == player_index) return true; //轮到该玩家
+	if (_curr_player_index == player_index) 
+	{
+		CP("%s:line:%d curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
+		return true; //轮到该玩家
+	}
 
+	CP("%s:line:%d can PaiOperate\n", __func__, __LINE__);
 	return false;
 }
 
@@ -119,6 +131,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			//检查各个玩家手里的牌是否满足胡、杠、碰、吃
 			auto player_id = CheckPai(pai, player->GetID()); 
 
+			CP("%s:line:%d player_id:%ld can PaiOperate\n", __func__, __LINE__, player_id);
+
 			if (player_id) //第一个满足要求的玩家
 			{
 				_oper_limit.set_player_id(player_id); //当前可操作玩家
@@ -134,11 +148,15 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			{
 				auto player_next = GetNextPlayer(player_id);
 				if (!player_next) return; 
+
+				CP("%s:line:%d player_id:%ld next_player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, 
+						player_id, player_next->GetID(), _curr_player_index);
 				
 				auto cards = FaPai(1); 
 				player_next->OnFaPai(cards);
 
 				_curr_player_index = (_curr_player_index + 1) % 4;
+				CP("%s:line:%d player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, player_id, _curr_player_index);
 			}
 		}
 		break;
@@ -307,23 +325,48 @@ std::shared_ptr<Player> Game::GetNextPlayer(int64_t player_id)
 {
 	if (!_room) return nullptr;
 
-	return _room->GetNextPlayer(player_id);
+	int32_t order = GetPlayerOrder(player_id);
+	if (order == -1) return nullptr;
+
+	return GetPlayerByOrder((order + 1) % 4);
 }
 
 int32_t Game::GetPlayerOrder(int32_t player_id)
 {
 	if (!_room) return -1;
 
-	return _room->GetPlayerOrder(player_id);
+	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+	{
+		auto player = _players[i];
+
+		if (!player) continue;
+
+		if (player->GetID()) return i; //序号
+	}
+
+	return -1;
 }
 
 std::shared_ptr<Player> Game::GetPlayerByOrder(int32_t player_index)
 {
 	if (!_room) return nullptr;
 
-	return _room->GetPlayerByOrder(player_index);
+	if (player_index < 0 || player_index >= MAX_PLAYER_COUNT) return nullptr;
+
+	return _players[player_index];
 }
 
+std::shared_ptr<Player> Game::GetPlayer(int64_t player_id)
+{
+	for (auto player : _players)
+	{
+		if (!player) continue;
+
+		if (player->GetID() == player_id) return player;
+	}
+	
+	return nullptr;
+}
 /////////////////////////////////////////////////////
 //游戏通用管理类
 /////////////////////////////////////////////////////

@@ -46,9 +46,9 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 				return;		//非法协议
 			}
 			
-			std::cout << "接收数据：";
-			meta.PrintDebugString(); //打印出来Message.
-			std::cout << std::endl;
+			//std::cout << "接收数据：";
+			//meta.PrintDebugString(); //打印出来Message.
+			//std::cout << std::endl;
 			
 			/////////////////////////////////////////////////////////////////////////////打印收到协议提示信息
 		
@@ -231,8 +231,6 @@ bool WorldSession::Update()
 
 void WorldSession::OnClose()
 {
-	g_player.reset(); //关闭连接
-	g_player = nullptr; //清除
 }
 
 void WorldSession::SendProtocol(pb::Message* message)

@@ -22,6 +22,8 @@ namespace Adoter
 class Game : public std::enable_shared_from_this<Game>
 {
 	std::shared_ptr<Room> _room = nullptr; //游戏在哪个房间开启
+
+	static const int32_t MAX_PLAYER_COUNT = 4;
 private:
 	
 	std::list<int32_t> _cards; //随机牌,每次开局更新,索引为GameManager牌中索引
@@ -32,7 +34,9 @@ private:
 
 	Asset::PaiOperationLimit _oper_limit; //牌操作限制
 	
-	std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
+	//std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
+
+	std::shared_ptr<Player> _players[MAX_PLAYER_COUNT]; //玩家数据：按照进房间的顺序，0->1->2->3...主要用于控制发牌和出牌顺序
 public:
 	virtual void Init(); //初始化
 	virtual bool Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players); //开始游戏
@@ -49,7 +53,7 @@ public:
 	//获取下家
 	std::shared_ptr<Player> GetNextPlayer(int64_t player_id);
 	//获取玩家
-	std::shared_ptr<Player> GetPlayer(int64_t player_id) { return _room->GetPlayer(player_id); }
+	std::shared_ptr<Player> GetPlayer(int64_t player_id);
 	std::shared_ptr<Player> GetPlayerByOrder(int32_t player_index);
 	//获取玩家的顺序
 	int32_t GetPlayerOrder(int32_t player_id);

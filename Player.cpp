@@ -112,6 +112,8 @@ int32_t Player::OnLogin(pb::Message* message)
 
 int32_t Player::OnLogout(pb::Message* message)
 {
+	if (_locate_room) _locate_room->Remove(GetID()); //如果在房间里则退出
+
 	this->_stuff.set_logout_time(CommonTimerInstance.GetTime());
 	//非存盘数据
 	this->_stuff.mutable_player_prop()->Clear(); 

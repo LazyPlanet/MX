@@ -25,11 +25,32 @@ void Room::Enter(std::shared_ptr<Player> player)
 {
 	if (TryEnter(player) != Asset::ERROR_SUCCESS) return; //进入房间之前都需要做此检查，理论上不会出现
 
-	_players_with_order[_players.size()] = player; //进入房间：主要用于模仿循环队列
+	/*
+	bool has_position = false;
+
+	for (int i = 0; i < max_player_count; ++i)
+	{
+		if (!_players_with_order[i])
+		{
+			_players_with_order[i] = player; //找到空位插入
+			player->SetPosition((Asset::POSITION_TYPE)(i + 1));
+
+			has_position = true;
+			break;
+		}
+	}
+			
+	if (!has_position)
+	{
+		_players_with_order[_players.size()] = player; //进入房间：主要用于模仿循环队列
+		player->SetPosition((Asset::POSITION_TYPE)_players.size());
+	}
+	*/
+
 
 	_players.emplace(player->GetID(), player); //进入房间
 
-	player->SetPosition((Asset::POSITION_TYPE)_players.size());
+	player->SetPosition((Asset::POSITION_TYPE)_players.size()); //设置位置
 
 	/*
 
@@ -69,6 +90,7 @@ bool Room::IsHoster(int64_t player_id)
 	return host->GetID() == player_id;
 }
 
+/*
 int32_t Room::GetPlayerOrder(int32_t player_id)
 {
 	for (int player_index = 0; player_index < max_player_count; ++player_index)
@@ -78,6 +100,7 @@ int32_t Room::GetPlayerOrder(int32_t player_id)
 
 	return -1; //返回一个非法的值
 }
+*/
 
 std::shared_ptr<Player> Room::GetPlayer(int64_t player_id)
 {
@@ -87,12 +110,14 @@ std::shared_ptr<Player> Room::GetPlayer(int64_t player_id)
 	return it->second;
 }
 
+/*
 std::shared_ptr<Player> Room::GetPlayerByOrder(int32_t player_index)
 {
 	if (player_index >= max_player_count || player_index < 0) return nullptr;
 
 	return _players_with_order[player_index];
 }
+*/
 
 bool Room::HasPlayer(int64_t player_id)
 {
@@ -147,13 +172,14 @@ bool Room::Remove(int64_t player_id)
 {
 	if (_players.find(player_id) == _players.end()) return false; //没有删除成功
 
-	int32_t player_index = GetPlayerOrder(player_id);	
-	if (player_index < 0) return false;
+	//int32_t player_index = GetPlayerOrder(player_id);	
+	//if (player_index < 0) return false;
 
 	//删除玩家
 	_players.erase(player_id); 
 	//顺序中删除玩家
-	_players_with_order[player_index] = nullptr;
+	//_players_with_order[player_index].reset(); 
+	//_players_with_order[player_index] = nullptr;
 
 	return true;
 }
@@ -206,6 +232,7 @@ bool Room::CanStarGame()
 	return true;
 }
 	
+/*
 //获取当前玩家的下家
 std::shared_ptr<Player> Room::GetNextPlayer(int64_t player_id)
 {
@@ -219,7 +246,7 @@ std::shared_ptr<Player> Room::GetNextPlayer(int64_t player_id)
 	auto player_next = GetPlayerByOrder(player_next_index);
 	return player_next;
 }
-
+*/
 /////////////////////////////////////////////////////
 //房间通用管理类
 /////////////////////////////////////////////////////
