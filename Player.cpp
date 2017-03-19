@@ -208,6 +208,8 @@ int32_t Player::CmdGameOperate(pb::Message* message)
 	
 	if (!_locate_room) return 2; //如果玩家不在房间，也不存在后面的逻辑
 
+	game_operate->set_source_player_id(GetID()); //设置当前操作玩家
+
 	switch(game_operate->oper_type())
 	{
 		case Asset::GAME_OPER_TYPE_START: //开始游戏：相当于准备
@@ -226,7 +228,8 @@ int32_t Player::CmdGameOperate(pb::Message* message)
 			}
 		}
 		break;
-
+		
+		case Asset::GAME_OPER_TYPE_NULL: 
 		default:
 		{
 			 _stuff.mutable_player_prop()->clear_game_oper_state();
@@ -340,11 +343,16 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 			auto room_id = enter_room->room().room_id(); 
 
 			auto locate_room = RoomInstance.Get(room_id);
-			if (!locate_room) return Asset::ERROR_ROOM_NOT_FOUNT; //非法的房间 
 
-			auto ret = locate_room->TryEnter(shared_from_this()); //玩家进入房间
-
-			enter_room->set_error_code(ret); //是否可以进入场景//房间
+			if (!locate_room) 
+			{
+				enter_room->set_error_code(Asset::ERROR_ROOM_NOT_FOUNT); //是否可以进入场景//房间
+			}
+			else
+			{
+				auto ret = locate_room->TryEnter(shared_from_this()); //玩家进入房间
+				enter_room->set_error_code(ret); //是否可以进入场景//房间
+			}
 
 			SendProtocol(enter_room);
 			return 0;
@@ -768,8 +776,14 @@ int32_t Player::CmdLoadScene(pb::Message* message)
 
 			auto room_id = _stuff.player_prop().room_id();
 			
-			_locate_room = RoomInstance.Get(room_id);
-			if (!_locate_room) return 3; //非法的房间 
+			auto locate_room = RoomInstance.Get(room_id);
+			if (!locate_room) return 3; //非法的房间 
+			
+			auto ret = locate_room->TryEnter(shared_from_this()); //玩家进入房间
+
+			if (ret != Asset::ERROR_SUCCESS) return 4;
+
+			_locate_room = locate_room;
 
 			_locate_room->Enter(shared_from_this()); //玩家进入房间
 			

@@ -17,6 +17,7 @@ void PlayerMatch::Join(std::shared_ptr<Player> player, pb::Message* message)
 	if (!enter_room) return;
 
 	Asset::ROOM_TYPE room_type = enter_room->room().room_type();
+	/*
 	bool cancel = enter_room->cancel();
 		
 	switch (room_type)
@@ -48,6 +49,7 @@ void PlayerMatch::Join(std::shared_ptr<Player> player, pb::Message* message)
 		}
 		break;
 	}
+	*/
 }
 	
 void PlayerMatch::DoMatch()
