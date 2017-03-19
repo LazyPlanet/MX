@@ -1,4 +1,5 @@
 #include "MessageDispatcher.h"
+#include "Player.h"
 
 namespace Adoter
 {

@@ -196,6 +196,8 @@ void Room::OnCreated()
 	
 bool Room::CanStarGame()
 {
+	if (_players.size() != 4) return false;
+
 	for (auto player : _players)
 	{
 		if (!player.second->IsReady()) return false; //需要所有玩家都是准备状态
@@ -241,6 +243,16 @@ int64_t RoomManager::CreateRoom()
 	std::shared_ptr<Redis> redis = std::make_shared<Redis>();
 	int64_t room_id = redis->CreateRoom();
 	return room_id;
+}
+	
+std::shared_ptr<Room> RoomManager::CreateRoom(const Asset::Room& room)
+{
+	auto locate_room = std::make_shared<Room>(room);
+	locate_room->OnCreated();
+
+	RoomInstance.OnCreateRoom(locate_room); //房间管理
+
+	return locate_room;
 }
 
 void RoomManager::OnCreateRoom(std::shared_ptr<Room> room)

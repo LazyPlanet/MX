@@ -135,6 +135,11 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 				Asset::PlayerList player_list;
 				player_list.mutable_player_list()->CopyFrom(user.player_list());
 				SendProtocol(player_list); //传给Client，带有角色ID
+				
+				//记录日志
+				//log->set_player_id(g_player->GetID());
+				log->set_type(Asset::PLAYER_LOGIN);
+				LOG(ACTION, log.get());
 			}
 			else if (Asset::META_TYPE_C2S_LOGOUT == meta.type_t()) //账号登出
 			{
@@ -200,13 +205,6 @@ void WorldSession::KillOutPlayer()
 {
 	if (g_player) 
 	{
-		auto log = make_unique<Asset::LogMessage>();
-		log->set_player_id(g_player->GetID());
-		log->set_type(Asset::PLAYER_INFO);
-		log->set_content(g_player->GetString());
-
-        LOG(INFO, log.get()); //记录日志
-
 		g_player->OnLogout(nullptr);
 
 		g_player.reset();

@@ -186,6 +186,6 @@ public:
 
 };
 
-#define PlayerCommonLimitInstance PlayerCommonLimit::Instance()
+#define CommonLimitInstance PlayerCommonLimit::Instance()
 
 }

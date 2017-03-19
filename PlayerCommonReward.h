@@ -80,6 +80,6 @@ public:
 
 };
 
-#define PlayerCommonReward PlayerCommonReward::Instance()
+#define CommonRewardInstance PlayerCommonReward::Instance()
 
 }

@@ -13,6 +13,7 @@
 #include "PlayerCommonReward.h"
 #include "PlayerCommonLimit.h"
 #include "MessageFormat.h"
+#include "PlayerMatch.h"
 
 namespace Adoter
 {
@@ -103,16 +104,26 @@ int32_t Player::OnLogin(pb::Message* message)
 	if (Load()) return 1;
 
 	SendPlayer(); //发送数据给Client
+	
+	this->_stuff.set_login_time(CommonTimerInstance.GetTime());
 
 	return 0;
 }
 
 int32_t Player::OnLogout(pb::Message* message)
 {
+	this->_stuff.set_logout_time(CommonTimerInstance.GetTime());
 	//非存盘数据
 	this->_stuff.mutable_player_prop()->Clear(); 
 	//存档数据库
 	Save();	
+	//日志
+	auto log = make_unique<Asset::LogMessage>();
+	log->set_player_id(GetID());
+	log->set_type(Asset::PLAYER_INFO);
+	log->set_content(GetString());
+
+	LOG(INFO, log.get()); //记录日志
 
 	return 0;
 }
@@ -137,6 +148,8 @@ int32_t Player::OnEnterGame()
 	if (Load()) return 1;
 
 	SendPlayer(); //发送数据给玩家
+	
+	this->_stuff.set_login_time(CommonTimerInstance.GetTime());
 	
 	return 0;
 }
@@ -168,15 +181,17 @@ int32_t Player::CmdCreateRoom(pb::Message* message)
 	
 	SendProtocol(create_room); 
 	
-	OnCreateRoom(room_id); //创建房间成功，直接将玩家设置到该房间
+	OnCreateRoom(create_room); //创建房间成功，直接将玩家设置到该房间
 
 	return 0;
 }
 
-void Player::OnCreateRoom(int64_t room_id)
+void Player::OnCreateRoom(Asset::CreateRoom* create_room)
 {
+	if (!create_room) return;
+
 	Asset::Room asset_room;
-	asset_room.set_room_id(room_id);
+	asset_room.CopyFrom(create_room->room());
 
 	_locate_room = std::make_shared<Room>(asset_room);
 	_locate_room->OnCreated();
@@ -341,12 +356,15 @@ int32_t Player::CmdEnterRoom(pb::Message* message)
 		case Asset::ROOM_TYPE_DASHI:
 		{
 			auto result = check();
-			if (result == Asset::ERROR_SUCCESS) 
+
+			if (result != Asset::ERROR_SUCCESS) //不允许进入
 			{
 				AlertMessage(result);
 				return result;
 			}
 
+			//进入匹配
+			MatchInstance.Join(shared_from_this(), message);
 		}
 		break;
 
@@ -432,10 +450,6 @@ void Player::SendProtocol(pb::Message* message)
 
 void Player::SendProtocol(pb::Message& message)
 {
-	std::cout << "发送数据：";
-	message.PrintDebugString(); //打印出来MESSAGE
-	std::cout << std::endl;
-
 	const pb::FieldDescriptor* field = message.GetDescriptor()->FindFieldByName("type_t");
 	if (!field) return;
 	
@@ -448,6 +462,14 @@ void Player::SendProtocol(pb::Message& message)
 
 	std::string content = meta.SerializeAsString();
 	GetSession()->AsyncSend(content);
+	
+	
+	auto log = make_unique<Asset::LogMessage>();
+	log->set_player_id(GetID());
+	log->set_type(Asset::SEND_PROTOCOL);
+	log->set_content(message.ShortDebugString());
+
+	LOG(INFO, log.get()); //记录日志
 }
 
 /*
@@ -582,17 +604,17 @@ void Player::AlertMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_
 
 bool Player::AddCommonLimit(int64_t global_id)
 {
-	return PlayerCommonLimitInstance.AddCommonLimit(shared_from_this(), global_id);
+	return CommonLimitInstance.AddCommonLimit(shared_from_this(), global_id);
 }
 	
 bool Player::IsCommonLimit(int64_t global_id)
 {
-	return PlayerCommonLimitInstance.IsCommonLimit(shared_from_this(), global_id);
+	return CommonLimitInstance.IsCommonLimit(shared_from_this(), global_id);
 }
 
 bool Player::CommonLimitUpdate()
 {
-	bool updated = PlayerCommonLimitInstance.Update(shared_from_this());
+	bool updated = CommonLimitInstance.Update(shared_from_this());
 	if (updated) SyncCommonLimit();
 
 	return updated;
@@ -608,7 +630,7 @@ void Player::SyncCommonLimit()
 
 bool Player::DeliverReward(int64_t global_id)
 {
-	bool delivered = PlayerCommonReward.DeliverReward(shared_from_this(), global_id);
+	bool delivered = CommonRewardInstance.DeliverReward(shared_from_this(), global_id);
 	if (delivered) SyncCommonReward(global_id);
 	
 	return delivered;
@@ -742,8 +764,6 @@ int32_t Player::CmdLoadScene(pb::Message* message)
 		{
 			if (_stuff.player_prop().load_type() != Asset::LOAD_SCENE_TYPE_START) return 2;
 
-			_stuff.mutable_player_prop()->Clear(); //状态
-
 			SendPlayer(); //发送数据给客户端
 
 			auto room_id = _stuff.player_prop().room_id();
@@ -752,6 +772,8 @@ int32_t Player::CmdLoadScene(pb::Message* message)
 			if (!_locate_room) return 3; //非法的房间 
 
 			_locate_room->Enter(shared_from_this()); //玩家进入房间
+			
+			_stuff.mutable_player_prop()->Clear(); //状态
 		}
 		break;
 		

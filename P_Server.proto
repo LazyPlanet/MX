@@ -44,6 +44,8 @@ enum LOG_TYPE {
 	CONSUME_HUANLEDOU = 9; //消耗欢乐豆
 	INCREASE_HUANLEDOU = 10; //增加欢乐豆
 	PLAYER_INFO = 11; //玩家数据
+	PLAYER_LOGIN = 12; //玩家登录
+	SEND_PROTOCOL = 13; //发送协议
 }
 
 //日志级别
