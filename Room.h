@@ -16,6 +16,10 @@ class Game;
 class Room : public std::enable_shared_from_this<Room>
 {
 	static const int32_t MAX_PLAYER_COUNT = 4;
+
+	int32_t _banker_index = 0; //庄家索引
+	int64_t _banker = 0; //庄家
+
 private:
 	std::shared_ptr<Asset::Room> _stuff;
 	std::vector<std::shared_ptr<Game>> _games;
@@ -53,6 +57,11 @@ public:
 	std::shared_ptr<Player> GetPlayer(int64_t player_id);
 	//删除玩家
 	bool Remove(int64_t player_id);
+	//游戏结束
+	void GameOver(int64_t player_id/*胡牌玩家*/);
+	
+	int32_t GetBankerIndex() { return _banker_index; }
+	int64_t GetBanker() { return _banker; }
 };
 
 /////////////////////////////////////////////////////

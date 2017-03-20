@@ -166,6 +166,13 @@ bool Room::Remove(int64_t player_id)
 	return false;
 }
 
+void Room::GameOver(int64_t player_id)
+{
+	if (_banker != player_id) ++_banker_index; //下庄
+
+	_banker = player_id;
+}
+
 void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
 {
 	if (!message) return;

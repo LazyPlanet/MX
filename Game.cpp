@@ -33,13 +33,15 @@ bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 {
 	if (MAX_PLAYER_COUNT != players.size()) return false; //做下检查，是否满足开局条件
 
-	int player_index = 0;
+	int32_t player_index = 0;
 
 	for (auto player : players)
 	{
 		CP("%s:line:%d player_id:%ld player_index:%d\n", __func__, __LINE__, player->GetID(), player_index);
 		_players[player_index++] = player; //复制成员
 	}
+
+	_banker_index = _room->GetBankerIndex();
 
 	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
@@ -72,10 +74,9 @@ void Game::OnStart()
 
 }
 
-bool Game::Over()
+bool Game::OnOver()
 {
 	_hupai_players.push_back(1);
-	++_banker_index; //换庄家
 	//for (auto player : _players) player.second->SetGame(nullptr);
 	return true;
 }
@@ -110,7 +111,7 @@ bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
-	if (!player || !message) return;
+	if (!player || !message || !_room) return;
 
 	if (!CanPaiOperate(player, message)) 
 	{
@@ -173,11 +174,23 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			if (!ret) 
 			{
 				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
+				
+				auto player_next = GetNextPlayer(player->GetID());
+				if (!player_next) return; 
+				
+				auto cards = FaPai(1); 
+				player_next->OnFaPai(cards);
+				
+				_curr_player_index = (_curr_player_index + 1) % 4;
+
 				return; 
 			}
 			else
 			{
 				//Caculate(); //结算
+				_room->GameOver(player->GetID()); //胡牌
+
+				OnOver();
 			}
 		}
 		break;

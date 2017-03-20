@@ -30,6 +30,7 @@ private:
 	std::vector<int64_t> _hupai_players;
 
 	int32_t _banker_index = 0; //庄家索引
+	int32_t _banker = 0; //庄家
 	int32_t _curr_player_index = 0; //当前在操作的玩家索引
 
 	Asset::PaiOperationLimit _oper_limit; //牌操作限制
@@ -41,7 +42,7 @@ public:
 	virtual void Init(std::shared_ptr<Room> room); //初始化
 	virtual bool Start(std::vector<std::shared_ptr<Player>> players); //开始游戏
 	virtual void OnStart(); //开始游戏回调
-	virtual bool Over(); //游戏结束
+	virtual bool OnOver(); //游戏结束
 	virtual std::vector<int32_t> FaPai(size_t card_count); //发牌
 	
 	void OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
