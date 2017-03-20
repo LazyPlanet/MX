@@ -152,7 +152,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
 			{
-				auto player_next = GetNextPlayer(player_id);
+				auto player_next = GetNextPlayer(player->GetID());
 				if (!player_next) return; 
 
 				CP("%s:line:%d player_id:%ld next_player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, 

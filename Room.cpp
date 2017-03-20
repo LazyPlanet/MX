@@ -18,6 +18,12 @@ Asset::ERROR_CODE Room::TryEnter(std::shared_ptr<Player> player)
 {
 	if (!player || IsFull()) return Asset::ERROR_ROOM_IS_FULL;
 
+	auto it = std::find_if(_players.begin(), _players.end(), [player](std::shared_ptr<Player> p) {
+				return player->GetID() == p->GetID();
+			});
+
+	if (it != _players.end()) return Asset::ERROR_ROOM_HAS_BEEN_IN; //已经在房间
+
 	return Asset::ERROR_SUCCESS;
 }
 
