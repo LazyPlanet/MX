@@ -845,6 +845,34 @@ void Player::OnEnterScene()
 {
 	SendPlayer(); //发送数据给客户端
 }
+
+int32_t Player::CmdLuckyPlate(pb::Message* message)
+{
+	auto lucky_plate = dynamic_cast<Asset::PlayerLuckyPlate*>(message);
+	if (!lucky_plate) return 1;
+
+	auto asset_message = AssetInstance.Get(lucky_plate->plate_id());
+	if (!asset_message) return 2;
+	
+	auto asset_lucky_plate = dynamic_cast<Asset::LuckyPlate*>(asset_message);
+	if (!asset_lucky_plate) return 3;
+
+	auto index = CommonUtil::RandomByWeight(asset_lucky_plate->plates().begin(), asset_lucky_plate->plates().end(), 
+			[](const Asset::LuckyPlate_Plate& ele){
+				return ele.weight();
+			});
+
+	if (index < 0 || index >= asset_lucky_plate->plates().size() || index >= asset_lucky_plate->plates_count()) return 4;
+
+	auto common_reward_id = asset_lucky_plate->plates(index).common_reward_id();
+	DeliverReward(common_reward_id); //发奖
+
+	lucky_plate->set_result(index + 1); //Client从1开始
+	SendProtocol(lucky_plate);
+
+	return 0;
+}
+
 /////////////////////////////////////////////////////
 /////游戏逻辑定义
 /////////////////////////////////////////////////////
