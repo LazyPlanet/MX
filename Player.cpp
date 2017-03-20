@@ -315,8 +315,8 @@ int32_t Player::CmdSign(pb::Message* message)
 	auto curr_t = CommonTimerInstance.GetTime(); //当前时间
 
 	auto it = std::find_if(_stuff.sign_time().rbegin(), _stuff.sign_time().rend(), [curr_t](const int32_t& time) {
-				return CommonTimerInstance.IsSameDay(curr_t, time); 
-				});
+			return CommonTimerInstance.IsSameDay(curr_t, time); 
+	});
 
 	if (it == _stuff.sign_time().rend()) 
 	{
