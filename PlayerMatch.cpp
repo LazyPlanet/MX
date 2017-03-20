@@ -82,9 +82,7 @@ void PlayerMatch::Join(std::shared_ptr<Player> player, pb::Message* message)
 	
 void PlayerMatch::DoMatch()
 {
-	auto match = [this](std::unordered_map<int64_t, std::shared_ptr<Player>> list) {
-
-		auto player_list = list;
+	auto match = [this](std::unordered_map<int64_t, std::shared_ptr<Player>>& player_list) {
 
 		_scheduler.Schedule(std::chrono::seconds(3), [&](TaskContext task) {
 			
@@ -113,7 +111,15 @@ void PlayerMatch::DoMatch()
 
 				it->second->SendProtocol(enter_room); //提示Client是否成功
 
-				if (Asset::ERROR_SUCCESS != ret) match_success = false; //理论上不应该出现，TODO：如果该玩家一直进不去，可能会导致后面玩家都进不去，需要处理
+				if (Asset::ERROR_SUCCESS != ret) 
+				{
+					match_success = false; //理论上不应该出现，TODO：如果该玩家一直进不去，可能会导致后面玩家都进不去，需要处理
+
+					auto log = make_unique<Asset::LogMessage>();
+					log->set_player_id(it->second->GetID());
+					log->set_type(Asset::PLAYER_MATCH);
+					LOG(ERROR, log.get())
+				}
 			}
 
 			if (match_success)
