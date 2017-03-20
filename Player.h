@@ -109,6 +109,8 @@ public:
 	//在线状态
 	void SetOnline(bool online) { _stuff.mutable_player_prop()->set_online(online);	}
 	bool IsOnline() { return _stuff.player_prop().online(); }
+	//签到
+	virtual int32_t CmdSign(pb::Message* message);
 public:
 	//获取所有包裹
 	const Asset::Inventory& GetInventory()

@@ -31,6 +31,7 @@ Player::Player()
 	AddHandler(Asset::META_TYPE_SHARE_PAI_OPERATION, std::bind(&Player::CmdPaiOperate, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_BUY_SOMETHING, std::bind(&Player::CmdBuySomething, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_SHARE_SIGN, std::bind(&Player::CmdSign, this, std::placeholders::_1));
 
 	//AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
 	//AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
@@ -303,6 +304,38 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 
 	_game->OnPaiOperate(shared_from_this(), message);
 
+	return 0;
+}
+	
+int32_t Player::CmdSign(pb::Message* message)
+{
+	Asset::Sign* sign = dynamic_cast<Asset::Sign*>(message);
+	if (!sign) return 1; 
+
+	auto curr_t = CommonTimerInstance.GetTime(); //当前时间
+
+	auto it = std::find_if(_stuff.sign_time().rbegin(), _stuff.sign_time().rend(), [curr_t](const int32_t& time) {
+				return CommonTimerInstance.IsSameDay(curr_t, time); 
+				});
+
+	if (it == _stuff.sign_time().rend()) 
+	{
+		_stuff.mutable_sign_time()->Add(curr_t); //记录签到时间
+		sign->set_success(true); //默认失败
+	}
+
+	//发奖
+	auto asset_message = AssetInstance.Get(g_const->daily_sign_id());
+	if (!asset_message) return 2;
+
+	auto asset_sign = dynamic_cast<Asset::DailySign*>(asset_message);
+	if (!asset_sign) return 3;
+
+	auto common_limit_id = asset_sign->common_limit_id();
+	if (!IsCommonLimit(common_limit_id)) DeliverReward(asset_sign->common_reward_id()); //正式发奖
+	AddCommonLimit(common_limit_id); //今日已领取
+
+	SendProtocol(sign);
 	return 0;
 }
 
