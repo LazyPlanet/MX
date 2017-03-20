@@ -952,6 +952,9 @@ bool Player::CheckChiPai(const Asset::PaiElement& pai)
 	auto it = _cards.find(pai.card_type());
 	if (it == _cards.end()) return false;
 
+	if (pai.card_type() != Asset::CARD_TYPE_WANZI && pai.card_type() != Asset::CARD_TYPE_BINGZI &&
+			pai.card_type() != Asset::CARD_TYPE_TIAOZI) return false; //万子牌、饼子牌和条子牌才能吃牌
+
 	int32_t card_value = pai.card_value();
 
 	//吃牌总共有有三种方式:
