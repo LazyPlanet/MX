@@ -126,7 +126,6 @@ void PlayerMatch::DoMatch()
 	
 	};
 
-
 	match(_xinshou); //新手匹配
 	match(_gaoshou); //高手匹配
 	match(_dashi); //大师匹配
