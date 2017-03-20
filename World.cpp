@@ -2,7 +2,7 @@
 #include "Protocol.h"
 #include "Room.h"
 #include "Game.h"
-//#include "Activity.h"
+#include "PlayerMatch.h"
 
 namespace Adoter
 {
@@ -32,24 +32,22 @@ bool World::Load()
 		//LOG(ERROR, "GameInstance load error.");
 		return false;
 	}
-/*
-	//活动初始化
-	if (!ActivityInstance.Load()) 
-	{
-		LOG(ERROR, "GameInstance load error.");
-		return false;
-	}
-*/
+
 //////////////////////////////////////////////////
 //游戏内初始化
 //////////////////////////////////////////////////
-	pb::Message* message = AssetInstance.Get(458753); //唯一写死ID
+
+	//特殊ID定义表
+	pb::Message* message = AssetInstance.Get(458753); 
 	g_const = dynamic_cast<const Asset::CommonConst*>(message); 
 	if (!g_const) 
 	{
 		//LOG(ERROR, "g_const is null.");
 		return false;
 	}
+
+	//玩家匹配
+	MatchInstance.DoMatch();
 
 	return true;
 }
@@ -58,6 +56,8 @@ bool World::Load()
 void World::Update(int32_t diff)
 {
 	++_heart_count;
+
+	MatchInstance.Update(diff);
 }
 	
 

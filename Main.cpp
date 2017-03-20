@@ -38,11 +38,11 @@ void WorldUpdateLoop()
 {
 	int32_t curr_time = 0, prev_sleep_time = 0;
 	
-	int32_t prev_time = CommonTimerInstance.GetTime();
+	int32_t prev_time = CommonTimerInstance.GetStartTime();
 
 	while (!WorldInstance.IsStopped())
 	{
-		curr_time = CommonTimerInstance.GetTime();
+		curr_time = CommonTimerInstance.GetStartTime();
 		
 		int32_t diff = CommonTimerInstance.GetTimeDiff(prev_time, curr_time);
 		

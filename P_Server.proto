@@ -46,6 +46,7 @@ enum LOG_TYPE {
 	PLAYER_INFO = 11; //玩家数据
 	PLAYER_LOGIN = 12; //玩家登录
 	SEND_PROTOCOL = 13; //发送协议
+	PLAYER_MATCH = 14; //玩家匹配
 }
 
 //日志级别

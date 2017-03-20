@@ -20,8 +20,8 @@ public:
 		return _instance;
 	}
 
-	//获取前时间(单位：毫秒)
-	inline int32_t GetTimems()
+	//获取前服务器启动时间(单位：毫秒)
+	inline int32_t GetStartTime()
 	{
 		using namespace std::chrono;
 		static const system_clock::time_point start_time = system_clock::now();
@@ -50,7 +50,7 @@ public:
 
 	inline int32_t GetTimeDiffToNow(int32_t old_time)
 	{
-		return GetTimeDiff(old_time, GetTime());
+		return GetTimeDiff(old_time, GetStartTime());
 	}
 
 	inline std::time_t GetDayBegin(std::time_t cur_t)

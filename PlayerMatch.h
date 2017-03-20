@@ -29,9 +29,10 @@ public:
 		return _instance;
 	}
 
+	void Update(int32_t diff);
+
 	void Join(std::shared_ptr<Player> player, pb::Message* message);
 	void DoMatch();
-
 };
 
 #define MatchInstance PlayerMatch::Instance()
