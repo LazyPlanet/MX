@@ -38,8 +38,8 @@ private:
 
 	std::shared_ptr<Player> _players[MAX_PLAYER_COUNT]; //玩家数据：按照进房间的顺序，0->1->2->3...主要用于控制发牌和出牌顺序
 public:
-	virtual void Init(); //初始化
-	virtual bool Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players); //开始游戏
+	virtual void Init(std::shared_ptr<Room> room); //初始化
+	virtual bool Start(std::vector<std::shared_ptr<Player>> players); //开始游戏
 	virtual void OnStart(); //开始游戏回调
 	virtual bool Over(); //游戏结束
 	virtual std::vector<int32_t> FaPai(size_t card_count); //发牌
@@ -57,6 +57,8 @@ public:
 	std::shared_ptr<Player> GetPlayerByOrder(int32_t player_index);
 	//获取玩家的顺序
 	int32_t GetPlayerOrder(int32_t player_id);
+	//设置房间
+	void SetRoom(std::shared_ptr<Room> room) {	_room = room; }
 };
 
 /////////////////////////////////////////////////////

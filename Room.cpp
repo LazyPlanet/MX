@@ -25,30 +25,7 @@ void Room::Enter(std::shared_ptr<Player> player)
 {
 	if (TryEnter(player) != Asset::ERROR_SUCCESS) return; //进入房间之前都需要做此检查，理论上不会出现
 
-	/*
-	bool has_position = false;
-
-	for (int i = 0; i < max_player_count; ++i)
-	{
-		if (!_players_with_order[i])
-		{
-			_players_with_order[i] = player; //找到空位插入
-			player->SetPosition((Asset::POSITION_TYPE)(i + 1));
-
-			has_position = true;
-			break;
-		}
-	}
-			
-	if (!has_position)
-	{
-		_players_with_order[_players.size()] = player; //进入房间：主要用于模仿循环队列
-		player->SetPosition((Asset::POSITION_TYPE)_players.size());
-	}
-	*/
-
-
-	_players.emplace(player->GetID(), player); //进入房间
+	_players.push_back(player); //进入房间
 
 	player->SetPosition((Asset::POSITION_TYPE)_players.size()); //设置位置
 
@@ -79,7 +56,7 @@ std::shared_ptr<Player> Room::GetHoster()
 {
 	if (_players.size() <= 0) return nullptr;
 
-	return _players.begin()->second; //房间里面的一个人就是房主
+	return *_players.begin(); //房间里面的一个人就是房主
 }
 
 bool Room::IsHoster(int64_t player_id)
@@ -104,10 +81,12 @@ int32_t Room::GetPlayerOrder(int32_t player_id)
 
 std::shared_ptr<Player> Room::GetPlayer(int64_t player_id)
 {
-	auto it = _players.find(player_id);
-	if (it == _players.end()) return nullptr;
+	for (auto player : _players)
+	{
+		if (player->GetID() == player_id) return player;
+	}
 
-	return it->second;
+	return nullptr;
 }
 
 /*
@@ -117,12 +96,12 @@ std::shared_ptr<Player> Room::GetPlayerByOrder(int32_t player_index)
 
 	return _players_with_order[player_index];
 }
-*/
 
 bool Room::HasPlayer(int64_t player_id)
 {
 	return _players.find(player_id) != _players.end();
 }
+*/
 
 void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
@@ -141,7 +120,7 @@ void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 			auto game = std::make_shared<Game>();
 
-			game->Init(); //洗牌
+			game->Init(shared_from_this()); //洗牌
 
 			game->Start(_players); //开始游戏
 
@@ -170,18 +149,15 @@ void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 bool Room::Remove(int64_t player_id)
 {
-	if (_players.find(player_id) == _players.end()) return false; //没有删除成功
+	for (auto it = _players.begin(); it != _players.end(); ++it)
+	{
+		if ((*it)->GetID() != player_id) continue;
 
-	//int32_t player_index = GetPlayerOrder(player_id);	
-	//if (player_index < 0) return false;
+		_players.erase(it); //删除玩家
+		return true;
+	}
 
-	//删除玩家
-	_players.erase(player_id); 
-	//顺序中删除玩家
-	//_players_with_order[player_index].reset(); 
-	//_players_with_order[player_index] = nullptr;
-
-	return true;
+	return false;
 }
 
 void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
@@ -190,9 +166,9 @@ void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
 
 	for (auto player : _players)
 	{
-		if (exclude_player_id == player.second->GetID()) continue;
+		if (exclude_player_id == player->GetID()) continue;
 
-		player.second->SendProtocol(message);
+		player->SendProtocol(message);
 	}
 }
 	
@@ -208,8 +184,8 @@ void Room::SyncRoom()
 	for (auto player : _players)
 	{
 		auto p = message.mutable_player_list()->Add();
-		p->set_position(player.second->GetPosition());
-		p->mutable_common_prop()->CopyFrom(player.second->CommonProp());
+		p->set_position(player->GetPosition());
+		p->mutable_common_prop()->CopyFrom(player->CommonProp());
 	}
 
 	BroadCast(message);
@@ -226,27 +202,12 @@ bool Room::CanStarGame()
 
 	for (auto player : _players)
 	{
-		if (!player.second->IsReady()) return false; //需要所有玩家都是准备状态
+		if (!player->IsReady()) return false; //需要所有玩家都是准备状态
 	}
 
 	return true;
 }
 	
-/*
-//获取当前玩家的下家
-std::shared_ptr<Player> Room::GetNextPlayer(int64_t player_id)
-{
-	auto player_index = GetPlayerOrder(player_id);
-	if (player_index < 0) return nullptr; //没有这个玩家
-
-	auto player_next_index = player_index + 1;
-	
-	player_next_index = player_next_index % max_player_count; //一圈
-
-	auto player_next = GetPlayerByOrder(player_next_index);
-	return player_next;
-}
-*/
 /////////////////////////////////////////////////////
 //房间通用管理类
 /////////////////////////////////////////////////////

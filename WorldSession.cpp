@@ -203,15 +203,6 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 
 void WorldSession::KillOutPlayer()
 {
-	if (g_player) 
-	{
-		g_player->OnLogout(nullptr);
-
-		g_player.reset();
-
-		g_player = nullptr;
-	}
-
 	Close();
 }
 
@@ -231,6 +222,14 @@ bool WorldSession::Update()
 
 void WorldSession::OnClose()
 {
+	if (g_player) //网络断开
+	{
+		g_player->OnLogout(nullptr);
+
+		g_player.reset();
+
+		g_player = nullptr;
+	}
 }
 
 void WorldSession::SendProtocol(pb::Message* message)

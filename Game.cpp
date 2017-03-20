@@ -12,7 +12,7 @@ namespace Adoter
 /////////////////////////////////////////////////////
 //一场游戏
 /////////////////////////////////////////////////////
-void Game::Init()
+void Game::Init(std::shared_ptr<Room> room)
 {
 	_cards.resize(136);
 
@@ -24,10 +24,12 @@ void Game::Init()
 
 	_cards = std::list<int32_t>(cards.begin(), cards.end());
 
+	_room = room;
+
 	std::cout << __func__ << ": size: " << _cards.size() << std::endl;
 }
 
-bool Game::Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players)
+bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 {
 	if (MAX_PLAYER_COUNT != players.size()) return false; //做下检查，是否满足开局条件
 
@@ -35,18 +37,24 @@ bool Game::Start(std::unordered_map<int64_t, std::shared_ptr<Player>> players)
 
 	for (auto player : players)
 	{
-		_players[player_index++] = player.second; //复制成员
+		CP("%s:line:%d player_id:%ld player_index:%d\n", __func__, __LINE__, player->GetID(), player_index);
+		_players[player_index++] = player; //复制成员
 	}
 
 	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
 		auto player = _players[i];
 
+		CP("%s:line:%d player_id:%ld player_index:%d\n", __func__, __LINE__, player->GetID(), i);
 		player->ClearCards(); 
 
 		int32_t card_count = 13; //正常开启，普通玩家牌数量
 
-		if (_banker_index % 4 == i) card_count = 14; //庄家牌数量
+		if (_banker_index % 4 == i) 
+		{
+			card_count = 14; //庄家牌数量
+			_curr_player_index = i; //当前操作玩家
+		}
 
 		auto cards = FaPai(card_count);
 
@@ -87,18 +95,16 @@ bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 	if (_oper_limit.time_out() < CommonTimerInstance.GetTime() 
 			&& _oper_limit.player_id() == player->GetID()) 
 	{
-		CP("%s:line:%d\n", __func__, __LINE__);
 		return true; //玩家操作：碰、杠、胡牌
 	}
 
 	auto player_index = GetPlayerOrder(player->GetID());
 	if (_curr_player_index == player_index) 
 	{
-		CP("%s:line:%d curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
 		return true; //轮到该玩家
 	}
 
-	CP("%s:line:%d can PaiOperate\n", __func__, __LINE__);
+	CP("%s:line:%d curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
 	return false;
 }
 
@@ -341,7 +347,7 @@ int32_t Game::GetPlayerOrder(int32_t player_id)
 
 		if (!player) continue;
 
-		if (player->GetID()) return i; //序号
+		if (player->GetID() == player_id) return i; //序号
 	}
 
 	return -1;

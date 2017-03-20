@@ -251,7 +251,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 	
 	if (!_locate_room || !_game) return 2; //还没加入房间或者还没开始游戏
 
-	if (pai_operate->pais().size() <= 0) return 3; //估计是外挂
+	//if (pai_operate->pais().size() <= 0 && pai_operate->pai().size() <= 0) return 3; //估计是外挂
 
 	//检查玩家是否真的有这些牌
 	for (const auto& pai : pai_operate->pais()) 
@@ -263,6 +263,11 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 
 		if (pais[pai.card_index()] != pai.card_value()) return 4; //Server<->Client 不一致
 	}
+
+	const auto& pais = _cards[pai_operate->pai().card_type()];
+	auto it = std::find(pais.begin(), pais.end(), pai_operate->pai().card_value());
+
+	if (it == pais.end()) return 5; //没有这张牌
 
 	//进行操作
 	switch (pai_operate->oper_type())
