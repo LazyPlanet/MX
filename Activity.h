@@ -42,7 +42,7 @@ public:
 		auto stop_time_t = boost::posix_time::to_time_t(stop_time);
 		
 		std::time_t cur_t = CommonTimerInstance.GetTime();
-		if (cur_t < start_time_t || cur_t > stop_time_t) return true;
+		if (cur_t < start_time_t || cur_t > stop_time_t) return false;
 
 		return true;
 	}
