@@ -136,7 +136,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			const auto& pai = pai_operate->pai(); //玩家发上来的牌
 
 			//检查各个玩家手里的牌是否满足胡、杠、碰、吃
-			auto player_id = CheckPai(pai, player->GetID()); 
+			Asset::PAI_CHECK_RETURN pai_rtn;
+			auto player_id = CheckPai(pai, player->GetID(), pai_rtn); 
 
 			CP("%s:line:%d player_id:%ld can PaiOperate\n", __func__, __LINE__, player_id);
 
@@ -149,6 +150,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				//发送给Client
 				Asset::PaiOperationAlert alert;
 				alert.mutable_pai()->CopyFrom(pai);
+				alert.set_check_return(pai_rtn);
 				if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert);
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
@@ -287,7 +289,7 @@ void Game::ClearOperation()
 //
 /////////////////////////////////////////////////////
 
-int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
+int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, Asset::PAI_CHECK_RETURN& pai_rt)
 {
 	int32_t player_index = GetPlayerOrder(from_player_id); //当前玩家索引
 	if (player_index == -1) return 0; //理论上不会出现
@@ -313,6 +315,7 @@ int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		if (result == Asset::PAI_CHECK_RETURN_CHI && cur_index != next_player_index) continue; //吃牌只能是下家
 
 		rtn_player_id = player->GetID(); //只获取可操作的玩家ID
+		pai_rt = result;
 	}
 
 	return rtn_player_id;
