@@ -18,11 +18,21 @@ void Game::Init(std::shared_ptr<Room> room)
 
 	std::iota(_cards.begin(), _cards.end(), 1);
 
+	for (auto card : _cards)
+	{
+		CP("%s:line:%d card:%d ", __func__, __LINE__, card);
+	}
+
 	std::vector<int32_t> cards(_cards.begin(), _cards.end());
 
 	std::random_shuffle(cards.begin(), cards.end()); //洗牌
 
 	_cards = std::list<int32_t>(cards.begin(), cards.end());
+
+	for (auto card : _cards)
+	{
+		CP("%s:line:%d card:%d ", __func__, __LINE__, card);
+	}
 
 	_room = room;
 
@@ -313,9 +323,11 @@ int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, Ass
 		if (result == Asset::PAI_CHECK_RETURN_NULL) continue; //不能吃、碰、杠和胡牌
 
 		if (result == Asset::PAI_CHECK_RETURN_CHI && cur_index != next_player_index) continue; //吃牌只能是下家
-
+		
 		rtn_player_id = player->GetID(); //只获取可操作的玩家ID
 		pai_rt = result;
+		
+		if (result == Asset::PAI_CHECK_RETURN_HU) break; //胡牌则终止检查
 	}
 
 	return rtn_player_id;

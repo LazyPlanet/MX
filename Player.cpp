@@ -107,6 +107,7 @@ int32_t Player::OnLogin(pb::Message* message)
 	SendPlayer(); //发送数据给Client
 	
 	this->_stuff.set_login_time(CommonTimerInstance.GetTime());
+	this->_stuff.set_logout_time(0);
 
 	return 0;
 }
@@ -115,6 +116,7 @@ int32_t Player::OnLogout(pb::Message* message)
 {
 	if (_locate_room) _locate_room->Remove(GetID()); //如果在房间里则退出
 
+	this->_stuff.set_login_time(0);
 	this->_stuff.set_logout_time(CommonTimerInstance.GetTime());
 	//非存盘数据
 	this->_stuff.mutable_player_prop()->Clear(); 
@@ -153,6 +155,7 @@ int32_t Player::OnEnterGame()
 	SendPlayer(); //发送数据给玩家
 	
 	this->_stuff.set_login_time(CommonTimerInstance.GetTime());
+	this->_stuff.set_logout_time(0);
 	
 	return 0;
 }
