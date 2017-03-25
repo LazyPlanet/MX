@@ -886,7 +886,7 @@ std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& p
 	if (CheckGangPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_GANG);
 	if (CheckPengPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_PENG);
 	if (CheckChiPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_CHI);
-	rtn_check;
+	return rtn_check;
 }
 
 //假定牌是排序过的, 且胡牌规则为 n*AAA+m*ABC+DD
