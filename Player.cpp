@@ -879,13 +879,14 @@ int32_t Player::CmdLuckyPlate(pb::Message* message)
 /////////////////////////////////////////////////////
 /////游戏逻辑定义
 /////////////////////////////////////////////////////
-Asset::PAI_CHECK_RETURN Player::CheckPai(const Asset::PaiElement& pai)
+std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& pai)
 {
-	if (CheckHuPai(pai)) return Asset::PAI_CHECK_RETURN_HU;
-	else if (CheckGangPai(pai)) return Asset::PAI_CHECK_RETURN_GANG;
-	else if (CheckPengPai(pai)) return Asset::PAI_CHECK_RETURN_PENG;
-	else if (CheckChiPai(pai)) return Asset::PAI_CHECK_RETURN_CHI;
-	return Asset::PAI_CHECK_RETURN_NULL;
+	std::vector<Asset::PAI_CHECK_RETURN> rtn_check;
+	if (CheckHuPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_HU);
+	if (CheckGangPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_GANG);
+	if (CheckPengPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_PENG);
+	if (CheckChiPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_CHI);
+	rtn_check;
 }
 
 //假定牌是排序过的, 且胡牌规则为 n*AAA+m*ABC+DD

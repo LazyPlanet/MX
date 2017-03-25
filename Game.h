@@ -49,7 +49,7 @@ public:
 	bool CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
 	void OnOperateTimeOut();
 	void ClearOperation();
-	int64_t CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, Asset::PAI_CHECK_RETURN& pai_rtn); //检查牌形：返回待操作的玩家ID
+	int64_t CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, std::vector<Asset::PAI_CHECK_RETURN>& pai_rtn); //检查牌形：返回待操作的玩家ID
 	
 	//获取下家
 	std::shared_ptr<Player> GetNextPlayer(int64_t player_id);

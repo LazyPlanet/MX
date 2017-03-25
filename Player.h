@@ -245,7 +245,7 @@ public:
 
 	virtual int32_t OnFaPai(std::vector<int32_t> cards); //发牌
 
-	Asset::PAI_CHECK_RETURN CheckPai(const Asset::PaiElement& pai);
+	std::vector<Asset::PAI_CHECK_RETURN> CheckPai(const Asset::PaiElement& pai);
 
 	bool CheckHuPai(const Asset::PaiElement& pai); //胡牌
 
