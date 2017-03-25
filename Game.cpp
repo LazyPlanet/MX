@@ -135,7 +135,9 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
 	if (!pai_operate) return; 
 
-	_curr_player_index = GetPlayerOrder(player->GetID()); //上面检查过，就说明当前该玩家可操作
+	//如果不是放弃，才是当前玩家的操作
+	if (Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GIVEUP != pai_operate->oper_type())
+		_curr_player_index = GetPlayerOrder(player->GetID()); //上面检查过，就说明当前该玩家可操作
 
 	_room->BroadCast(message); //广播玩家操作
 	
@@ -163,7 +165,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				//发送给Client
 				Asset::PaiOperationAlert alert;
 				alert.mutable_pai()->CopyFrom(pai);
-				for (auto rtn : pai_rtn) alert.mutable_check_return()->Add(rtn);
+				for (auto rtn : pai_rtn) alert.mutable_check_return()->Add(rtn); //可操作牌类型
 				if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert);
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
@@ -272,15 +274,41 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GIVEUP: //放弃
 		{
-			auto player_next = GetNextPlayer(player->GetID());
+			auto next_player_index = (_curr_player_index + 1) % 4; //如果有玩家放弃操作，则继续下个玩家
+
+			auto player_next = GetPlayerByOrder(next_player_index);
 			if (!player_next) return; 
-			
-			auto cards = FaPai(1); //发牌 
-			player_next->OnFaPai(cards);
 
-			_curr_player_index = (_curr_player_index + 1) % 4; //下家吃牌
+			//如果是其他玩家放弃了操作(比如，对门不碰)，则检查下家还能不能要这张牌，来吃
+			if (_oper_limit.player_id() != player_next->GetID()) 
+			{
+				auto rtn_check = player_next->CheckPai(pai);
 
-			ClearOperation(); //清理缓存以及等待玩家操作的状态
+				if (rtn_check.size() > 0)
+				{
+					//发送给Client
+					Asset::PaiOperationAlert alert;
+					alert.mutable_pai()->CopyFrom(pai);
+					for (auto rtn : rtn_check) alert.mutable_check_return()->Add(rtn); //可操作牌类型
+					player_next->SendProtocol(alert);
+				}
+				else
+				{
+					auto cards = FaPai(1); //发牌 
+					player_next->OnFaPai(cards);
+
+					_curr_player_index = next_player_index;
+					ClearOperation(); //清理缓存以及等待玩家操作的状态
+				}
+			}
+			else
+			{
+				auto cards = FaPai(1); //发牌 
+				player_next->OnFaPai(cards);
+
+				_curr_player_index = next_player_index;
+				ClearOperation(); //清理缓存以及等待玩家操作的状态
+			}
 		}
 		break;
 
