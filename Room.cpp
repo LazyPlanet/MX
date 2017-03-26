@@ -37,7 +37,7 @@ void Room::Enter(std::shared_ptr<Player> player)
 
 	_players.push_back(player); //进入房间
 
-	player->SetPosition((Asset::POSITION_TYPE)_players.size()); //设置位置
+	//player->SetPosition((Asset::POSITION_TYPE)_players.size()); //设置位置
 
 	/*
 

@@ -124,6 +124,8 @@ bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
 	if (!player || !message || !_room) return;
+	
+	CP("%s:line:%d player_id:%ld\n", __func__, __LINE__, player->GetID());
 
 	if (!CanPaiOperate(player, message)) 
 	{
@@ -278,6 +280,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			auto next_player_index = (_curr_player_index + 1) % 4; //如果有玩家放弃操作，则继续下个玩家
 
 			auto player_next = GetPlayerByOrder(next_player_index);
+			CP("%s:line:%d _oper_limit.player_id:%ld next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", 
+					__func__, __LINE__, _oper_limit.player_id(), player_next->GetID(), _curr_player_index, next_player_index);
 			if (!player_next) return; 
 
 			//如果是其他玩家放弃了操作(比如，对门不碰)，则检查下家还能不能要这张牌，来吃

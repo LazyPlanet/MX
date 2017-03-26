@@ -258,21 +258,11 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 	//if (pai_operate->pais().size() <= 0 && pai_operate->pai().size() <= 0) return 3; //估计是外挂
 
 	pai_operate->set_position(GetPosition()); //设置玩家座位
-	//检查玩家是否真的有这些牌
-	for (const auto& pai : pai_operate->pais()) 
-	{
-		const auto& pais = _cards[pai.card_type()];
 
-		auto it = std::find(pais.begin(), pais.end(), pai.card_value());
-		if (it == pais.end()) return 3; //没有这张牌
+	//const auto& pais = _cards[pai_operate->pai().card_type()];
+	//auto it = std::find(pais.begin(), pais.end(), pai_operate->pai().card_value());
 
-		if (pais[pai.card_index()] != pai.card_value()) return 4; //Server<->Client 不一致
-	}
-
-	const auto& pais = _cards[pai_operate->pai().card_type()];
-	auto it = std::find(pais.begin(), pais.end(), pai_operate->pai().card_value());
-
-	if (it == pais.end()) return 5; //没有这张牌
+	//if (it == pais.end()) return 5; //没有这张牌
 
 	//进行操作
 	switch (pai_operate->oper_type())
@@ -296,6 +286,21 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 			//bool ret = CheckHuPai(pai); 
 			//if (!ret) return 7; //估计是挂
 
+		}
+		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_CHIPAI: //吃牌
+		{
+			//检查玩家是否真的有这些牌
+			for (const auto& pai : pai_operate->pais()) 
+			{
+				const auto& pais = _cards[pai.card_type()];
+
+				auto it = std::find(pais.begin(), pais.end(), pai.card_value());
+				if (it == pais.end()) return 3; //没有这张牌
+
+				//if (pais[pai.card_index()] != pai.card_value()) return 4; //Server<->Client 不一致 TODO:暂时不做检查
+			}
 		}
 		break;
 
@@ -1057,7 +1062,7 @@ bool Player::CheckPengPai(const Asset::PaiElement& pai)
 	int32_t card_value = pai.card_value();
 	int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
 
-	if (2 <= count) return false;
+	if (count < 2) return false;
 	
 	return true;
 }
