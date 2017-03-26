@@ -836,7 +836,8 @@ int32_t Player::CmdLoadScene(pb::Message* message)
 
 			_locate_room->Enter(shared_from_this()); //玩家进入房间
 			
-			_stuff.mutable_player_prop()->Clear(); //状态
+			_stuff.mutable_player_prop()->clear_load_type(); //状态
+			_stuff.mutable_player_prop()->clear_room_id(); //状态
 		}
 		break;
 		
@@ -973,7 +974,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 		int32_t count = crds.second.size();
 		count_sum += count;
 	}
-	if (count_sum != 14) return false;
+	//if (count_sum != 14) return false; //TODO: 只需要记录手中的牌即可
 	
 	std::sort(cards[pai.card_type()].begin(), cards[pai.card_type()].end(), [](int x, int y){ return x < y; }); //由小到大，排序
 
