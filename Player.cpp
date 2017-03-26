@@ -257,6 +257,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 
 	//if (pai_operate->pais().size() <= 0 && pai_operate->pai().size() <= 0) return 3; //估计是外挂
 
+	pai_operate->set_position(GetPosition()); //设置玩家座位
 	//检查玩家是否真的有这些牌
 	for (const auto& pai : pai_operate->pais()) 
 	{
@@ -1035,12 +1036,12 @@ void Player::OnChiPai(const Asset::PaiElement& pai, pb::Message* message)
 	if (cards[1].card_value() - cards[0].card_value() != 1 || 
 			cards[2].card_value() - cards[1].card_value() != 1) return; //不是顺子
 
-	auto first = std::find(it->second.begin(), it->second.end(), cards[1].card_value());
+	auto first = std::find(it->second.begin(), it->second.end(), pai_operate->pais(0).card_value());
 	if (first == it->second.end()) return; //理论上不会出现
 	
 	it->second.erase(first); //删除
 	
-	auto second = std::find(it->second.begin(), it->second.end(), cards[2].card_value());
+	auto second = std::find(it->second.begin(), it->second.end(), pai_operate->pais(1).card_value());
 	if (second == it->second.end()) return; //理论上不会出现
 
 	it->second.erase(second); //删除
@@ -1056,7 +1057,7 @@ bool Player::CheckPengPai(const Asset::PaiElement& pai)
 	int32_t card_value = pai.card_value();
 	int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
 
-	if (2 != count) return false;
+	if (2 <= count) return false;
 	
 	return true;
 }
@@ -1098,6 +1099,52 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
 	
 	SynchronizePai();
+}
+
+bool Player::CheckFengGangPai()
+{
+	auto it = _cards.find(Asset::CARD_TYPE_FENG);
+	for (auto card_value = 1; card_value <= 4; ++card_value) //东南西北
+	{
+		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
+		if (it_if == it->second.end()) return false;
+	}
+	return true;
+}
+
+void Player::OnGangFengPai()
+{
+	if (!CheckFengGangPai()) return;
+
+	auto it = _cards.find(Asset::CARD_TYPE_FENG);
+	for (auto card_value = 1; card_value <= 4; ++card_value) //东南西北
+	{
+		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
+		if (it_if != it->second.end())  it->second.erase(it_if); //删除
+	}
+}
+
+bool Player::CheckJianGangPai()
+{
+	auto it = _cards.find(Asset::CARD_TYPE_JIAN);
+	for (auto card_value = 1; card_value <= 3; ++card_value) //中发白
+	{
+		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
+		if (it_if == it->second.end()) return false;
+	}
+	return true;
+}
+
+void Player::OnGangJianPai()
+{
+	if (!CheckJianGangPai()) return;
+
+	auto it = _cards.find(Asset::CARD_TYPE_JIAN);
+	for (auto card_value = 1; card_value <= 3; ++card_value) //中发白
+	{
+		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
+		if (it_if != it->second.end())  it->second.erase(it_if); //删除
+	}
 }
 
 int32_t Player::OnFaPai(std::vector<int32_t> cards)

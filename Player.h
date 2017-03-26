@@ -226,7 +226,7 @@ public:
 private:
 	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
 	std::shared_ptr<Game> _game = nullptr; //当前游戏
-	std::unordered_map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家具有的麻将
+	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家具有的麻将
 public:
 	//玩家操作
 	virtual int32_t CmdGameOperate(pb::Message* message); //游戏操作
@@ -251,6 +251,11 @@ public:
 
 	bool CheckGangPai(const Asset::PaiElement& pai); //是否可以杠牌
 	void OnGangPai(const Asset::PaiElement& pai); //杠牌
+	
+	bool CheckFengGangPai(); //是否有旋风杠
+	bool CheckJianGangPai(); //是否有箭杠
+	void OnGangFengPai(); //旋风杠
+	void OnGangJianPai(); //箭杠
 
 	bool CheckPengPai(const Asset::PaiElement& pai); //是否可以碰牌
 	void OnPengPai(const Asset::PaiElement& pai); //碰牌
@@ -261,7 +266,7 @@ public:
 	bool IsReady() { return _stuff.player_prop().game_oper_state() == Asset::GAME_OPER_TYPE_START; }
 	//获取玩家座次
 	Asset::POSITION_TYPE GetPosition() { return _stuff.player_prop().position(); }
-	void SetPosition(Asset::POSITION_TYPE position) { return _stuff.mutable_player_prop()->set_position(position); }
+	void SetPosition(Asset::POSITION_TYPE position) { _stuff.mutable_player_prop()->set_position(position); }
 
 	void SynchronizePai();
 	void ClearCards() {	_cards.clear();	}

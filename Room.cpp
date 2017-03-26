@@ -16,6 +16,8 @@ namespace Adoter
 
 Asset::ERROR_CODE Room::TryEnter(std::shared_ptr<Player> player)
 {
+	std::lock_guard<std::mutex> lock(_mutex);
+
 	if (!player || IsFull()) return Asset::ERROR_ROOM_IS_FULL;
 
 	auto it = std::find_if(_players.begin(), _players.end(), [player](std::shared_ptr<Player> p) {
@@ -30,6 +32,8 @@ Asset::ERROR_CODE Room::TryEnter(std::shared_ptr<Player> player)
 void Room::Enter(std::shared_ptr<Player> player)
 {
 	if (TryEnter(player) != Asset::ERROR_SUCCESS) return; //进入房间之前都需要做此检查，理论上不会出现
+
+	std::lock_guard<std::mutex> lock(_mutex);
 
 	_players.push_back(player); //进入房间
 

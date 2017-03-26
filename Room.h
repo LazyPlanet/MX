@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <mutex>
 #include <unordered_map>
 
 #include "Asset.h"
@@ -19,6 +20,8 @@ class Room : public std::enable_shared_from_this<Room>
 
 	int32_t _banker_index = 0; //庄家索引
 	int64_t _banker = 0; //庄家
+
+	std::mutex _mutex;
 
 private:
 	std::shared_ptr<Asset::Room> _stuff;
