@@ -889,10 +889,26 @@ int32_t Player::CmdLuckyPlate(pb::Message* message)
 std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& pai)
 {
 	std::vector<Asset::PAI_CHECK_RETURN> rtn_check;
-	if (CheckHuPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_HU);
-	if (CheckGangPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_GANG);
-	if (CheckPengPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_PENG);
-	if (CheckChiPai(pai)) rtn_check.push_back(Asset::PAI_CHECK_RETURN_CHI);
+
+	if (CheckHuPai(pai)) 
+	{
+		rtn_check.push_back(Asset::PAI_CHECK_RETURN_HU);
+	}
+	if (CheckGangPai(pai)) 
+	{
+		rtn_check.push_back(Asset::PAI_CHECK_RETURN_GANG);
+	}
+	if (CheckPengPai(pai)) 
+	{
+		rtn_check.push_back(Asset::PAI_CHECK_RETURN_PENG);
+	}
+	if (CheckChiPai(pai)) 
+	{
+		rtn_check.push_back(Asset::PAI_CHECK_RETURN_CHI);
+	}
+		
+	PrintPai();
+
 	return rtn_check;
 }
 
@@ -911,6 +927,12 @@ std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& p
 
 bool CanHuPai(std::vector<int32_t>& cards, bool use_pair = false)
 {
+	std::cout << "============================检查胡牌" << std::endl;
+	for (auto card : cards)
+		std::cout << card << " ";
+	std::cout << std::endl;
+	std::cout << "============================检查胡牌" << std::endl;
+
 	int32_t size = cards.size();
 
 	if (size <= 2) 
@@ -983,6 +1005,15 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 		bool can_hu = CanHuPai(crds.second);	
 		if (!can_hu) return false; //牌类型检查
 	}
+
+	std::cout << "当前玩家牌:" << std::endl;
+	for (auto card : _cards)
+	{
+		std::cout << card.first << std::endl;
+		for (auto value : card.second)
+		std::cout << value << " ";
+	}
+	std::cout << std::endl;
 	return true;
 }
 
@@ -1167,6 +1198,8 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 	{
 		std::sort(cards.second.begin(), cards.second.end(), [](int x, int y){ return x < y; }); //由小到大
 	}
+
+	PrintPai();
 	
 	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
 
@@ -1192,6 +1225,13 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 		notify.mutable_pai()->set_card_value(card.card_value());
 
 		notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //操作类型：发牌
+
+		//检查玩家手中牌是否可操作
+		Asset::PaiOperationAlert alert;
+		alert.mutable_pai()->CopyFrom(card);
+		if (CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU); 
+		if (CheckGangPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+		if (alert.check_return().size()) SendProtocol(alert);
 	}
 	
 	SendProtocol(notify); //发送
@@ -1218,6 +1258,25 @@ void Player::SynchronizePai()
 	SendProtocol(notify); //发送
 }
 
+void Player::PrintPai()
+{
+	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
+
+	for (auto pai : _cards)
+	{
+		auto pais = notify.mutable_pais()->Add();
+
+		pais->set_card_type((Asset::CARD_TYPE)pai.first); //牌类型
+
+		::google::protobuf::RepeatedField<int32_t> cards(pai.second.begin(), pai.second.end());
+		pais->mutable_cards()->CopyFrom(cards); //牌值
+	}
+	
+	notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_SYNC); //操作类型：同步数据
+	
+	std::cout << "当前玩家牌:" << GetID() << std::endl;
+	notify.PrintDebugString();
+}
 /////////////////////////////////////////////////////
 //玩家通用管理类
 /////////////////////////////////////////////////////

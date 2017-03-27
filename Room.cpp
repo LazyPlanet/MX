@@ -38,9 +38,9 @@ void Room::Enter(std::shared_ptr<Player> player)
 
 	CP("%s:line:%d 当前房间人数:%d player_id:%ld\n", __func__, __LINE__, _players.size(), player->GetID());
 
-	player->SetPosition((Asset::POSITION_TYPE)_players.size()); //设置位置
-	
 	_players.push_back(player); //进入房间
+
+	player->SetPosition((Asset::POSITION_TYPE)_players.size()); //设置位置
 
 	/*
 

@@ -269,6 +269,7 @@ public:
 	void SetPosition(Asset::POSITION_TYPE position) { _stuff.mutable_player_prop()->set_position(position); }
 
 	void SynchronizePai();
+	void PrintPai();
 	void ClearCards() {	_cards.clear();	}
 };
 
