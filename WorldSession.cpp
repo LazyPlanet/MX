@@ -194,6 +194,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 	}
 	catch (std::exception& e)
 	{
+		CP("异常：%s", e.what());
 		Close();
 		return;
 	}

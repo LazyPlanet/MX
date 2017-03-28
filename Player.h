@@ -250,6 +250,7 @@ public:
 	bool CheckHuPai(const Asset::PaiElement& pai); //胡牌
 
 	bool CheckGangPai(const Asset::PaiElement& pai); //是否可以杠牌
+	bool CheckAnGangPai(Asset::PaiElement& pai); //是否可以暗杠
 	void OnGangPai(const Asset::PaiElement& pai); //杠牌
 	
 	bool CheckFengGangPai(); //是否有旋风杠

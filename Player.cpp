@@ -888,27 +888,33 @@ int32_t Player::CmdLuckyPlate(pb::Message* message)
 /////////////////////////////////////////////////////
 std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& pai)
 {
+	std::cout << "玩家来的牌:line:" << __LINE__ << "card_type:" << pai.card_type() << " card_value:" << pai.card_value() << std::endl;
+
+	PrintPai();
+
 	std::vector<Asset::PAI_CHECK_RETURN> rtn_check;
 
 	if (CheckHuPai(pai)) 
 	{
+		std::cout << "玩家胡牌line:" << __LINE__ << std::endl;
 		rtn_check.push_back(Asset::PAI_CHECK_RETURN_HU);
 	}
 	if (CheckGangPai(pai)) 
 	{
+		std::cout << "玩家杠牌line:" << __LINE__ << std::endl;
 		rtn_check.push_back(Asset::PAI_CHECK_RETURN_GANG);
 	}
 	if (CheckPengPai(pai)) 
 	{
+		std::cout << "玩家碰牌line:" << __LINE__ << std::endl;
 		rtn_check.push_back(Asset::PAI_CHECK_RETURN_PENG);
 	}
 	if (CheckChiPai(pai)) 
 	{
+		std::cout << "玩家吃牌line:" << __LINE__ << std::endl;
 		rtn_check.push_back(Asset::PAI_CHECK_RETURN_CHI);
 	}
 		
-	PrintPai();
-
 	return rtn_check;
 }
 
@@ -937,7 +943,7 @@ bool CanHuPai(std::vector<int32_t>& cards, bool use_pair = false)
 
 	if (size <= 2) 
 	{
-		return size == 0 || std::equal(cards.begin() + 1, cards.end(), cards.begin()); 
+		return size == 0; //|| std::equal(cards.begin() + 1, cards.end(), cards.begin()); 
 	}
 
 	bool pair = false/*一对*/, straight/*顺子//一套副*/ = false;
@@ -1006,14 +1012,6 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 		if (!can_hu) return false; //牌类型检查
 	}
 
-	std::cout << "当前玩家牌:" << std::endl;
-	for (auto card : _cards)
-	{
-		std::cout << card.first << std::endl;
-		for (auto value : card.second)
-		std::cout << value << " ";
-	}
-	std::cout << std::endl;
 	return true;
 }
 
@@ -1120,7 +1118,7 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai)
 	int32_t card_value = pai.card_value();
 	int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
 
-	if (3 != count) return false;
+	if (3 > count) return false; //如果玩家有3张，则是明杠，如果玩家有4张则是暗杠
 	
 	return true;
 }
@@ -1136,6 +1134,26 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
 	
 	SynchronizePai();
+}
+
+bool Player::CheckAnGangPai(Asset::PaiElement& pai)
+{
+	for (auto card : _cards)
+	{
+		for (auto card_value : card.second)
+		{
+			int32_t count = std::count_if(card.second.begin(), card.second.end(), [card_value](int32_t value) { return card_value == value; });
+
+			if (count == 4) //暗杠
+			{
+				pai.set_card_type((Asset::CARD_TYPE)card.first);
+				pai.set_card_value(pai.card_value());
+				return true;
+			}
+		}
+	}
+	
+	return false;
 }
 
 bool Player::CheckFengGangPai()
