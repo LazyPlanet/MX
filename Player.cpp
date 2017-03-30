@@ -931,26 +931,43 @@ std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& p
 //
 //下面的算法是可以直接判断是否牌型是否和牌的，不局限于14张牌(3n+2即可)
 
-bool CanHuPai(std::vector<int32_t>& cards, bool use_pair = false)
-{
-	std::cout << "============================检查胡牌" << std::endl;
-	for (auto card : cards)
-		std::cout << card << " ";
-	std::cout << std::endl;
-	std::cout << "============================检查胡牌" << std::endl;
+struct Card_t {
 
+	int32_t _type; //类型
+	int32_t _value; //值
+
+public:
+	bool operator == (const Card_t& card)
+	{
+		return _type == card._type && _value == card._value;
+	}
+
+	Card_t operator + (int32_t value)
+	{
+		return Card_t(_type, _value + value);
+	}
+
+	Card_t(int32_t type, int32_t value)
+	{
+		_type = type;
+		_value = value;
+	}
+};
+
+bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
+{
 	int32_t size = cards.size();
 
 	if (size <= 2) 
 	{
-		return size == 0; //|| std::equal(cards.begin() + 1, cards.end(), cards.begin()); 
+		return size == 0 || cards[0] == cards[1]; 
 	}
 
 	bool pair = false/*一对*/, straight/*顺子//一套副*/ = false;
 
 	if (!use_pair)
 	{
-		std::vector<int32_t> sub_cards(cards.begin() + 2, cards.end());
+		std::vector<Card_t> sub_cards(cards.begin() + 2, cards.end());
 
 		pair = (cards[0] == cards[1]) && CanHuPai(sub_cards, true);
 	}
@@ -959,18 +976,18 @@ bool CanHuPai(std::vector<int32_t>& cards, bool use_pair = false)
 	//
 	//首张牌用以三张, 剩下的牌是否能和牌。
 	
-	std::vector<int32_t> sub_cards(cards.begin() + 3, cards.end());
+	std::vector<Card_t> sub_cards(cards.begin() + 3, cards.end());
 	bool trips = (cards[0] == cards[1]) && (cards[1] == cards[2]) && CanHuPai(sub_cards, use_pair); //刻:三个一样的牌
 
-	int32_t card_value = cards[0];
+	int32_t card_value = cards[0]._value;
 	if (card_value <= 7)
 	{
 		//顺子的第一张牌
-		int32_t first = cards[0];
+		auto first = cards[0];
 		//顺子的第二张牌
-		int32_t second = cards[0] + 1;
+		auto second = cards[0] + 1;
 		//顺子的第三张牌
-		int32_t third = cards[0] + 2;
+		auto third = cards[0] + 2;
 		//玩家是否真的有这两张牌
 		if (std::find(cards.begin(), cards.end(), second) != cards.end() && std::find(cards.begin(), cards.end(), third) != cards.end())
 		{
@@ -1006,13 +1023,17 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	
 	std::sort(cards[pai.card_type()].begin(), cards[pai.card_type()].end(), [](int x, int y){ return x < y; }); //由小到大，排序
 
+	std::vector<Card_t> card_list;
+
 	for (auto crds : cards) //不同牌类别的牌
 	{
-		bool can_hu = CanHuPai(crds.second);	
-		if (!can_hu) return false; //牌类型检查
+		for (auto value : crds.second)
+			card_list.push_back(Card_t(crds.first, value));
 	}
+		
+	bool can_hu = CanHuPai(card_list);	
 
-	return true;
+	return can_hu;
 }
 
 bool Player::CheckChiPai(const Asset::PaiElement& pai)
