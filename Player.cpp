@@ -979,8 +979,9 @@ bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
 	std::vector<Card_t> sub_cards(cards.begin() + 3, cards.end());
 	bool trips = (cards[0] == cards[1]) && (cards[1] == cards[2]) && CanHuPai(sub_cards, use_pair); //刻:三个一样的牌
 
-	int32_t card_value = cards[0]._value;
-	if (card_value <= 7)
+	int32_t card_value = cards[0]._value, card_type = cards[0]._type;
+
+	if (card_value <= 7 && card_type != Asset::CARD_TYPE_FENG && card_type != Asset::CARD_TYPE_JIAN)
 	{
 		//顺子的第一张牌
 		auto first = cards[0];
