@@ -1140,7 +1140,7 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai)
 	int32_t card_value = pai.card_value();
 	int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
 
-	if (3 > count) return false; //如果玩家有3张，则是明杠，如果玩家有4张则是暗杠
+	if (count < 3) return false; //如果玩家有3张，则是明杠，如果玩家有4张则是暗杠
 	
 	return true;
 }
