@@ -104,8 +104,8 @@ bool Game::OnOver()
 	
 bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
-	if (_oper_limit.time_out() < CommonTimerInstance.GetTime() 
-			&& _oper_limit.player_id() == player->GetID()) 
+	if (/*_oper_limit.time_out() < CommonTimerInstance.GetTime() 
+			&& */_oper_limit.player_id() == player->GetID()) 
 	{
 		return true; //玩家操作：碰、杠、胡牌
 	}
