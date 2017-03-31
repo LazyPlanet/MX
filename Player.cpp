@@ -888,7 +888,7 @@ int32_t Player::CmdLuckyPlate(pb::Message* message)
 /////////////////////////////////////////////////////
 std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& pai)
 {
-	std::cout << "玩家来的牌:line:" << __LINE__ << "card_type:" << pai.card_type() << " card_value:" << pai.card_value() << std::endl;
+	std::cout << "玩家来的牌:line:" << __LINE__ << " card_type:" << pai.card_type() << " card_value:" << pai.card_value() << std::endl;
 
 	PrintPai();
 
@@ -1096,11 +1096,13 @@ void Player::OnChiPai(const Asset::PaiElement& pai, pb::Message* message)
 	auto first = std::find(it->second.begin(), it->second.end(), pai_operate->pais(0).card_value());
 	if (first == it->second.end()) return; //理论上不会出现
 	
+	CP("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(0).card_type(), pai_operate->pais(0).card_value());
 	it->second.erase(first); //删除
-	
+
 	auto second = std::find(it->second.begin(), it->second.end(), pai_operate->pais(1).card_value());
 	if (second == it->second.end()) return; //理论上不会出现
 
+	CP("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(1).card_type(), pai_operate->pais(0).card_value());
 	it->second.erase(second); //删除
 
 	SynchronizePai();
@@ -1121,13 +1123,21 @@ bool Player::CheckPengPai(const Asset::PaiElement& pai)
 
 void Player::OnPengPai(const Asset::PaiElement& pai)
 {
-	if (!CheckPengPai(pai)) return;
+	if (!CheckPengPai(pai)) 
+	{
+		auto log = make_unique<Asset::LogMessage>();
+		log->set_player_id(GetID());
+		log->set_type(Asset::PAI_PERATION);
+		LOG(ERROR, log.get()); //记录日志
+		return;
+	}
 	
 	auto it = _cards.find(pai.card_type());
 	if (it == _cards.end()) return; //理论上不会如此
 	
 	int32_t card_value = pai.card_value();
 	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除，TODO:玩家手里有3张牌，但是选择了碰牌...
+	CP("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai.card_type(), pai.card_value());
 	
 	SynchronizePai();
 }

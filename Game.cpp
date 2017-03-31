@@ -59,7 +59,6 @@ bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 		auto player = _players[i];
 
 		CP("%s:line:%d player_id:%ld player_index:%d\n", __func__, __LINE__, player->GetID(), i);
-		player->ClearCards(); 
 
 		int32_t card_count = 13; //正常开启，普通玩家牌数量
 
@@ -88,7 +87,12 @@ void Game::OnStart()
 bool Game::OnOver()
 {
 	_hupai_players.push_back(1);
-	//for (auto player : _players) player.second->SetGame(nullptr);
+	//清理牌
+	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+	{
+		auto player = _players[i];
+		player->ClearCards();
+	}
 	return true;
 }
 
@@ -127,13 +131,16 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 	
 	CP("%s:line:%d player_id:%ld\n", __func__, __LINE__, player->GetID());
 
+	std::cout << "当前缓存的牌" << std::endl;
+	_oper_limit.PrintDebugString();
+
 	if (!CanPaiOperate(player, message)) 
 	{
 		player->AlertMessage(Asset::ERROR_GAME_NO_PERMISSION); //没有权限，没到玩家操作
 		//return; 
 	}
 
-	if (CommonTimerInstance.GetTime() < _oper_limit.time_out()) ClearOperation(); //已经超时，清理缓存以及等待玩家操作的状态
+	//if (CommonTimerInstance.GetTime() < _oper_limit.time_out()) ClearOperation(); //已经超时，清理缓存以及等待玩家操作的状态
 			
 	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
 	if (!pai_operate) return; 
