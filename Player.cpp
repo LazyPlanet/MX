@@ -1320,7 +1320,7 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 
 		if (alert.check_return().size()) SendProtocol(alert);
 
-		_stuff.mutable_player_prop()->set_check_xuanfeng(true);
+		_stuff.mutable_player_prop()->set_check_xuanfeng(true); //设置已经检查过旋风杠
 	}
 	
 	SendProtocol(notify); //发送
