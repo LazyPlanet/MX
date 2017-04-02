@@ -1316,11 +1316,11 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 		{
 			if (CheckFengGangPai(cards_inhand)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
 			if (CheckJianGangPai(cards_inhand)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+
+			_stuff.mutable_player_prop()->set_check_xuanfeng(true); //设置已经检查过旋风杠
 		}
 
 		if (alert.check_return().size()) SendProtocol(alert);
-
-		_stuff.mutable_player_prop()->set_check_xuanfeng(true); //设置已经检查过旋风杠
 	}
 	
 	SendProtocol(notify); //发送
