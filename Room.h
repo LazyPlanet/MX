@@ -33,6 +33,15 @@ public:
 	virtual int64_t GetID() { return _stuff->room_id(); }
 
 	virtual void SetID(int64_t room_id) { return _stuff->set_room_id(room_id); }
+	
+	virtual std::shared_ptr<Asset::Room> Get() {
+		return _stuff; //数据
+	}
+	
+	const Asset::RoomOptions& GetOptions() {
+		return _stuff->options(); //数据
+	}
+
 public:
 	Asset::ERROR_CODE TryEnter(std::shared_ptr<Player> player);
 	void Enter(std::shared_ptr<Player> player);

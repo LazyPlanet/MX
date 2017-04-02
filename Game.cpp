@@ -18,25 +18,13 @@ void Game::Init(std::shared_ptr<Room> room)
 
 	std::iota(_cards.begin(), _cards.end(), 1);
 
-	for (auto card : _cards)
-	{
-		CP("%s:line:%d card:%d ", __func__, __LINE__, card);
-	}
-
 	std::vector<int32_t> cards(_cards.begin(), _cards.end());
 
 	std::random_shuffle(cards.begin(), cards.end()); //洗牌
 
 	_cards = std::list<int32_t>(cards.begin(), cards.end());
 
-	for (auto card : _cards)
-	{
-		CP("%s:line:%d card:%d ", __func__, __LINE__, card);
-	}
-
 	_room = room;
-
-	std::cout << __func__ << ": size: " << _cards.size() << std::endl;
 }
 
 bool Game::Start(std::vector<std::shared_ptr<Player>> players)
@@ -47,7 +35,6 @@ bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 
 	for (auto player : players)
 	{
-		CP("%s:line:%d player_id:%ld player_index:%d\n", __func__, __LINE__, player->GetID(), player_index);
 		_players[player_index++] = player; //复制成员
 		player->SetPosition(Asset::POSITION_TYPE(player_index));
 	}
@@ -58,7 +45,7 @@ bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 	{
 		auto player = _players[i];
 
-		CP("%s:line:%d player_id:%ld player_index:%d\n", __func__, __LINE__, player->GetID(), i);
+		DEBUG("%s:line:%d player_id:%ld player_index:%d\n", __func__, __LINE__, player->GetID(), i);
 
 		int32_t card_count = 13; //正常开启，普通玩家牌数量
 
@@ -81,6 +68,7 @@ bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 	
 void Game::OnStart()
 {
+	if (!_room) return;
 
 }
 

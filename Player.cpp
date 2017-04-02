@@ -1190,7 +1190,15 @@ bool Player::CheckAnGangPai(Asset::PaiElement& pai)
 
 bool Player::CheckFengGangPai()
 {
+	if (!_locate_room) return false;
+
+	auto options = _locate_room->GetOptions();
+
+	auto it_xuanfeng = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_XUANFENGGANG);
+	if (it_xuanfeng == options.extend_type().end()) return false;
+
 	auto it = _cards.find(Asset::CARD_TYPE_FENG);
+
 	for (auto card_value = 1; card_value <= 4; ++card_value) //东南西北
 	{
 		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
@@ -1230,6 +1238,7 @@ void Player::OnGangJianPai()
 	for (auto card_value = 1; card_value <= 3; ++card_value) //中发白
 	{
 		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
+
 		if (it_if != it->second.end())  it->second.erase(it_if); //删除
 	}
 }
@@ -1249,11 +1258,11 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 		std::sort(cards.second.begin(), cards.second.end(), [](int x, int y){ return x < y; }); //由小到大
 	}
 
-	PrintPai();
+	//PrintPai();
 	
 	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
 
-	if (cards.size() > 1)
+	if (cards.size() > 1) //开局
 	{
 		for (auto pai : _cards)
 		{
@@ -1276,7 +1285,7 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 
 		notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //操作类型：发牌
 
-		//检查玩家手中牌是否可操作
+		//检查玩家是否可以暗杠或者自摸
 		Asset::PaiOperationAlert alert;
 		alert.mutable_pai()->CopyFrom(card);
 		if (CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU); 
