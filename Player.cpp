@@ -959,6 +959,8 @@ public:
 	}
 };
 
+std::vector<std::tuple<bool, bool, bool>> hu_result;
+
 bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
 {
 	int32_t size = cards.size();
@@ -1010,36 +1012,91 @@ bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
 		}
 	}
 
+	hu_result.push_back(std::make_tuple(pair, trips, straight));
+
 	return pair || trips || straight; //一对、刻或者顺子
 }
 
 bool Player::CheckHuPai(const Asset::PaiElement& pai)
 {
 	auto cards = _cards; //复制当前牌
-	cards[pai.card_type()].push_back(pai.card_value());
-	
-	int32_t count_sum = 0;
-	//每个玩家有14张牌，需要满足 [3 3 3 3 2] 模型才能胡牌
-	for (auto crds : cards)
-	{
-		int32_t count = crds.second.size();
-		count_sum += count;
-	}
-	//if (count_sum != 14) return false; //TODO: 只需要记录手中的牌即可
+	for (auto crds : _cards_outhand) cards.emplace(crds);
+
+	cards[pai.card_type()].push_back(pai.card_value()); //放入可以操作的牌
 	
 	std::sort(cards[pai.card_type()].begin(), cards[pai.card_type()].end(), [](int x, int y){ return x < y; }); //由小到大，排序
 
-	std::vector<Card_t> card_list;
+	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
+	auto options = _locate_room->GetOptions();
+	//是否可以缺门
+	auto it_duanmen = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_DUANMEN);
+	if (it_duanmen != options.extend_type().end()) 
+	{
+		if (cards.find(Asset::CARD_TYPE_WANZI) == cards.end() || cards.find(Asset::CARD_TYPE_BINGZI) == cards.end() || 
+				cards.find(Asset::CARD_TYPE_TIAOZI) == cards.end()) return false; //不可缺门
+	}
+	//是否可以站立胡
+	auto it_zhanli = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_ZHANLIHU);
+	if (it_zhanli != options.extend_type().end()) 
+	{
+		if (_cards_outhand.size() == 0) return false; //没开门
+	}
+	
+	//是否有幺九
+	bool has_yao = false;
 
+	for (auto crds : cards) //不同牌类别的牌
+	{
+		if (crds.first == Asset::CARD_TYPE_WANZI || crds.first == Asset::CARD_TYPE_BINGZI || crds.first == Asset::CARD_TYPE_TIAOZI)
+		{
+			if (crds.second.size() == 0) continue;
+
+			if (std::find(crds.second.begin(), crds.second.end(), 1) != crds.second.end() || 
+					(std::find(crds.second.begin(), crds.second.end(), 9) != crds.second.end()))
+			{
+				has_yao = true;
+				break;
+			}
+		}
+		
+		if (crds.first == Asset::CARD_TYPE_FENG || crds.first == Asset::CARD_TYPE_JIAN)
+		{
+			if (crds.second.size() > 0) 
+			{
+				has_yao = true;
+				break;
+			}
+		}
+	}
+
+	if (!has_yao) return false;
+
+	////////////////////////////////////////////////////////////////////////////是否可以满足胡牌的要求
+	
+	hu_result.clear();
+
+	std::vector<Card_t> card_list;
 	for (auto crds : cards) //不同牌类别的牌
 	{
 		for (auto value : crds.second)
 			card_list.push_back(Card_t(crds.first, value));
 	}
-		
 	bool can_hu = CanHuPai(card_list);	
+	if (!can_hu) return false;
+	
+	//胡牌时至少有一刻子或杠，或有中发白其中一对
+	bool has_keng = false;
+	for (auto r : hu_result)
+	{
+		 has_keng = std::get<1>(r);
+		 if (has_keng) break;
+	}
 
-	return can_hu;
+	if (!has_keng && (cards[Asset::CARD_TYPE_FENG].size() || cards[Asset::CARD_TYPE_JIAN].size())) has_keng = true;
+	
+	if (!has_keng) return false;
+
+	return true;
 }
 
 bool Player::CheckChiPai(const Asset::PaiElement& pai)
@@ -1102,13 +1159,17 @@ void Player::OnChiPai(const Asset::PaiElement& pai, pb::Message* message)
 	if (first == it->second.end()) return; //理论上不会出现
 	
 	DEBUG("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(0).card_type(), pai_operate->pais(0).card_value());
+	_cards_outhand[pai.card_type()].push_back(pai_operate->pais(0).card_value());
 	it->second.erase(first); //删除
 
 	auto second = std::find(it->second.begin(), it->second.end(), pai_operate->pais(1).card_value());
 	if (second == it->second.end()) return; //理论上不会出现
 
 	DEBUG("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(1).card_type(), pai_operate->pais(0).card_value());
+	_cards_outhand[pai.card_type()].push_back(pai_operate->pais(1).card_value());
 	it->second.erase(second); //删除
+	
+	_cards_outhand[pai.card_type()].push_back(pai.card_value());
 
 	SynchronizePai();
 }
@@ -1144,6 +1205,11 @@ void Player::OnPengPai(const Asset::PaiElement& pai)
 		it->second.erase(iit);
 		DEBUG("%s:line:%d,删除玩家%ld手中牌 类型:%d--值%d", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 	}
+
+	for (int i = 0; i < 3; ++i)
+	{
+		_cards_outhand[pai.card_type()].push_back(pai.card_value());
+	}
 	
 	SynchronizePai();
 }
@@ -1170,6 +1236,13 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	
 	int32_t card_value = pai.card_value();
 	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
+	
+	auto count = std::count(it->second.begin(), it->second.end(), card_value); //玩家手里多少张牌
+
+	for (int i = 0; i < count; ++i)
+	{
+		_cards_gang[pai.card_type()].push_back(pai.card_value());
+	}
 	
 	SynchronizePai();
 }
