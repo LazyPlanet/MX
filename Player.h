@@ -254,8 +254,8 @@ public:
 	bool CheckAnGangPai(Asset::PaiElement& pai); //是否可以暗杠
 	void OnGangPai(const Asset::PaiElement& pai); //杠牌
 	
-	bool CheckFengGangPai(); //是否有旋风杠
-	bool CheckJianGangPai(); //是否有箭杠
+	bool CheckFengGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/>& cards); //是否有旋风杠
+	bool CheckJianGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/>& cards); //是否有箭杠
 	void OnGangFengPai(); //旋风杠
 	void OnGangJianPai(); //箭杠
 

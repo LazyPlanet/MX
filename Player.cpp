@@ -252,17 +252,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 {
 	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
 	if (!pai_operate) return 1; 
-	
 	if (!_locate_room || !_game) return 2; //还没加入房间或者还没开始游戏
-
-	//if (pai_operate->pais().size() <= 0 && pai_operate->pai().size() <= 0) return 3; //估计是外挂
-
-	pai_operate->set_position(GetPosition()); //设置玩家座位
-
-	//const auto& pais = _cards[pai_operate->pai().card_type()];
-	//auto it = std::find(pais.begin(), pais.end(), pai_operate->pai().card_value());
-
-	//if (it == pais.end()) return 5; //没有这张牌
 
 	//进行操作
 	switch (pai_operate->oper_type())
@@ -280,15 +270,6 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 		}
 		break;
 		
-		//其余的操作都转入到Game中处理
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI: //胡牌
-		{
-			//bool ret = CheckHuPai(pai); 
-			//if (!ret) return 7; //估计是挂
-
-		}
-		break;
-		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_CHIPAI: //吃牌
 		{
 			//检查玩家是否真的有这些牌
@@ -303,6 +284,28 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 			}
 		}
 		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_XUANFENG_FENG: //旋风杠
+		{
+			if (_stuff.player_prop().pai_oper_count() >= 2) 
+			{
+				P(Asset::ERROR, "%s:line:%d, player:%ld 检查旋风杠，估计外挂行为.", __func__, __LINE__, GetID());
+				return 4;
+			}
+			OnGangFengPai();
+		}
+		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_XUANFENG_JIAN: //旋风杠
+		{
+			if (_stuff.player_prop().pai_oper_count() >= 2) 
+			{
+				P(Asset::ERROR, "%s:line:%d, player:%ld 检查旋风杠，估计外挂行为.", __func__, __LINE__, GetID());
+				return 4;
+			}
+			OnGangJianPai();
+		}
+		break;
 
 		default:
 		{
@@ -312,6 +315,8 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 	}
 
 	_game->OnPaiOperate(shared_from_this(), message);
+
+	_stuff.mutable_player_prop()->set_pai_oper_count(_stuff.player_prop().pai_oper_count()); //玩家操作次数
 
 	return 0;
 }
@@ -1125,19 +1130,20 @@ void Player::OnPengPai(const Asset::PaiElement& pai)
 {
 	if (!CheckPengPai(pai)) 
 	{
-		auto log = make_unique<Asset::LogMessage>();
-		log->set_player_id(GetID());
-		log->set_type(Asset::PAI_PERATION);
-		LOG(ERROR, log.get()); //记录日志
+		DEBUG("%s:line:%d,玩家无法碰牌 类型:%d--值%d", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 		return;
 	}
 	
 	auto it = _cards.find(pai.card_type());
 	if (it == _cards.end()) return; //理论上不会如此
 	
-	int32_t card_value = pai.card_value();
-	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除，TODO:玩家手里有3张牌，但是选择了碰牌...
-	DEBUG("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai.card_type(), pai.card_value());
+	for (int i = 0; i < 2; ++i)
+	{
+		auto iit = std::find(it->second.begin(), it->second.end(), pai.card_value()); //从玩家手里删除
+		if (iit == it->second.end()) return;
+		it->second.erase(iit);
+		DEBUG("%s:line:%d,删除玩家%ld手中牌 类型:%d--值%d", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+	}
 	
 	SynchronizePai();
 }
@@ -1188,7 +1194,7 @@ bool Player::CheckAnGangPai(Asset::PaiElement& pai)
 	return false;
 }
 
-bool Player::CheckFengGangPai()
+bool Player::CheckFengGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/>& cards)
 {
 	if (!_locate_room) return false;
 
@@ -1197,7 +1203,7 @@ bool Player::CheckFengGangPai()
 	auto it_xuanfeng = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_XUANFENGGANG);
 	if (it_xuanfeng == options.extend_type().end()) return false; //不支持
 
-	auto it = _cards.find(Asset::CARD_TYPE_FENG);
+	auto it = cards.find(Asset::CARD_TYPE_FENG);
 
 	for (auto card_value = 1; card_value <= 4; ++card_value) //东南西北
 	{
@@ -1209,7 +1215,7 @@ bool Player::CheckFengGangPai()
 
 void Player::OnGangFengPai()
 {
-	if (!CheckFengGangPai()) return;
+	if (!CheckFengGangPai(_cards)) return;
 
 	auto it = _cards.find(Asset::CARD_TYPE_FENG);
 	for (auto card_value = 1; card_value <= 4; ++card_value) //东南西北
@@ -1217,9 +1223,13 @@ void Player::OnGangFengPai()
 		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
 		if (it_if != it->second.end())  it->second.erase(it_if); //删除
 	}
+	
+	//从后楼给玩家取一张牌
+	auto cards = _game->FaPai();
+	OnFaPai(cards);
 }
 
-bool Player::CheckJianGangPai()
+bool Player::CheckJianGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/>& cards)
 {
 	if (!_locate_room) return false;
 
@@ -1228,7 +1238,7 @@ bool Player::CheckJianGangPai()
 	auto it_xuanfeng = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_XUANFENGGANG);
 	if (it_xuanfeng == options.extend_type().end()) return false; //不支持
 
-	auto it = _cards.find(Asset::CARD_TYPE_JIAN);
+	auto it = cards.find(Asset::CARD_TYPE_JIAN);
 	for (auto card_value = 1; card_value <= 3; ++card_value) //中发白
 	{
 		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
@@ -1239,7 +1249,7 @@ bool Player::CheckJianGangPai()
 
 void Player::OnGangJianPai()
 {
-	if (!CheckJianGangPai()) return;
+	if (!CheckJianGangPai(_cards)) return;
 
 	auto it = _cards.find(Asset::CARD_TYPE_JIAN);
 	for (auto card_value = 1; card_value <= 3; ++card_value) //中发白
@@ -1248,10 +1258,16 @@ void Player::OnGangJianPai()
 
 		if (it_if != it->second.end())  it->second.erase(it_if); //删除
 	}
+
+	//从后楼给玩家取一张牌
+	auto cards = _game->FaPai();
+	OnFaPai(cards);
 }
 
 int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 {
+	auto cards_inhand = _cards;
+
 	for (auto card_index : cards)
 	{
 		auto card = GameInstance.GetCard(card_index);
@@ -1295,7 +1311,16 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 		alert.mutable_pai()->CopyFrom(card);
 		if (CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU); 
 		if (CheckGangPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+		//检查玩家是否有旋风杠
+		if (!_stuff.player_prop().check_xuanfeng())
+		{
+			if (CheckFengGangPai(cards_inhand)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
+			if (CheckJianGangPai(cards_inhand)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+		}
+
 		if (alert.check_return().size()) SendProtocol(alert);
+
+		_stuff.mutable_player_prop()->set_check_xuanfeng(true);
 	}
 	
 	SendProtocol(notify); //发送
