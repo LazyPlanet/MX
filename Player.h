@@ -244,7 +244,7 @@ public:
 
 	void SetGame(std::shared_ptr<Game> game) { _game = game; }
 
-	virtual int32_t OnFaPai(std::vector<int32_t> cards); //发牌
+	virtual int32_t OnFaPai(std::vector<int32_t>& cards); //发牌
 
 	std::vector<Asset::PAI_CHECK_RETURN> CheckPai(const Asset::PaiElement& pai);
 

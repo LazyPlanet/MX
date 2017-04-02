@@ -2,6 +2,8 @@
 
 #include <random>
 
+#include "Config.h"
+
 namespace Adoter
 {
 	template<typename T, typename ...Args>
@@ -11,11 +13,8 @@ namespace Adoter
 	}
 
 #define DEBUG_ASSERT(expr) \
-	auto debug = ConfigInstance.GetString("DebugModel", true); \
-	if (debug) \
-	{ \
-		assert(expr); \
-	} \
+	auto debug = ConfigInstance.GetBool("DebugModel", true); \
+		assert(debug && expr); \
 
 }
 

@@ -5,6 +5,7 @@
 #include "Timer.h"
 #include "Asset.h"
 #include "MXLog.h"
+#include "CommonUtil.h"
 
 namespace Adoter
 {
@@ -108,7 +109,7 @@ bool Game::CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		return true; //轮到该玩家
 	}
 
-	CP("%s:line:%d curr_player_index:%d player_index:%d player_id:%ld oper_limit_player_id:%ld\n", 
+	DEBUG("%s:line:%d curr_player_index:%d player_index:%d player_id:%ld oper_limit_player_id:%ld\n", 
 			__func__, __LINE__, _curr_player_index, player_index, player->GetID(), _oper_limit.player_id());
 	return false;
 }
@@ -117,15 +118,12 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 {
 	if (!player || !message || !_room) return;
 	
-	CP("%s:line:%d player_id:%ld\n", __func__, __LINE__, player->GetID());
-
-	std::cout << "当前缓存的牌" << std::endl;
-	_oper_limit.PrintDebugString();
+	DEBUG("%s:line:%d player_id:%ld, 当前可操作的牌:%s\n", __func__, __LINE__, player->GetID(), _oper_limit.DebugString().c_str());
 
 	if (!CanPaiOperate(player, message)) 
 	{
-		player->AlertMessage(Asset::ERROR_GAME_NO_PERMISSION); //没有权限，没到玩家操作
-		//return; 
+		player->AlertMessage(Asset::ERROR_GAME_NO_PERMISSION); //没有权限，没到玩家操作，防止外挂
+		DEBUG_ASSERT(false); 
 	}
 
 	//if (CommonTimerInstance.GetTime() < _oper_limit.time_out()) ClearOperation(); //已经超时，清理缓存以及等待玩家操作的状态
@@ -152,7 +150,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			std::vector<Asset::PAI_CHECK_RETURN> pai_rtn;
 			auto player_id = CheckPai(pai, player->GetID(), pai_rtn); 
 
-			CP("%s:line:%d player_id:%ld can PaiOperate\n", __func__, __LINE__, player_id);
+			DEBUG("满足操作的玩家数据:%s:line:%d player_id:%ld can PaiOperate\n", __func__, __LINE__, player_id);
 
 			if (player_id) //第一个满足要求的玩家
 			{
@@ -171,14 +169,14 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				auto player_next = GetNextPlayer(player->GetID());
 				if (!player_next) return; 
 
-				CP("%s:line:%d player_id:%ld next_player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, 
+				DEBUG("没有操作玩家，顺序发牌:%s:line:%d player_id:%ld next_player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, 
 						player_id, player_next->GetID(), _curr_player_index);
 				
 				auto cards = FaPai(1); 
 				player_next->OnFaPai(cards);
 
 				_curr_player_index = (_curr_player_index + 1) % 4;
-				CP("%s:line:%d player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, player_id, _curr_player_index);
+				DEBUG("设置当前操作数据数据:%s:line:%d player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, player_id, _curr_player_index);
 			}
 		}
 		break;

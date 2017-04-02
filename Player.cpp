@@ -1096,13 +1096,13 @@ void Player::OnChiPai(const Asset::PaiElement& pai, pb::Message* message)
 	auto first = std::find(it->second.begin(), it->second.end(), pai_operate->pais(0).card_value());
 	if (first == it->second.end()) return; //理论上不会出现
 	
-	CP("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(0).card_type(), pai_operate->pais(0).card_value());
+	DEBUG("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(0).card_type(), pai_operate->pais(0).card_value());
 	it->second.erase(first); //删除
 
 	auto second = std::find(it->second.begin(), it->second.end(), pai_operate->pais(1).card_value());
 	if (second == it->second.end()) return; //理论上不会出现
 
-	CP("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(1).card_type(), pai_operate->pais(0).card_value());
+	DEBUG("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(1).card_type(), pai_operate->pais(0).card_value());
 	it->second.erase(second); //删除
 
 	SynchronizePai();
@@ -1137,7 +1137,7 @@ void Player::OnPengPai(const Asset::PaiElement& pai)
 	
 	int32_t card_value = pai.card_value();
 	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除，TODO:玩家手里有3张牌，但是选择了碰牌...
-	CP("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai.card_type(), pai.card_value());
+	DEBUG("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai.card_type(), pai.card_value());
 	
 	SynchronizePai();
 }
@@ -1195,7 +1195,7 @@ bool Player::CheckFengGangPai()
 	auto options = _locate_room->GetOptions();
 
 	auto it_xuanfeng = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_XUANFENGGANG);
-	if (it_xuanfeng == options.extend_type().end()) return false;
+	if (it_xuanfeng == options.extend_type().end()) return false; //不支持
 
 	auto it = _cards.find(Asset::CARD_TYPE_FENG);
 
@@ -1221,6 +1221,13 @@ void Player::OnGangFengPai()
 
 bool Player::CheckJianGangPai()
 {
+	if (!_locate_room) return false;
+
+	auto options = _locate_room->GetOptions();
+
+	auto it_xuanfeng = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_XUANFENGGANG);
+	if (it_xuanfeng == options.extend_type().end()) return false; //不支持
+
 	auto it = _cards.find(Asset::CARD_TYPE_JIAN);
 	for (auto card_value = 1; card_value <= 3; ++card_value) //中发白
 	{
@@ -1243,7 +1250,7 @@ void Player::OnGangJianPai()
 	}
 }
 
-int32_t Player::OnFaPai(std::vector<int32_t> cards)
+int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 {
 	for (auto card_index : cards)
 	{
@@ -1258,8 +1265,6 @@ int32_t Player::OnFaPai(std::vector<int32_t> cards)
 		std::sort(cards.second.begin(), cards.second.end(), [](int x, int y){ return x < y; }); //由小到大
 	}
 
-	//PrintPai();
-	
 	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
 
 	if (cards.size() > 1) //开局
