@@ -1,7 +1,7 @@
 #pragma once
 
 #include <random>
-	
+
 namespace Adoter
 {
 	template<typename T, typename ...Args>
@@ -9,6 +9,14 @@ namespace Adoter
 	{
 		return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 	}
+
+#define DEBUG_ASSERT(expr) \
+	auto debug = ConfigInstance.GetString("DebugModel", true); \
+	if (debug) \
+	{ \
+		assert(expr); \
+	} \
+
 }
 
 class CommonUtil

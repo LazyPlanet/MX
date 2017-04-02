@@ -194,7 +194,7 @@ int32_t Player::CmdCreateRoom(pb::Message* message)
 
 void Player::OnCreateRoom(Asset::CreateRoom* create_room)
 {
-	if (!create_room) return;
+	if (!create_room) return; //理论不会如此
 
 	Asset::Room asset_room;
 	asset_room.CopyFrom(create_room->room());

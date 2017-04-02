@@ -10,9 +10,9 @@
 namespace Adoter
 {
 
-//void vutf8printf(FILE* out, const char *str, va_list* ap);
-//void utf8printf(FILE* out, const char *str, ...);
 void CP(const char *str, ...); //控制台日志
+void DEBUG(const char *str, ...);
+void P(Asset::LOG_LEVEL level, const char *format, ...);
 
 enum ColorTypes
 {
@@ -71,9 +71,6 @@ private:
 };
 
 #define MXLogInstance MXLog::Instance()
-
-//存储日志
-#define P(message) MXLog::Instance().Print(message)
 
 //按级别日志
 #define LOG(level, message) \

@@ -24,7 +24,7 @@ class Room : public std::enable_shared_from_this<Room>
 	std::mutex _mutex;
 
 private:
-	std::shared_ptr<Asset::Room> _stuff;
+	std::shared_ptr<Asset::Room> _stuff; //数据
 	std::vector<std::shared_ptr<Game>> _games;
 	std::vector<std::shared_ptr<Player>> _players; //房间中的玩家：按照进房间的顺序，东南西北
 public:

@@ -1,5 +1,4 @@
-#ifndef GOOGLE_PROTOBUF_TEXT_FORMAT_H__
-#define GOOGLE_PROTOBUF_TEXT_FORMAT_H__
+#pragma once
 
 #include <map>
 #include <memory>
@@ -433,4 +432,3 @@ inline MessageFormat::ParseInfoTree* MessageFormat::CreateNested(
 }  // namespace protobuf
 
 }  // namespace google
-#endif  // GOOGLE_PROTOBUF_TEXT_FORMAT_H__

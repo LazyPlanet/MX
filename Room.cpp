@@ -36,23 +36,12 @@ void Room::Enter(std::shared_ptr<Player> player)
 
 	std::lock_guard<std::mutex> lock(_mutex);
 
-	CP("%s:line:%d 当前房间人数:%d player_id:%ld\n", __func__, __LINE__, _players.size(), player->GetID());
+	DEBUG("%s:line:%d 当前房间人数:%d player_id:%ld\n", __func__, __LINE__, _players.size(), player->GetID());
 
 	_players.push_back(player); //进入房间
 
 	player->SetPosition((Asset::POSITION_TYPE)_players.size()); //设置位置
 
-	/*
-
-	//广播给其他玩家
-	Asset::CommonProperty common_prop;
-	common_prop.set_reason_type(Asset::CommonProperty_SYNC_REASON_TYPE_SYNC_REASON_TYPE_ENTER_ROOM);
-	common_prop.set_player_id(player->GetID());
-	common_prop.mutable_common_prop()->CopyFrom(player->CommonProp());
-
-	BroadCast(common_prop, player->GetID());
-
-	*/
 	SyncRoom(); //同步当前房间内玩家数据
 }
 
@@ -80,18 +69,6 @@ bool Room::IsHoster(int64_t player_id)
 	return host->GetID() == player_id;
 }
 
-/*
-int32_t Room::GetPlayerOrder(int32_t player_id)
-{
-	for (int player_index = 0; player_index < max_player_count; ++player_index)
-	{
-		if (player_id == _players_with_order[player_index]->GetID()) return player_index;
-	}
-
-	return -1; //返回一个非法的值
-}
-*/
-
 std::shared_ptr<Player> Room::GetPlayer(int64_t player_id)
 {
 	for (auto player : _players)
@@ -101,20 +78,6 @@ std::shared_ptr<Player> Room::GetPlayer(int64_t player_id)
 
 	return nullptr;
 }
-
-/*
-std::shared_ptr<Player> Room::GetPlayerByOrder(int32_t player_index)
-{
-	if (player_index >= max_player_count || player_index < 0) return nullptr;
-
-	return _players_with_order[player_index];
-}
-
-bool Room::HasPlayer(int64_t player_id)
-{
-	return _players.find(player_id) != _players.end();
-}
-*/
 
 void Room::OnPlayerOperate(std::shared_ptr<Player> player, pb::Message* message)
 {

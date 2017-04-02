@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <string>
+#include <stdarg.h>
 
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/posix_time/conversion.hpp"
@@ -7,6 +8,7 @@
 #include "MXLog.h"
 #include "Player.h"
 #include "Config.h"
+#include "CommonUtil.h"
 #include "MessageFormat.h"
 
 namespace Adoter
@@ -31,6 +33,31 @@ void CP(const char *str, ...)
 	va_list ap;
 	va_start(ap, str);
 	vutf8printf(stdout, str, &ap);
+}
+
+void DEBUG(const char *str, ...)
+{
+	va_list ap;
+	va_start(ap, str);
+	vutf8printf(stdout, str, &ap);
+}
+
+void P(Asset::LOG_LEVEL level, const char *format, ...)
+{
+	va_list args;
+	va_start (args, format);
+	va_end (args);
+
+	char string_content[1024];
+	int ret = vsprintf(string_content, format, args);
+	if (ret != 0) return;
+
+	auto log = make_unique<Asset::LogMessage>(); 
+	log->set_level(level); 
+
+	log->set_content(string_content); 
+
+	MXLog::Instance().Print(log.get());
 }
 
 void MXLog::Print(Asset::LogMessage* message)
@@ -124,7 +151,7 @@ void MXLog::Print(Asset::LogMessage* message)
 
 	if (FILE* logfile = fopen(fullname.c_str(), "aw"))
 	{
-		fprintf(logfile, "%s|%ld|%s|%s\n", curr_time.c_str(), _server_id, _server_name.c_str(), output.c_str());
+		utf8printf(logfile, "%s|%ld|%s|%s\n", curr_time.c_str(), _server_id, _server_name.c_str(), output.c_str());
 		fflush(logfile); //写入文件
 		//fclose(logfile);
 	}
