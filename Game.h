@@ -43,7 +43,9 @@ public:
 	virtual bool Start(std::vector<std::shared_ptr<Player>> players); //开始游戏
 	virtual void OnStart(); //开始游戏回调
 	virtual bool OnOver(); //游戏结束
+
 	virtual std::vector<int32_t> FaPai(size_t card_count); //发牌
+	virtual std::vector<int32_t> FaPai(); //后楼发牌
 	
 	void OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
 	bool CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message);

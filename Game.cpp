@@ -273,12 +273,12 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			auto next_player_index = (_curr_player_index + 1) % 4; //如果有玩家放弃操作，则继续下个玩家
 
 			auto player_next = GetPlayerByOrder(next_player_index);
-			CP("%s:line:%d _oper_limit.player_id:%ld next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", 
+			DEBUG("%s:line:%d _oper_limit.player_id:%ld next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", 
 					__func__, __LINE__, _oper_limit.player_id(), player_next->GetID(), _curr_player_index, next_player_index);
 			if (!player_next) return; 
 
 			//如果是其他玩家放弃了操作(比如，对门不碰)，则检查下家还能不能要这张牌，来吃
-			CP("%s:line:%d _oper_limit.player_id:%ld next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", 
+			DEBUG("%s:line:%d _oper_limit.player_id:%ld next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", 
 					__func__, __LINE__, _oper_limit.player_id(), player_next->GetID(), _curr_player_index, next_player_index);
 
 			if (_oper_limit.player_id() != player_next->GetID()) 
@@ -323,7 +323,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 void Game::ClearOperation()
 {
-	CP("%s:line:%d player_id:%ld\n", __func__, __LINE__, _oper_limit.player_id());
+	DEBUG("%s:line:%d player_id:%ld\n", __func__, __LINE__, _oper_limit.player_id());
 	_oper_limit.Clear(); //清理状态
 }
 	
@@ -341,7 +341,7 @@ int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, std
 	if (player_index == -1) return 0; //理论上不会出现
 
 	//assert(_curr_player_index == player_index); //理论上一定相同：错误，如果碰牌的玩家出牌就不一定
-	CP("%s!!!:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
+	DEBUG("%s!!!:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
 
 	int32_t next_player_index = (_curr_player_index + 1) % 4;
 
@@ -354,34 +354,34 @@ int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, std
 		auto player = GetPlayerByOrder(cur_index);
 		if (!player) 
 		{
-			CP("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
+			DEBUG("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
 			return rtn_player_id; //理论上不会出现
 		}
 
 		if (from_player_id == player->GetID())
 		{
-			CP("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
+			DEBUG("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
 			continue; //自己不能对自己的牌进行操作
 		}
 
 		auto rtn_check = player->CheckPai(pai);
 		if (rtn_check.size() == 0) 
 		{
-			CP("%s!!!:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
+			DEBUG("%s!!!:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
 			continue; //不能吃、碰、杠和胡牌
 		}
 
 		auto it_chi = std::find(rtn_check.begin(), rtn_check.end(), Asset::PAI_CHECK_RETURN_CHI);
 		if (it_chi != rtn_check.end() && rtn_check.size() == 1 && cur_index != next_player_index) 
 		{
-			CP("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
+			DEBUG("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
 			continue; //吃牌只能是下家
 		}
 		
 		rtn_player_id = player->GetID(); //只获取可操作的玩家ID
 		pai_rt = rtn_check;
 			
-		CP("%s!!!:line:%d rtn_player_id:%ld rtn_player_id:%ld\n", __func__, __LINE__, rtn_player_id, player->GetID());
+		DEBUG("%s!!!:line:%d rtn_player_id:%ld rtn_player_id:%ld\n", __func__, __LINE__, rtn_player_id, player->GetID());
 		
 		auto it_hu = std::find(rtn_check.begin(), rtn_check.end(), Asset::PAI_CHECK_RETURN_HU);
 		if (it_hu != rtn_check.end()) break; //胡牌则终止检查
@@ -394,18 +394,29 @@ void Game::OnOperateTimeOut()
 {
 }
 
+std::vector<int32_t> Game::FaPai()
+{
+	std::vector<int32_t> cards;
+	
+	if (_cards.size() < 1) return cards;
+
+	int32_t value = _cards.back();	
+	cards.push_back(value);
+	_cards.pop_back();
+
+	return cards;
+}
+
 std::vector<int32_t> Game::FaPai(size_t card_count)
 {
 	std::vector<int32_t> cards;
 	
-	if (card_count > _cards.size()) return cards;
+	if (_cards.size() < card_count) return cards;
 
 	for (size_t i = 0; i < card_count; ++i)
 	{
 		int32_t value = _cards.front();	
-
 		cards.push_back(value);
-
 		_cards.pop_front();
 	}
 	
