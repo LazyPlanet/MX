@@ -316,7 +316,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 
 	_game->OnPaiOperate(shared_from_this(), message);
 
-	_stuff.mutable_player_prop()->set_pai_oper_count(_stuff.player_prop().pai_oper_count()); //玩家操作次数
+	_stuff.mutable_player_prop()->set_pai_oper_count(_stuff.player_prop().pai_oper_count() + 1); //玩家操作次数
 
 	return 0;
 }
