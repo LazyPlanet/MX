@@ -100,6 +100,7 @@ void PlayerMatch::DoMatch()
 
 			Asset::EnterRoom enter_room;
 			enter_room.mutable_room()->CopyFrom(room);
+			enter_room.set_enter_type(Asset::EnterRoom_ENTER_TYPE_ENTER_TYPE_ENTER); //进入房间
 
 			bool match_success = true;
 

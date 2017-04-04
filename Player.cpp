@@ -1086,6 +1086,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	
 	//胡牌时至少有一刻子或杠，或有中发白其中一对
 	bool has_keng = false;
+
 	for (auto r : hu_result)
 	{
 		 has_keng = std::get<1>(r);
