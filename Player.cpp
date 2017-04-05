@@ -252,7 +252,10 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 {
 	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
 	if (!pai_operate) return 1; 
+
 	if (!_locate_room || !_game) return 2; //还没加入房间或者还没开始游戏
+
+	pai_operate->set_position(GetPosition()); //设置玩家座位
 
 	//进行操作
 	switch (pai_operate->oper_type())
