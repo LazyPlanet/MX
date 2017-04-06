@@ -1272,7 +1272,7 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	auto it = _cards.find(pai.card_type());
 	if (it == _cards.end()) 
 	{
-		P(Asset::ERROR, "%s:line:%d, player:%ld 检查杠, 牌类型:%d, 牌值:%d.", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+		DEBUG_ASSERT(false);
 		return; //理论上不会如此
 	}
 	
@@ -1291,6 +1291,12 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	{
 		_angang.push_back(pai);
 	}
+	
+	P(Asset::ACTION, "%s:line:%d, player:%ld 玩家杠牌, 牌类型:%d, 牌值:%d.", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+	
+	//从后楼给玩家取一张牌
+	auto cards = _game->FaPai();
+	OnFaPai(cards);
 	
 	SynchronizePai();
 }
@@ -1347,6 +1353,8 @@ void Player::OnGangFengPai()
 
 	++_fenggang;
 	
+	P(Asset::ACTION, "%s:line:%d, player:%ld 旋风杠", __func__, __LINE__, GetID());
+	
 	//从后楼给玩家取一张牌
 	auto cards = _game->FaPai();
 	OnFaPai(cards);
@@ -1383,6 +1391,9 @@ void Player::OnGangJianPai()
 	}
 
 	++_jiangang;
+
+	P(Asset::ACTION, "%s:line:%d, player:%ld 旋风杠", __func__, __LINE__, GetID());
+
 	//从后楼给玩家取一张牌
 	auto cards = _game->FaPai();
 	OnFaPai(cards);
