@@ -273,7 +273,12 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 			auto& pais = _cards[pai.card_type()]; //获取该类型的牌
 
 			auto it = std::find(pais.begin(), pais.end(), pai.card_value()); //查找第一个满足条件的牌即可
-			if (it == pais.end()) return 6; //没有这张牌
+			
+			if (it == pais.end()) 
+			{
+				DEBUG_ASSERT(false);
+				return 6; //没有这张牌
+			}
 
 			DEBUG("%s:line:%d,玩家:%ld 删除牌 类型:%d--值%d", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 
@@ -1285,7 +1290,7 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	
 	auto count = std::count(it->second.begin(), it->second.end(), card_value); //玩家手里多少张牌
 
-	DEBUG_ASSERT(count <= 2);
+	DEBUG_ASSERT(count > 2);
 
 	if (count == 3)
 	{
@@ -1460,9 +1465,12 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 		}
 
 		if (alert.check_return().size()) SendProtocol(alert);
+		
+		SynchronizePai(); //每次都同步
 	}
 	
 	SendProtocol(notify); //发送
+	
 
 	return 0;
 }
