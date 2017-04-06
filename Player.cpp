@@ -1078,6 +1078,18 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 		}
 	}
 
+	for (auto gang : _minggang)
+	{
+		if (gang.card_value() == 1 || gang.card_value() == 9) has_yao = true;
+	}
+	
+	for (auto gang : _angang)
+	{
+		if (gang.card_value() == 1 || gang.card_value() == 9) has_yao = true;
+	}
+
+	if (_jiangang > 0 || _fenggang > 0) has_yao = true;
+
 	if (!has_yao) return false;
 
 	////////////////////////////////////////////////////////////////////////////是否可以满足胡牌的要求
@@ -1103,6 +1115,8 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	}
 
 	if (!has_keng && (cards[Asset::CARD_TYPE_FENG].size() || cards[Asset::CARD_TYPE_JIAN].size())) has_keng = true;
+	
+	if (_jiangang > 0 || _fenggang > 0 || _minggang.size() > 0 || _angang.size() > 0) has_keng = true;
 	
 	if (!has_keng) return false;
 
@@ -1146,7 +1160,11 @@ void Player::OnChiPai(const Asset::PaiElement& pai, pb::Message* message)
 
 	cards.push_back(pai);
 
-	if (pai_operate->pais().size() != 2) return; 
+	if (pai_operate->pais().size() != 2) 
+	{
+		DEBUG_ASSERT(false);
+		return; 
+	}
 	
 	auto it = _cards.find(pai.card_type());
 	if (it == _cards.end()) return;
@@ -1162,24 +1180,34 @@ void Player::OnChiPai(const Asset::PaiElement& pai, pb::Message* message)
 			return rv.card_value() < lv.card_value();
 		});
 
-	if (cards[1].card_value() - cards[0].card_value() != 1 || 
-			cards[2].card_value() - cards[1].card_value() != 1) return; //不是顺子
+	if (cards[1].card_value() - cards[0].card_value() != 1 || cards[2].card_value() - cards[1].card_value() != 1) 
+	{
+		DEBUG_ASSERT(false);
+		return; //不是顺子
+	}
 
 	auto first = std::find(it->second.begin(), it->second.end(), pai_operate->pais(0).card_value());
-	if (first == it->second.end()) return; //理论上不会出现
+	if (first == it->second.end()) 
+	{
+		DEBUG_ASSERT(false);
+		return; //理论上不会出现
+	}
 	
 	DEBUG("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(0).card_type(), pai_operate->pais(0).card_value());
-	_cards_outhand[pai.card_type()].push_back(pai_operate->pais(0).card_value());
 	it->second.erase(first); //删除
 
 	auto second = std::find(it->second.begin(), it->second.end(), pai_operate->pais(1).card_value());
-	if (second == it->second.end()) return; //理论上不会出现
+	if (second == it->second.end()) 
+	{
+		DEBUG_ASSERT(false);
+		return; //理论上不会出现
+	}
 
 	DEBUG("%s:line:%d,删除牌 类型:%d--值%d", __func__, __LINE__, pai_operate->pais(1).card_type(), pai_operate->pais(0).card_value());
-	_cards_outhand[pai.card_type()].push_back(pai_operate->pais(1).card_value());
 	it->second.erase(second); //删除
 	
-	_cards_outhand[pai.card_type()].push_back(pai.card_value());
+	for (auto card : cards)
+		_cards_outhand[card.card_type()].push_back(pai.card_value());
 
 	SynchronizePai();
 }
