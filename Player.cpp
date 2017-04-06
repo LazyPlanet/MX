@@ -114,7 +114,13 @@ int32_t Player::OnLogin(pb::Message* message)
 
 int32_t Player::OnLogout(pb::Message* message)
 {
-	if (_locate_room) _locate_room->Remove(GetID()); //如果在房间里则退出
+	if (_locate_room) 
+	{
+		auto game_operate = Asset::GameOperation();
+		game_operate.set_source_player_id(GetID()); //设置当前操作玩家
+		game_operate.set_oper_type(Asset::GAME_OPER_TYPE_LEAVE); //离开游戏，退出房间
+		_locate_room->OnPlayerOperate(shared_from_this(), &game_operate); //广播给其他玩家
+	}
 
 	this->_stuff.set_login_time(0);
 	this->_stuff.set_logout_time(CommonTimerInstance.GetTime());
