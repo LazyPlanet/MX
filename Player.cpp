@@ -275,6 +275,8 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 			auto it = std::find(pais.begin(), pais.end(), pai.card_value()); //查找第一个满足条件的牌即可
 			if (it == pais.end()) return 6; //没有这张牌
 
+			DEBUG("%s:line:%d,玩家:%ld 删除牌 类型:%d--值%d", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+
 			pais.erase(it); //打出牌
 		}
 		break;
@@ -976,6 +978,8 @@ bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
 
 	if (size <= 2) 
 	{
+		if (size == 1)	P(Asset::ERROR, "%s:line:%d, size=1.", __func__, __LINE__);
+
 		return size == 0 || cards[0] == cards[1]; 
 	}
 
@@ -1498,7 +1502,7 @@ void Player::PrintPai()
 
 		pais->set_card_type((Asset::CARD_TYPE)pai.first); //牌类型
 		
-		DEBUG("%s:line:%d, 玩家 %ld手里真正的牌数据，牌类型:%d, 牌值:", __func__, __LINE__, pai.first);
+		DEBUG("%s:line:%d, 玩家 %ld手里真正的牌数据，牌类型:%d, 牌值:", __func__, __LINE__, GetID(), pai.first);
 
 		for (auto value : pai.second)
 			std::cout << value << " ";
