@@ -1042,7 +1042,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	auto it_zhanli = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_ZHANLIHU);
 	if (it_zhanli != options.extend_type().end()) 
 	{
-		if (_cards_outhand.size() == 0) return false; //没开门
+		if (_cards_outhand.size() == 0 && _minggang.size() == 0) return false; //没开门
 	}
 	
 	//是否有幺九
@@ -1236,16 +1236,26 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	if (!CheckGangPai(pai)) return;
 
 	auto it = _cards.find(pai.card_type());
-	if (it == _cards.end()) return; //理论上不会如此
+	if (it == _cards.end()) 
+	{
+		P(Asset::ERROR, "%s:line:%d, player:%ld 检查杠, 牌类型:%d, 牌值:%d.", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+		return; //理论上不会如此
+	}
 	
 	int32_t card_value = pai.card_value();
 	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
 	
 	auto count = std::count(it->second.begin(), it->second.end(), card_value); //玩家手里多少张牌
 
-	for (int i = 0; i < count; ++i)
+	DEBUG_ASSERT(count <= 2);
+
+	if (count == 3)
 	{
-		_cards_gang[pai.card_type()].push_back(pai.card_value());
+		_minggang.push_back(pai);
+	}
+	else if (count == 4)
+	{
+		_angang.push_back(pai);
 	}
 	
 	SynchronizePai();
@@ -1300,6 +1310,8 @@ void Player::OnGangFengPai()
 		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
 		if (it_if != it->second.end())  it->second.erase(it_if); //删除
 	}
+
+	++_fenggang;
 	
 	//从后楼给玩家取一张牌
 	auto cards = _game->FaPai();
@@ -1336,6 +1348,7 @@ void Player::OnGangJianPai()
 		if (it_if != it->second.end())  it->second.erase(it_if); //删除
 	}
 
+	++_jiangang;
 	//从后楼给玩家取一张牌
 	auto cards = _game->FaPai();
 	OnFaPai(cards);
@@ -1415,6 +1428,12 @@ void Player::SynchronizePai()
 
 		pais->set_card_type((Asset::CARD_TYPE)pai.first); //牌类型
 
+		DEBUG("%s:line:%d, 玩家 %ld手里真正的牌数据，牌类型:%d, 牌值:", __func__, __LINE__, pai.first);
+
+		for (auto value : pai.second)
+			std::cout << value << " ";
+		std::cout << std::endl;
+
 		::google::protobuf::RepeatedField<int32_t> cards(pai.second.begin(), pai.second.end());
 		pais->mutable_cards()->CopyFrom(cards); //牌值
 	}
@@ -1433,6 +1452,12 @@ void Player::PrintPai()
 		auto pais = notify.mutable_pais()->Add();
 
 		pais->set_card_type((Asset::CARD_TYPE)pai.first); //牌类型
+		
+		DEBUG("%s:line:%d, 玩家 %ld手里真正的牌数据，牌类型:%d, 牌值:", __func__, __LINE__, pai.first);
+
+		for (auto value : pai.second)
+			std::cout << value << " ";
+		std::cout << std::endl;
 
 		::google::protobuf::RepeatedField<int32_t> cards(pai.second.begin(), pai.second.end());
 		pais->mutable_cards()->CopyFrom(cards); //牌值

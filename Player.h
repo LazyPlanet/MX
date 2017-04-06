@@ -228,7 +228,10 @@ private:
 	std::shared_ptr<Game> _game = nullptr; //当前游戏
 	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家手里的麻将
 	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards_outhand; //玩家墙外牌
-	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards_gang; //玩家杠牌
+	std::vector<Asset::PaiElement> _minggang; //明杠
+	std::vector<Asset::PaiElement> _angang; //暗杠
+	int32_t _jiangang = 0; //旋风杠，本质是明杠
+	int32_t _fenggang = 0; //旋风杠，本质是暗杠
 public:
 	//玩家操作
 	virtual int32_t CmdGameOperate(pb::Message* message); //游戏操作
