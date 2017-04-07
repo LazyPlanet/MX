@@ -173,9 +173,17 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 						player_id, player_next->GetID(), _curr_player_index);
 				
 				auto cards = FaPai(1); 
+
+				Asset::PaiOperationAlert alert;
+				auto card = GameInstance.GetCard(cards[0]);
+				alert.mutable_pai()->CopyFrom(card);
+				if (player_next->CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
+				if (player_next->CheckGangPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+				if (alert.check_return().size()) player_next->SendProtocol(alert);
+				else _curr_player_index = (_curr_player_index + 1) % 4;
+
 				player_next->OnFaPai(cards);
 
-				_curr_player_index = (_curr_player_index + 1) % 4;
 				DEBUG("设置当前操作数据数据:%s:line:%d player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, player_id, _curr_player_index);
 			}
 		}

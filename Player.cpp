@@ -116,7 +116,7 @@ int32_t Player::OnLogout(pb::Message* message)
 {
 	if (_locate_room) 
 	{
-		auto game_operate = Asset::GameOperation();
+		Asset::GameOperation game_operate;
 		game_operate.set_source_player_id(GetID()); //设置当前操作玩家
 		game_operate.set_oper_type(Asset::GAME_OPER_TYPE_LEAVE); //离开游戏，退出房间
 		_locate_room->OnPlayerOperate(shared_from_this(), &game_operate); //广播给其他玩家
@@ -1451,11 +1451,12 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 		notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //操作类型：发牌
 
 		//检查玩家是否可以暗杠或者自摸
-		Asset::PaiOperationAlert alert;
-		alert.mutable_pai()->CopyFrom(card);
-		if (CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU); 
-		if (CheckGangPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+		//Asset::PaiOperationAlert alert;
+		//alert.mutable_pai()->CopyFrom(card);
+		//if (CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU); 
+		//if (CheckGangPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
 		//检查玩家是否有旋风杠
+		/*
 		if (!_stuff.player_prop().check_xuanfeng())
 		{
 			if (CheckFengGangPai(cards_inhand)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
@@ -1465,6 +1466,7 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 		}
 
 		if (alert.check_return().size()) SendProtocol(alert);
+		*/
 		
 		SynchronizePai(); //每次都同步
 	}
