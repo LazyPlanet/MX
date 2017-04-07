@@ -1329,6 +1329,24 @@ bool Player::CheckAnGangPai(Asset::PaiElement& pai)
 	
 	return false;
 }
+	
+bool Player::CheckFengGangPai() 
+{ 
+	if (_stuff.player_prop().check_feng_gang()) return false;
+
+	_stuff.mutable_player_prop()->set_check_feng_gang(true); //设置已经检查过旋风杠
+
+	return CheckFengGangPai(_cards); 
+}
+
+bool Player::CheckJianGangPai() 
+{ 
+	if (_stuff.player_prop().check_jian_gang()) return false;
+
+	_stuff.mutable_player_prop()->set_check_jian_gang(true); //设置已经检查过旋风杠
+
+	return CheckJianGangPai(_cards); 
+}
 
 bool Player::CheckFengGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/>& cards)
 {
@@ -1402,10 +1420,6 @@ void Player::OnGangJianPai()
 	++_jiangang;
 
 	P(Asset::ACTION, "%s:line:%d, player:%ld 旋风杠", __func__, __LINE__, GetID());
-
-	//从后楼给玩家取一张牌
-	auto cards = _game->FaPai();
-	OnFaPai(cards);
 }
 
 int32_t Player::OnFaPai(std::vector<int32_t>& cards)

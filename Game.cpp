@@ -161,8 +161,15 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				//发送给Client
 				Asset::PaiOperationAlert alert;
 				alert.mutable_pai()->CopyFrom(pai);
-				for (auto rtn : pai_rtn) alert.mutable_check_return()->Add(rtn); //可操作牌类型
-				if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert);
+				for (auto rtn : pai_rtn) 
+				{
+					alert.mutable_check_return()->Add(rtn); //可操作牌类型
+				}
+
+				if (auto player_to = GetPlayer(player_id)) 
+				{
+					player_to->SendProtocol(alert);
+				}
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
 			{
@@ -179,8 +186,20 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				alert.mutable_pai()->CopyFrom(card);
 				if (player_next->CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
 				if (player_next->CheckGangPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
-				if (alert.check_return().size()) player_next->SendProtocol(alert);
-				else _curr_player_index = (_curr_player_index + 1) % 4;
+				if (player_next->CheckFengGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
+				if (player_next->CheckJianGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+
+				if (alert.check_return().size()) 
+				{
+					player_next->SendProtocol(alert);
+
+					_oper_limit.set_player_id(player_next->GetID()); //当前可操作玩家
+					_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
+				}
+				else 
+				{
+					_curr_player_index = (_curr_player_index + 1) % 4;
+				}
 
 				player_next->OnFaPai(cards);
 

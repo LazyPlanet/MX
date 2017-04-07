@@ -263,6 +263,9 @@ public:
 	void OnGangFengPai(); //旋风杠
 	void OnGangJianPai(); //箭杠
 
+	bool CheckFengGangPai(); 
+	bool CheckJianGangPai();
+
 	bool CheckPengPai(const Asset::PaiElement& pai); //是否可以碰牌
 	void OnPengPai(const Asset::PaiElement& pai); //碰牌
 
