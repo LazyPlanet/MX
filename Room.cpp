@@ -45,14 +45,10 @@ void Room::Enter(std::shared_ptr<Player> player)
 	SyncRoom(); //同步当前房间内玩家数据
 }
 
-/*
-void Room::LeaveRoom(std::shared_ptr<Player> player)
+void Room::OnPlayerLeave(int64_t player_id)
 {
-	if (!player) return;
-
-	_players.erase(player->GetID()); //玩家退出房间
+	SyncRoom(); //同步当前房间内玩家数据
 }
-*/
 
 std::shared_ptr<Player> Room::GetHoster()
 {
@@ -130,6 +126,9 @@ bool Room::Remove(int64_t player_id)
 		if ((*it)->GetID() != player_id) continue;
 
 		_players.erase(it); //删除玩家
+
+		OnPlayerLeave(player_id); //玩家离开房间
+
 		return true;
 	}
 

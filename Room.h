@@ -46,7 +46,7 @@ public:
 	Asset::ERROR_CODE TryEnter(std::shared_ptr<Player> player);
 	void Enter(std::shared_ptr<Player> player);
 
-	//void LeaveRoom(std::shared_ptr<Player> player);
+	void OnPlayerLeave(int64_t player_id);
 
 	void OnCreated(); 
 

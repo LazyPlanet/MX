@@ -1286,8 +1286,6 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	}
 	
 	int32_t card_value = pai.card_value();
-	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
-	
 	auto count = std::count(it->second.begin(), it->second.end(), card_value); //玩家手里多少张牌
 
 	DEBUG_ASSERT(count > 2);
@@ -1301,7 +1299,8 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 		_angang.push_back(pai);
 	}
 	
-	P(Asset::ACTION, "%s:line:%d, player:%ld 玩家杠牌, 牌类型:%d, 牌值:%d.", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+	P(Asset::ACTION, "%s:line:%d, player:%ld 玩家杠牌, 牌类型:%d, 牌值:%d, 数量:%d.", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), count);
+	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
 	
 	//从后楼给玩家取一张牌
 	auto cards = _game->FaPai();
