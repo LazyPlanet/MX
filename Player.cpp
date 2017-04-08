@@ -1310,22 +1310,14 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	SynchronizePai();
 }
 
-bool Player::CheckAnGangPai(Asset::PaiElement& pai)
+bool Player::CheckMingGangPai(const Asset::PaiElement& pai)
 {
-	for (auto card : _cards)
-	{
-		for (auto card_value : card.second)
-		{
-			int32_t count = std::count_if(card.second.begin(), card.second.end(), [card_value](int32_t value) { return card_value == value; });
+	auto it = _cards_outhand.find(pai.card_type());
+	if (it == _cards_outhand.end()) return false;
 
-			if (count == 4) //暗杠
-			{
-				pai.set_card_type((Asset::CARD_TYPE)card.first);
-				pai.set_card_value(pai.card_value());
-				return true;
-			}
-		}
-	}
+	int32_t count = std::count(it->second.begin(), it->second.end(), pai.card_value());
+
+	if (count == 3) return true;
 	
 	return false;
 }

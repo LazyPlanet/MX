@@ -181,11 +181,13 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				
 				auto cards = FaPai(1); 
 
-				Asset::PaiOperationAlert alert;
 				auto card = GameInstance.GetCard(cards[0]);
+
+				Asset::PaiOperationAlert alert;
 				alert.mutable_pai()->CopyFrom(card);
 				if (player_next->CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
-				if (player_next->CheckGangPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+				if (player_next->CheckGangPai(card) || 
+						player_next->CheckMingGangPai(pai)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
 				if (player_next->CheckFengGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
 				if (player_next->CheckJianGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
 
@@ -314,6 +316,10 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 				if (rtn_check.size() > 0)
 				{
+					_oper_limit.set_player_id(player_next->GetID()); //当前可操作玩家
+					_oper_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
+					_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
+
 					//发送给Client
 					Asset::PaiOperationAlert alert;
 					alert.mutable_pai()->CopyFrom(pai);
@@ -325,9 +331,10 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					auto cards = FaPai(1); //发牌 
 					player_next->OnFaPai(cards);
 
-					_curr_player_index = next_player_index;
 					ClearOperation(); //清理缓存以及等待玩家操作的状态
 				}
+					
+				_curr_player_index = next_player_index;
 			}
 			else
 			{
@@ -403,6 +410,11 @@ int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, std
 		{
 			DEBUG("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
 			continue; //吃牌只能是下家
+		}
+		
+		if (it_chi != rtn_check.end() && cur_index != next_player_index) //如果不是下家，不能提示这个吃牌操作
+		{
+			rtn_check.erase(it_chi);
 		}
 		
 		rtn_player_id = player->GetID(); //只获取可操作的玩家ID
