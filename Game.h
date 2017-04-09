@@ -35,7 +35,7 @@ private:
 
 	Asset::PaiOperationLimit _oper_limit; //牌操作限制
 	
-	//std::unordered_map<int64_t, std::shared_ptr<Player>> _players; //房间中的玩家
+	std::vector<Asset::PaiOperationList> _oper_list; //可操作列表
 
 	std::shared_ptr<Player> _players[MAX_PLAYER_COUNT]; //玩家数据：按照进房间的顺序，0->1->2->3...主要用于控制发牌和出牌顺序
 public:
@@ -51,7 +51,8 @@ public:
 	bool CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
 	void OnOperateTimeOut();
 	void ClearOperation();
-	int64_t CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, std::vector<Asset::PAI_CHECK_RETURN>& pai_rtn); //检查牌形：返回待操作的玩家ID
+	bool SendCheckRtn(const Asset::PaiElement& pai);
+	bool CheckPai(const Asset::PaiElement& pai, int64_t from_player_id); //检查牌形：返回待操作的玩家ID
 	
 	//获取下家
 	std::shared_ptr<Player> GetNextPlayer(int64_t player_id);

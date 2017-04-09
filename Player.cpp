@@ -208,7 +208,7 @@ void Player::OnCreateRoom(Asset::CreateRoom* create_room)
 	_locate_room = std::make_shared<Room>(asset_room);
 	_locate_room->OnCreated();
 
-	_locate_room->Enter(shared_from_this()); //玩家进入房间
+	//_locate_room->Enter(shared_from_this()); //玩家进入房间
 
 	RoomInstance.OnCreateRoom(_locate_room); //房间管理
 }

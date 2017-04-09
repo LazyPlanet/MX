@@ -123,7 +123,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 	if (!CanPaiOperate(player, message)) 
 	{
 		player->AlertMessage(Asset::ERROR_GAME_NO_PERMISSION); //没有权限，没到玩家操作，防止外挂
-		DEBUG_ASSERT(false); 
+		//DEBUG_ASSERT(false); 
 	}
 
 	//if (CommonTimerInstance.GetTime() < _oper_limit.time_out()) ClearOperation(); //已经超时，清理缓存以及等待玩家操作的状态
@@ -145,40 +145,16 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI: //打牌
 		{
 			const auto& pai = pai_operate->pai(); //玩家发上来的牌
-
 			//检查各个玩家手里的牌是否满足胡、杠、碰、吃
-			std::vector<Asset::PAI_CHECK_RETURN> pai_rtn;
-			auto player_id = CheckPai(pai, player->GetID(), pai_rtn); 
-
-			DEBUG("满足操作的玩家数据:%s:line:%d player_id:%ld can PaiOperate\n", __func__, __LINE__, player_id);
-
-			if (player_id) //第一个满足要求的玩家
+			if (CheckPai(pai, player->GetID())) //有满足要求的玩家
 			{
-				_oper_limit.set_player_id(player_id); //当前可操作玩家
-				_oper_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
-				_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
-				
-				//发送给Client
-				Asset::PaiOperationAlert alert;
-				alert.mutable_pai()->CopyFrom(pai);
-				for (auto rtn : pai_rtn) 
-				{
-					alert.mutable_check_return()->Add(rtn); //可操作牌类型
-				}
-
-				if (auto player_to = GetPlayer(player_id)) 
-				{
-					player_to->SendProtocol(alert);
-				}
+				SendCheckRtn(pai);
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
 			{
 				auto player_next = GetNextPlayer(player->GetID());
 				if (!player_next) return; 
 
-				DEBUG("没有操作玩家，顺序发牌:%s:line:%d player_id:%ld next_player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, 
-						player_id, player_next->GetID(), _curr_player_index);
-				
 				auto cards = FaPai(1); 
 
 				auto card = GameInstance.GetCard(cards[0]);
@@ -204,8 +180,6 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				}
 
 				player_next->OnFaPai(cards);
-
-				DEBUG("设置当前操作数据数据:%s:line:%d player_id:%ld can PaiOperate _curr_player_index:%d\n", __func__, __LINE__, player_id, _curr_player_index);
 			}
 		}
 		break;
@@ -299,6 +273,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GIVEUP: //放弃
 		{
+			if (SendCheckRtn(pai)) return;
+			
 			auto next_player_index = (_curr_player_index + 1) % 4; //如果有玩家放弃操作，则继续下个玩家
 
 			auto player_next = GetPlayerByOrder(next_player_index);
@@ -360,6 +336,62 @@ void Game::ClearOperation()
 	DEBUG("%s:line:%d player_id:%ld\n", __func__, __LINE__, _oper_limit.player_id());
 	_oper_limit.Clear(); //清理状态
 }
+
+bool Game::SendCheckRtn(const Asset::PaiElement& pai)
+{
+	int64_t player_id = 0;
+	std::vector<Asset::PAI_CHECK_RETURN> pai_rtn;
+
+	if (_oper_list.size() == 0) return false;
+
+	for (const auto& oper : _oper_list)
+	{
+		for (auto value : oper.oper_list()) pai_rtn.push_back((Asset::PAI_CHECK_RETURN)value);
+		player_id = oper.player_id();
+
+		auto it_hu = std::find(oper.oper_list().begin(), oper.oper_list().end(), Asset::PAI_CHECK_RETURN_HU);
+		if (it_hu != oper.oper_list().end()) 
+		{
+			_oper_limit.set_oper_limit(Asset::PAI_CHECK_RETURN_HU);
+			break;
+		}
+		auto it_gang = std::find(oper.oper_list().begin(), oper.oper_list().end(), Asset::PAI_CHECK_RETURN_GANG);
+		if (it_gang != oper.oper_list().end()) 
+		{
+			_oper_limit.set_oper_limit(Asset::PAI_CHECK_RETURN_GANG);
+			break;
+		}
+		auto it_peng = std::find(oper.oper_list().begin(), oper.oper_list().end(), Asset::PAI_CHECK_RETURN_PENG);
+		if (it_peng != oper.oper_list().end()) 
+		{
+			_oper_limit.set_oper_limit(Asset::PAI_CHECK_RETURN_PENG);
+			break;
+		}
+		auto it_chi = std::find(oper.oper_list().begin(), oper.oper_list().end(), Asset::PAI_CHECK_RETURN_CHI);
+		if (it_chi != oper.oper_list().end()) 
+		{
+			_oper_limit.set_oper_limit(Asset::PAI_CHECK_RETURN_CHI);
+			break;
+		}
+	}
+	
+	_oper_limit.set_player_id(player_id); //当前可操作玩家
+	_oper_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
+	_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
+	
+	//发送给Client
+	Asset::PaiOperationAlert alert;
+	alert.mutable_pai()->CopyFrom(pai);
+	for (auto rtn : pai_rtn) alert.mutable_check_return()->Add(rtn); //可操作牌类型
+
+	if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert);
+
+	std::remove_if(_oper_list.begin(), _oper_list.end(), [player_id](const Asset::PaiOperationList& operation){
+			return player_id == operation.player_id();
+			});
+
+	return true;
+}
 	
 /////////////////////////////////////////////////////
 //
@@ -369,34 +401,24 @@ void Game::ClearOperation()
 //
 /////////////////////////////////////////////////////
 
-int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, std::vector<Asset::PAI_CHECK_RETURN>& pai_rt)
+bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
 	int32_t player_index = GetPlayerOrder(from_player_id); //当前玩家索引
-	if (player_index == -1) return 0; //理论上不会出现
+	if (player_index == -1) return false; //理论上不会出现
 
 	//assert(_curr_player_index == player_index); //理论上一定相同：错误，如果碰牌的玩家出牌就不一定
 	DEBUG("%s!!!:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
 
 	int32_t next_player_index = (_curr_player_index + 1) % 4;
 
-	int64_t rtn_player_id = 0; //返回可操作的玩家ID
-
 	for (int32_t i = next_player_index; i < 3 + next_player_index; ++i)
 	{
 		auto cur_index = i % 4;
 
 		auto player = GetPlayerByOrder(cur_index);
-		if (!player) 
-		{
-			DEBUG("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
-			return rtn_player_id; //理论上不会出现
-		}
+		if (!player) return false; //理论上不会出现
 
-		if (from_player_id == player->GetID())
-		{
-			DEBUG("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
-			continue; //自己不能对自己的牌进行操作
-		}
+		if (from_player_id == player->GetID()) continue; //自己不能对自己的牌进行操作
 
 		auto rtn_check = player->CheckPai(pai);
 		if (rtn_check.size() == 0) 
@@ -406,27 +428,27 @@ int64_t Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id, std
 		}
 
 		auto it_chi = std::find(rtn_check.begin(), rtn_check.end(), Asset::PAI_CHECK_RETURN_CHI);
+
 		if (it_chi != rtn_check.end() && rtn_check.size() == 1 && cur_index != next_player_index) 
 		{
 			DEBUG("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
 			continue; //吃牌只能是下家
 		}
 		
-		if (it_chi != rtn_check.end() && cur_index != next_player_index) //如果不是下家，不能提示这个吃牌操作
-		{
-			rtn_check.erase(it_chi);
-		}
-		
-		rtn_player_id = player->GetID(); //只获取可操作的玩家ID
-		pai_rt = rtn_check;
-			
-		DEBUG("%s!!!:line:%d rtn_player_id:%ld rtn_player_id:%ld\n", __func__, __LINE__, rtn_player_id, player->GetID());
-		
-		auto it_hu = std::find(rtn_check.begin(), rtn_check.end(), Asset::PAI_CHECK_RETURN_HU);
-		if (it_hu != rtn_check.end()) break; //胡牌则终止检查
+		//如果不是下家，不能提示这个吃牌操作
+		if (it_chi != rtn_check.end() && cur_index != next_player_index) rtn_check.erase(it_chi);
+
+		///////////////////////////////////////////////////缓存所有操作
+		Asset::PaiOperationList pai_operation;
+		pai_operation.set_player_id(player->GetID());
+		pai_operation.set_from_player_id(from_player_id);
+		pai_operation.mutable_pai()->CopyFrom(pai);
+		for (auto result : rtn_check) 
+			pai_operation.mutable_oper_list()->Add(result);
+		_oper_list.push_back(pai_operation);
 	}
 
-	return rtn_player_id;
+	return _oper_list.size() > 0;
 }
 
 void Game::OnOperateTimeOut()
