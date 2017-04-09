@@ -354,7 +354,7 @@ void Game::ClearOperation()
 
 bool Game::SendCheckRtn(const Asset::PaiElement& pai)
 {
-	_oper_limit.Clear();
+	ClearOperation();
 
 	int64_t player_id = 0; std::vector<Asset::PAI_CHECK_RETURN> pai_rtn;
 
