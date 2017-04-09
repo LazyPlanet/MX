@@ -15,6 +15,8 @@ namespace Adoter
 /////////////////////////////////////////////////////
 void Game::Init(std::shared_ptr<Room> room)
 {
+	_cards.clear();
+
 	_cards.resize(136);
 
 	std::iota(_cards.begin(), _cards.end(), 1);
@@ -24,6 +26,11 @@ void Game::Init(std::shared_ptr<Room> room)
 	std::random_shuffle(cards.begin(), cards.end()); //洗牌
 
 	_cards = std::list<int32_t>(cards.begin(), cards.end());
+
+	auto log = make_unique<Asset::LogMessage>();
+	log->set_type(Asset::GAME_CARDS);
+	for (auto card : _cards) log->mutable_cards()->Add(card);
+	LOG(INFO, log.get()); 
 
 	_room = room;
 }

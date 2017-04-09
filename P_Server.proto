@@ -48,6 +48,7 @@ enum LOG_TYPE {
 	SEND_PROTOCOL = 13; //发送协议
 	PLAYER_MATCH = 14; //玩家匹配
 	PAI_PERATION = 15; //玩家牌操作
+	GAME_CARDS = 16; //开局牌
 }
 
 //日志级别
@@ -77,5 +78,6 @@ message LogMessage {
 	optional string client_ip = 6; //Client地址
 	optional int64 common_limit = 7; //通用限制
 	optional int64 common_reward = 8; //通用奖励
+	repeated int32 cards = 9; //牌值
 	optional string content = 20; //内容
 }
