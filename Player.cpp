@@ -1042,7 +1042,8 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 
 	cards[pai.card_type()].push_back(pai.card_value()); //放入可以操作的牌
 	
-	std::sort(cards[pai.card_type()].begin(), cards[pai.card_type()].end(), [](int x, int y){ return x < y; }); //由小到大，排序
+	for (auto& card : cards)
+		std::sort(card.second.begin(), card.second.end(), [](int x, int y){ return x < y; }); //由小到大，排序
 
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
 	auto options = _locate_room->GetOptions();
@@ -1125,7 +1126,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 
 	if (!has_keng && (cards[Asset::CARD_TYPE_FENG].size() || cards[Asset::CARD_TYPE_JIAN].size())) has_keng = true;
 	
-	if (_jiangang > 0 || _fenggang > 0 || _minggang.size() > 0 || _angang.size() > 0) has_keng = true;
+	if (!has_keng && (_jiangang > 0 || _fenggang > 0 || _minggang.size() > 0 || _angang.size() > 0)) has_keng = true;
 	
 	if (!has_keng) return false;
 
