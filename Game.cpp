@@ -144,14 +144,15 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 	_room->BroadCast(message); //广播玩家操作
 	
-	const auto& pai = _oper_limit.pai(); //缓存的牌
+	//const auto& pai = _oper_limit.pai(); //缓存的牌
+	const auto& pai = pai_operate->pai(); //玩家发上来的牌
 
 	//一个人打牌之后，要检查其余每个玩家手中的牌，且等待他们的操作，直到超时
 	switch (pai_operate->oper_type())
 	{
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI: //打牌
 		{
-			const auto& pai = pai_operate->pai(); //玩家发上来的牌
+			//const auto& pai = pai_operate->pai(); //玩家发上来的牌
 			//检查各个玩家手里的牌是否满足胡、杠、碰、吃
 			if (CheckPai(pai, player->GetID())) //有满足要求的玩家
 			{
@@ -169,8 +170,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				Asset::PaiOperationAlert alert;
 				alert.mutable_pai()->CopyFrom(card);
 				if (player_next->CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
-				if (player_next->CheckGangPai(card) || 
-						player_next->CheckMingGangPai(pai)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+				if (player_next->CheckGangPai(card) || player_next->CheckGangPai()) 
+					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
 				if (player_next->CheckFengGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
 				if (player_next->CheckJianGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
 
@@ -353,8 +354,9 @@ bool Game::SendCheckRtn(const Asset::PaiElement& pai)
 
 	for (const auto& oper : _oper_list)
 	{
-		for (auto value : oper.oper_list()) pai_rtn.push_back((Asset::PAI_CHECK_RETURN)value);
 		player_id = oper.player_id();
+
+		for (auto value : oper.oper_list()) pai_rtn.push_back((Asset::PAI_CHECK_RETURN)value);
 
 		auto it_hu = std::find(oper.oper_list().begin(), oper.oper_list().end(), Asset::PAI_CHECK_RETURN_HU);
 		if (it_hu != oper.oper_list().end()) 
@@ -393,9 +395,10 @@ bool Game::SendCheckRtn(const Asset::PaiElement& pai)
 
 	if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert);
 
+	DEBUG("删除玩家操作,玩家ID:%ld", player_id);
 	std::remove_if(_oper_list.begin(), _oper_list.end(), [player_id](const Asset::PaiOperationList& operation){
 			return player_id == operation.player_id();
-			});
+	});
 
 	return true;
 }
@@ -410,6 +413,8 @@ bool Game::SendCheckRtn(const Asset::PaiElement& pai)
 
 bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
+	_oper_list.clear();
+
 	int32_t player_index = GetPlayerOrder(from_player_id); //当前玩家索引
 	if (player_index == -1) return false; //理论上不会出现
 
@@ -436,14 +441,17 @@ bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 
 		auto it_chi = std::find(rtn_check.begin(), rtn_check.end(), Asset::PAI_CHECK_RETURN_CHI);
 
+		/*
 		if (it_chi != rtn_check.end() && rtn_check.size() == 1 && cur_index != next_player_index) 
 		{
 			DEBUG("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
 			continue; //吃牌只能是下家
 		}
+		*/
 		
-		//如果不是下家，不能提示这个吃牌操作
 		if (it_chi != rtn_check.end() && cur_index != next_player_index) rtn_check.erase(it_chi);
+		
+		if (rtn_check.size() == 0) continue; 
 
 		///////////////////////////////////////////////////缓存所有操作
 		Asset::PaiOperationList pai_operation;
@@ -451,7 +459,10 @@ bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		pai_operation.set_from_player_id(from_player_id);
 		pai_operation.mutable_pai()->CopyFrom(pai);
 		for (auto result : rtn_check) 
+		{
 			pai_operation.mutable_oper_list()->Add(result);
+			DEBUG("%s!!!:line:%d 可操作玩家:%ld 可以操作类型:%d\n", __func__, __LINE__, player->GetID(), result);
+		}
 		_oper_list.push_back(pai_operation);
 	}
 

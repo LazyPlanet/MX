@@ -1264,14 +1264,54 @@ void Player::OnPengPai(const Asset::PaiElement& pai)
 bool Player::CheckGangPai(const Asset::PaiElement& pai)
 {
 	auto it = _cards.find(pai.card_type());
-	if (it == _cards.end()) return false;
-
 	int32_t card_value = pai.card_value();
-	int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
 
-	if (count < 3) return false; //如果玩家有3张，则是明杠，如果玩家有4张则是暗杠
-	
-	return true;
+	if (it != _cards.end()) 
+	{
+		int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
+		if (count == 3) return true; 
+	}
+	else
+	{
+		auto iit = _cards_outhand.find(pai.card_type());
+		if (iit != _cards_outhand.end()) 
+		{
+			int32_t count = std::count(iit->second.begin(), iit->second.end(), card_value);
+			if (count == 3) return true;
+		}
+	}
+
+	return false;
+}
+
+bool Player::CheckGangPai()
+{
+	for (auto cards : _cards)
+	{
+		for (auto card_value : cards.second)
+		{
+			auto count = std::count(cards.second.begin(), cards.second.end(), card_value);
+			if (count == 4) return true; //暗杠
+		}
+	}
+
+	for (auto cards : _cards_outhand)
+	{
+		for (auto card_value : cards.second)
+		{
+			auto count = std::count(cards.second.begin(), cards.second.end(), card_value);
+			if (count != 3) continue; //外面是否碰了3张
+			
+			auto it = _cards.find(cards.first);
+			if (it == _cards.end()) continue; 
+
+			auto it_value = std::find(it->second.begin(), it->second.end(), card_value); //手里是否还有1张
+
+			if (it_value != it->second.end()) return true; //明杠
+		}
+	}
+
+	return false;
 }
 	
 void Player::OnGangPai(const Asset::PaiElement& pai)
@@ -1309,6 +1349,7 @@ void Player::OnGangPai(const Asset::PaiElement& pai)
 	SynchronizePai();
 }
 
+/*
 bool Player::CheckMingGangPai(const Asset::PaiElement& pai)
 {
 	auto it = _cards_outhand.find(pai.card_type());
@@ -1320,6 +1361,7 @@ bool Player::CheckMingGangPai(const Asset::PaiElement& pai)
 	
 	return false;
 }
+*/
 	
 bool Player::CheckFengGangPai() 
 { 
