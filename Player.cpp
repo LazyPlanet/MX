@@ -1284,14 +1284,21 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai)
 	return false;
 }
 
-bool Player::CheckGangPai()
+bool Player::CheckGangPai(std::vector<Asset::PaiElement>& pais)
 {
 	for (auto cards : _cards)
 	{
 		for (auto card_value : cards.second)
 		{
 			auto count = std::count(cards.second.begin(), cards.second.end(), card_value);
-			if (count == 4) return true; //暗杠
+			if (count == 4) 
+			{
+				Asset::PaiElement pai;
+				pai.set_card_type((Asset::CARD_TYPE)cards.first);
+				pai.set_card_value(card_value);
+
+				pais.push_back(pai); //暗杠
+			}
 		}
 	}
 
@@ -1307,11 +1314,18 @@ bool Player::CheckGangPai()
 
 			auto it_value = std::find(it->second.begin(), it->second.end(), card_value); //手里是否还有1张
 
-			if (it_value != it->second.end()) return true; //明杠
+			if (it_value != it->second.end())
+			{
+				Asset::PaiElement pai;
+				pai.set_card_type((Asset::CARD_TYPE)cards.first);
+				pai.set_card_value(card_value);
+
+				pais.push_back(pai); //明杠
+			}
 		}
 	}
 
-	return false;
+	return pais.size() > 0;
 }
 	
 void Player::OnGangPai(const Asset::PaiElement& pai)
@@ -1526,6 +1540,8 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 	
 void Player::SynchronizePai()
 {
+	return;
+
 	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
 
 	for (auto pai : _cards)

@@ -170,10 +170,18 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				Asset::PaiOperationAlert alert;
 				alert.mutable_pai()->CopyFrom(card);
 				if (player_next->CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
-				if (player_next->CheckGangPai(card) || player_next->CheckGangPai()) 
-					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+
 				if (player_next->CheckFengGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
 				if (player_next->CheckJianGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+				
+				player_next->OnFaPai(cards);
+				
+				std::vector<Asset::PaiElement> pais;
+				if (player_next->CheckGangPai(pais)) 
+				{
+					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+					for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai);
+				}
 
 				if (alert.check_return().size()) 
 				{
@@ -187,7 +195,6 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					_curr_player_index = (_curr_player_index + 1) % 4;
 				}
 
-				player_next->OnFaPai(cards);
 			}
 		}
 		break;
@@ -347,8 +354,9 @@ void Game::ClearOperation()
 
 bool Game::SendCheckRtn(const Asset::PaiElement& pai)
 {
-	int64_t player_id = 0;
-	std::vector<Asset::PAI_CHECK_RETURN> pai_rtn;
+	_oper_limit.Clear();
+
+	int64_t player_id = 0; std::vector<Asset::PAI_CHECK_RETURN> pai_rtn;
 
 	if (_oper_list.size() == 0) return false;
 
