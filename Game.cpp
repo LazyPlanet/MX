@@ -396,7 +396,7 @@ bool Game::SendCheckRtn()
 	for (auto rtn : operation.oper_list()) alert.mutable_check_return()->Add(rtn); //可操作牌类型
 	if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert); //发给目标玩家
 
-	auto it = std::find_if(_oper_list.begin(), _oper_list.end(), [player_id](Asset::PaiOperationList operation){
+	auto it = std::find_if(_oper_list.begin(), _oper_list.end(), [player_id](const Asset::PaiOperationList& operation){
 				return player_id == operation.player_id();
 			});
 	if (it != _oper_list.end()) _oper_list.erase(it);
