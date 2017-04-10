@@ -359,60 +359,46 @@ bool Game::SendCheckRtn()
 {
 	ClearOperation();
 
-	int64_t player_id = 0; 
-	Asset::PaiElement pai;
-	std::vector<Asset::PAI_CHECK_RETURN> pai_rtn;
-
 	if (_oper_list.size() == 0) return false;
 
-	for (const auto& oper : _oper_list)
+	auto check = [this](Asset::PAI_CHECK_RETURN rtn_type, Asset::PaiOperationList& operation)->bool{
+
+		for (const auto& oper : _oper_list)
+		{
+			auto it = std::find(oper.oper_list().begin(), oper.oper_list().end(), rtn_type);
+
+			if (it != oper.oper_list().end()) 
+			{
+				operation = oper;
+
+				return true;
+			}
+		}
+		return false;
+	};
+
+	Asset::PaiOperationList operation;
+	for (int i = Asset::PAI_CHECK_RETURN_HU; i <= Asset::PAI_CHECK_RETURN_CHI; ++i)
 	{
-		player_id = oper.player_id();
-		pai = oper.pai();
-
-		for (auto value : oper.oper_list()) pai_rtn.push_back((Asset::PAI_CHECK_RETURN)value);
-
-		auto it_hu = std::find(oper.oper_list().begin(), oper.oper_list().end(), Asset::PAI_CHECK_RETURN_HU);
-		if (it_hu != oper.oper_list().end()) 
-		{
-			_oper_limit.set_oper_limit(Asset::PAI_CHECK_RETURN_HU);
-			break;
-		}
-		auto it_gang = std::find(oper.oper_list().begin(), oper.oper_list().end(), Asset::PAI_CHECK_RETURN_GANG);
-		if (it_gang != oper.oper_list().end()) 
-		{
-			_oper_limit.set_oper_limit(Asset::PAI_CHECK_RETURN_GANG);
-			break;
-		}
-		auto it_peng = std::find(oper.oper_list().begin(), oper.oper_list().end(), Asset::PAI_CHECK_RETURN_PENG);
-		if (it_peng != oper.oper_list().end()) 
-		{
-			_oper_limit.set_oper_limit(Asset::PAI_CHECK_RETURN_PENG);
-			break;
-		}
-		auto it_chi = std::find(oper.oper_list().begin(), oper.oper_list().end(), Asset::PAI_CHECK_RETURN_CHI);
-		if (it_chi != oper.oper_list().end()) 
-		{
-			_oper_limit.set_oper_limit(Asset::PAI_CHECK_RETURN_CHI);
-			break;
-		}
+		auto result = check(Asset::PAI_CHECK_RETURN_HU, operation);
+		if (result) break;
 	}
-	
+	if (operation.oper_list().size() == 0) return false;
+
+	int64_t player_id = operation.player_id(); 
+
 	_oper_limit.set_player_id(player_id); //当前可操作玩家
-	_oper_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
+	_oper_limit.mutable_pai()->CopyFrom(operation.pai()); //缓存这张牌
 	_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
 	
 	Asset::PaiOperationAlert alert;
-	alert.mutable_pai()->CopyFrom(pai);
-	for (auto rtn : pai_rtn) 
-		alert.mutable_check_return()->Add(rtn); //可操作牌类型
-	if (auto player_to = GetPlayer(player_id)) 
-		player_to->SendProtocol(alert);
+	alert.mutable_pai()->CopyFrom(operation.pai());
+	for (auto rtn : operation.oper_list()) alert.mutable_check_return()->Add(rtn); //可操作牌类型
+	if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert); //发给目标玩家
 
-	DEBUG("删除玩家操作,玩家ID:%ld", player_id);
 	auto it = std::find_if(_oper_list.begin(), _oper_list.end(), [player_id](Asset::PaiOperationList operation){
-			return player_id == operation.player_id();
-	});
+				return player_id == operation.player_id();
+			});
 	if (it != _oper_list.end()) _oper_list.erase(it);
 
 	return true;
