@@ -380,10 +380,14 @@ bool Game::SendCheckRtn()
 	Asset::PaiOperationList operation;
 	for (int i = Asset::PAI_CHECK_RETURN_HU; i <= Asset::PAI_CHECK_RETURN_CHI; ++i)
 	{
-		auto result = check(Asset::PAI_CHECK_RETURN_HU, operation);
+		auto result = check(i, operation);
 		if (result) break;
 	}
-	if (operation.oper_list().size() == 0) return false;
+	if (operation.oper_list().size() == 0) 
+	{
+		DEBUG("%s:line%d 没有可操作的牌值.", __func__, __LINE__);
+		return false;
+	}
 
 	int64_t player_id = operation.player_id(); 
 
@@ -393,13 +397,19 @@ bool Game::SendCheckRtn()
 	
 	Asset::PaiOperationAlert alert;
 	alert.mutable_pai()->CopyFrom(operation.pai());
-	for (auto rtn : operation.oper_list()) alert.mutable_check_return()->Add(rtn); //可操作牌类型
-	if (auto player_to = GetPlayer(player_id)) player_to->SendProtocol(alert); //发给目标玩家
+	for (auto rtn : operation.oper_list()) 
+		alert.mutable_check_return()->Add(rtn); //可操作牌类型
+	if (auto player_to = GetPlayer(player_id)) 
+		player_to->SendProtocol(alert); //发给目标玩家
 
 	auto it = std::find_if(_oper_list.begin(), _oper_list.end(), [player_id](const Asset::PaiOperationList& operation){
 				return player_id == operation.player_id();
 			});
-	if (it != _oper_list.end()) _oper_list.erase(it);
+	if (it != _oper_list.end()) 
+	{
+		DEBUG("%s:line%d 删除玩家%ld操作.", __func__, __LINE__, player_id);
+		_oper_list.erase(it);
+	}
 
 	return true;
 }
@@ -440,16 +450,10 @@ bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 			continue; //不能吃、碰、杠和胡牌
 		}
 
-		auto it_chi = std::find(rtn_check.begin(), rtn_check.end(), Asset::PAI_CHECK_RETURN_CHI);
-
-		/*
-		if (it_chi != rtn_check.end() && rtn_check.size() == 1 && cur_index != next_player_index) 
-		{
-			DEBUG("%s!!!:line:%d cur_index:%d player_index:%d\n", __func__, __LINE__, cur_index, player->GetID());
-			continue; //吃牌只能是下家
-		}
-		*/
+		for (auto value : rtn_check)
+			DEBUG("玩家可以进行的操作: %s:line:%d cur_index:%d next_player_index:%d player_id:%ld value:%d\n", __func__, __LINE__, cur_index, next_player_index, player->GetID(),value);
 		
+		auto it_chi = std::find(rtn_check.begin(), rtn_check.end(), Asset::PAI_CHECK_RETURN_CHI);
 		if (it_chi != rtn_check.end() && cur_index != next_player_index) rtn_check.erase(it_chi);
 		
 		if (rtn_check.size() == 0) continue; 
