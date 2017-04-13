@@ -170,23 +170,28 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 				Asset::PaiOperationAlert alert;
 				alert.mutable_pai()->CopyFrom(card);
-				if (player_next->CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
 
+				//胡牌检查
+				if (player_next->CheckHuPai(card)) 
+					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
+
+				//旋风杠检查，只检查第一次发牌之前
 				if (player_next->CheckFengGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
 				if (player_next->CheckJianGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
 				
-				player_next->OnFaPai(cards);
+				player_next->OnFaPai(cards); //放入玩家牌里面
 				
+				//杠检查：包括明杠和暗杠
 				std::vector<Asset::PaiElement> pais;
 				if (player_next->CheckGangPai(pais)) 
 				{
 					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
-					for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai);
+					for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
 				}
 
 				if (alert.check_return().size()) 
 				{
-					player_next->SendProtocol(alert);
+					player_next->SendProtocol(alert); //提示Client
 
 					_oper_limit.set_player_id(player_next->GetID()); //当前可操作玩家
 					_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
@@ -378,9 +383,9 @@ bool Game::SendCheckRtn()
 	};
 
 	Asset::PaiOperationList operation;
-	for (int i = Asset::PAI_CHECK_RETURN_HU; i <= Asset::PAI_CHECK_RETURN_CHI; ++i)
+	for (int32_t i = Asset::PAI_CHECK_RETURN_HU; i <= Asset::PAI_CHECK_RETURN_CHI; ++i)
 	{
-		auto result = check(i, operation);
+		auto result = check((Asset::PAI_CHECK_RETURN)i, operation);
 		if (result) break;
 	}
 	if (operation.oper_list().size() == 0) 

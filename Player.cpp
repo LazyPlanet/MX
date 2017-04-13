@@ -1161,7 +1161,11 @@ bool Player::CheckChiPai(const Asset::PaiElement& pai)
 
 void Player::OnChiPai(const Asset::PaiElement& pai, pb::Message* message)
 {
-	if (!CheckChiPai(pai) || !message) return;
+	if (!CheckChiPai(pai) || !message) 
+	{
+		DEBUG_ASSERT(false);
+		return;
+	}
 
 	Asset::PaiOperation* pai_operate = dynamic_cast<Asset::PaiOperation*>(message);
 	if (!pai_operate) return;
@@ -1239,6 +1243,7 @@ void Player::OnPengPai(const Asset::PaiElement& pai)
 {
 	if (!CheckPengPai(pai)) 
 	{
+		DEBUG_ASSERT(false);
 		DEBUG("%s:line:%d,玩家无法碰牌 类型:%d--值%d", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 		return;
 	}
@@ -1270,7 +1275,7 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai)
 	if (it != _cards.end()) 
 	{
 		int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
-		if (count == 3) return true; 
+		if (count == 4) return true;  //玩家手里需要有4张牌
 	}
 	else
 	{
@@ -1479,7 +1484,7 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 		auto card = GameInstance.GetCard(card_index);
 		if (card.card_type() == 0 || card.card_value() == 0) return 1; //数据有误
 
-		_cards[card.card_type()].push_back(card.card_value());
+		_cards[card.card_type()].push_back(card.card_value()); //插入玩家手牌
 	}
 
 	for (auto& cards : _cards) //整理牌
