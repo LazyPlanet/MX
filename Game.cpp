@@ -183,7 +183,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				
 				//杠检查：包括明杠和暗杠
 				std::vector<Asset::PaiElement> pais;
-				if (player_next->CheckGangPai(pais)) 
+				if (player_next->CheckAllGangPai(pais)) 
 				{
 					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
 					for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
@@ -194,6 +194,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					player_next->SendProtocol(alert); //提示Client
 
 					_oper_limit.set_player_id(player_next->GetID()); //当前可操作玩家
+					_oper_limit.set_from_player_id(player->GetID()); //当前牌来自玩家
 					_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
 				}
 				else 
@@ -234,15 +235,16 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GANGPAI: //杠牌
 		{
-			bool ret = player->CheckGangPai(_oper_limit.pai());
+			bool ret = player->CheckGangPai(_oper_limit.pai(), _oper_limit.from_player_id());
 			if (!ret) 
 			{
+				DEBUG_ASSERT(false);
 				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
 				return; 
 			}
 			else
 			{
-				player->OnGangPai(_oper_limit.pai());
+				player->OnGangPai(_oper_limit.pai(), _oper_limit.from_player_id());
 				
 				auto cards = FaPai(1);  //理论上应该给他从后面发一张，现在就顺序发一张吧
 				player->OnFaPai(cards);
@@ -309,30 +311,9 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 			if (_oper_limit.player_id() != player_next->GetID()) 
 			{
-				/*
-				auto rtn_check = player_next->CheckPai(pai);
+				auto cards = FaPai(1); //发牌 
+				player_next->OnFaPai(cards);
 
-				if (rtn_check.size() > 0)
-				{
-					_oper_limit.set_player_id(player_next->GetID()); //当前可操作玩家
-					_oper_limit.mutable_pai()->CopyFrom(pai); //缓存这张牌
-					_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
-
-					//发送给Client
-					Asset::PaiOperationAlert alert;
-					alert.mutable_pai()->CopyFrom(pai);
-					for (auto rtn : rtn_check) alert.mutable_check_return()->Add(rtn); //可操作牌类型
-					player_next->SendProtocol(alert);
-				}
-				else
-				{
-				*/
-					auto cards = FaPai(1); //发牌 
-					player_next->OnFaPai(cards);
-
-					//ClearOperation(); //清理缓存以及等待玩家操作的状态
-				//}
-					
 				_curr_player_index = next_player_index;
 			}
 			else
@@ -397,6 +378,7 @@ bool Game::SendCheckRtn()
 	int64_t player_id = operation.player_id(); 
 
 	_oper_limit.set_player_id(player_id); //当前可操作玩家
+	_oper_limit.set_from_player_id(operation.from_player_id()); //当前牌来自玩家
 	_oper_limit.mutable_pai()->CopyFrom(operation.pai()); //缓存这张牌
 	_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
 	
@@ -448,7 +430,7 @@ bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 
 		if (from_player_id == player->GetID()) continue; //自己不能对自己的牌进行操作
 
-		auto rtn_check = player->CheckPai(pai);
+		auto rtn_check = player->CheckPai(pai, from_player_id);
 		if (rtn_check.size() == 0) 
 		{
 			DEBUG("%s!!!:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);

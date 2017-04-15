@@ -907,7 +907,7 @@ int32_t Player::CmdLuckyPlate(pb::Message* message)
 /////////////////////////////////////////////////////
 /////游戏逻辑定义
 /////////////////////////////////////////////////////
-std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& pai)
+std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
 	std::cout << "玩家来的牌:line:" << __LINE__ << " card_type:" << pai.card_type() << " card_value:" << pai.card_value() << std::endl;
 
@@ -920,7 +920,7 @@ std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& p
 		std::cout << "玩家胡牌line:" << __LINE__ << std::endl;
 		rtn_check.push_back(Asset::PAI_CHECK_RETURN_HU);
 	}
-	if (CheckGangPai(pai)) 
+	if (CheckGangPai(pai, from_player_id)) 
 	{
 		std::cout << "玩家杠牌line:" << __LINE__ << std::endl;
 		rtn_check.push_back(Asset::PAI_CHECK_RETURN_GANG);
@@ -1267,31 +1267,40 @@ void Player::OnPengPai(const Asset::PaiElement& pai)
 	SynchronizePai();
 }
 
-bool Player::CheckGangPai(const Asset::PaiElement& pai)
+bool Player::CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
 	auto it = _cards.find(pai.card_type());
 	int32_t card_value = pai.card_value();
 
 	if (it != _cards.end()) 
 	{
-		int32_t count = std::count_if(it->second.begin(), it->second.end(), [card_value](int32_t value) { return card_value == value; });
-		if (count == 4) return true;  //玩家手里需要有4张牌
+		int32_t count = std::count(it->second.begin(), it->second.end(), card_value);
+		if (count == 3) return true;  //玩家手里需要有3张牌
 	}
-	else
+
+	if (from_player_id == GetID()) //玩家自己抓牌
 	{
-		auto iit = _cards_outhand.find(pai.card_type());
-		if (iit != _cards_outhand.end()) 
-		{
-			int32_t count = std::count(iit->second.begin(), iit->second.end(), card_value);
-			if (count == 3) return true;
-		}
+		auto it = _cards_outhand.find(pai.card_type()); //牌面的牌不做排序,顺序必须3张
+
+		auto first_it = std::find(it->second.begin(), it->second.end(), card_value);
+
+		if (first_it == it->second.end()) return false;
+
+		auto second_it = ++first_it;
+		if (second_it == it->second.end()) return false;
+
+		auto third_it = ++second_it;
+		if (third_it == it->second.end()) return false;
+
+		if ((*first_it == *second_it) && (*second_it == *third_it)) return true;  //玩家牌面有3张牌
 	}
 
 	return false;
 }
 
-bool Player::CheckGangPai(std::vector<Asset::PaiElement>& pais)
+bool Player::CheckAllGangPai(std::vector<Asset::PaiElement>& pais)
 {
+	/////手里有4张牌，即暗杠检查
 	for (auto cards : _cards)
 	{
 		for (auto card_value : cards.second)
@@ -1308,35 +1317,33 @@ bool Player::CheckGangPai(std::vector<Asset::PaiElement>& pais)
 		}
 	}
 
+	/////手里有1张牌，牌面有3张碰牌，即明杠检查
 	for (auto cards : _cards_outhand)
 	{
-		for (auto card_value : cards.second)
+		DEBUG_ASSERT(cards.second.size() % 3 == 0);
+
+		auto size = cards.second.size() - 3;
+
+		for (size_t i = 0; i < size; i = i + 3)
 		{
-			auto count = std::count(cards.second.begin(), cards.second.end(), card_value);
-			if (count != 3) continue; //外面是否碰了3张
+			auto card_value = cards.second.at(i);
+
+			if ((card_value != cards.second.at(i + 1)) || (card_value != cards.second.at(i + 2))) continue; //外面是否碰了3张
 			
-			auto it = _cards.find(cards.first);
-			if (it == _cards.end()) continue; 
+			Asset::PaiElement pai;
+			pai.set_card_type((Asset::CARD_TYPE)cards.first);
+			pai.set_card_value(card_value);
 
-			auto it_value = std::find(it->second.begin(), it->second.end(), card_value); //手里是否还有1张
-
-			if (it_value != it->second.end())
-			{
-				Asset::PaiElement pai;
-				pai.set_card_type((Asset::CARD_TYPE)cards.first);
-				pai.set_card_value(card_value);
-
-				pais.push_back(pai); //明杠
-			}
+			pais.push_back(pai); //明杠
 		}
 	}
 
 	return pais.size() > 0;
 }
 	
-void Player::OnGangPai(const Asset::PaiElement& pai)
+void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
-	if (!CheckGangPai(pai)) return;
+	if (!CheckGangPai(pai, from_player_id)) return;
 
 	auto it = _cards.find(pai.card_type());
 	if (it == _cards.end()) 

@@ -250,15 +250,15 @@ public:
 
 	virtual int32_t OnFaPai(std::vector<int32_t>& cards); //发牌
 
-	std::vector<Asset::PAI_CHECK_RETURN> CheckPai(const Asset::PaiElement& pai);
+	std::vector<Asset::PAI_CHECK_RETURN> CheckPai(const Asset::PaiElement& pai, int64_t from_player_id);
 
 	bool CheckHuPai(const Asset::PaiElement& pai); //胡牌
 
-	bool CheckGangPai(const Asset::PaiElement& pai); //是否可以杠牌
+	bool CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id); //是否可以杠牌
 	//bool CheckMingGangPai(const Asset::PaiElement& pai); //是否可以暗杠：检查门前是否有碰，自摸了一张，从而构成明杠
-	bool CheckGangPai(std::vector<Asset::PaiElement>& pais); //有玩家一直不杠牌, 每次都要提示, 比如玩家碰了7条,但是手里有7-8-9条,而选择暂时不杠
+	bool CheckAllGangPai(std::vector<Asset::PaiElement>& pais); //有玩家一直不杠牌, 每次都要提示, 比如玩家碰了7条,但是手里有7-8-9条,而选择暂时不杠
 
-	void OnGangPai(const Asset::PaiElement& pai); //杠牌
+	void OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id); //杠牌
 	
 	bool CheckFengGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/>& cards); //是否有旋风杠
 	bool CheckJianGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/>& cards); //是否有箭杠
