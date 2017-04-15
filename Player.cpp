@@ -1322,6 +1322,8 @@ bool Player::CheckAllGangPai(std::vector<Asset::PaiElement>& pais)
 	{
 		DEBUG_ASSERT(cards.second.size() % 3 == 0);
 
+		int32_t card_type = cards.first;
+
 		auto size = cards.second.size() - 3;
 
 		for (size_t i = 0; i < size; i = i + 3)
@@ -1329,9 +1331,15 @@ bool Player::CheckAllGangPai(std::vector<Asset::PaiElement>& pais)
 			auto card_value = cards.second.at(i);
 
 			if ((card_value != cards.second.at(i + 1)) || (card_value != cards.second.at(i + 2))) continue; //外面是否碰了3张
+
+			auto it = _cards.find(card_type);
+			if (it == _cards.end()) continue;
+			
+			auto iit = std::find(it->second.begin(), it->second.end(), card_value);
+			if (iit == it->second.end()) continue; 
 			
 			Asset::PaiElement pai;
-			pai.set_card_type((Asset::CARD_TYPE)cards.first);
+			pai.set_card_type((Asset::CARD_TYPE)card_type);
 			pai.set_card_value(card_value);
 
 			pais.push_back(pai); //明杠
