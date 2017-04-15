@@ -1564,29 +1564,10 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 
 		notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //操作类型：发牌
 
-		//检查玩家是否可以暗杠或者自摸
-		//Asset::PaiOperationAlert alert;
-		//alert.mutable_pai()->CopyFrom(card);
-		//if (CheckHuPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU); 
-		//if (CheckGangPai(card)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
-		//检查玩家是否有旋风杠
-		/*
-		if (!_stuff.player_prop().check_xuanfeng())
-		{
-			if (CheckFengGangPai(cards_inhand)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
-			if (CheckJianGangPai(cards_inhand)) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
-
-			_stuff.mutable_player_prop()->set_check_xuanfeng(true); //设置已经检查过旋风杠
-		}
-
-		if (alert.check_return().size()) SendProtocol(alert);
-		*/
-		
 		SynchronizePai(); //每次都同步
 	}
 	
 	SendProtocol(notify); //发送
-	
 
 	return 0;
 }
