@@ -1295,7 +1295,7 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 	if (it != _cards.end()) 
 	{
 		int32_t count = std::count(it->second.begin(), it->second.end(), card_value);
-		if (count == 3) return true;  //玩家手里需要有3张牌
+		if (count == 3 /*牌是来自其他玩家*/ || count == 4 /*牌是玩家自己抓的*/) return true;  //玩家手里需要有3|4张牌
 	}
 
 	if (from_player_id == GetID()) //玩家自己抓牌
@@ -1323,16 +1323,21 @@ bool Player::CheckAllGangPai(std::vector<Asset::PaiElement>& pais)
 	/////手里有4张牌，即暗杠检查
 	for (auto cards : _cards)
 	{
+		auto card_type = cards.first;
+
 		for (auto card_value : cards.second)
 		{
 			auto count = std::count(cards.second.begin(), cards.second.end(), card_value);
 			if (count == 4) 
 			{
 				Asset::PaiElement pai;
-				pai.set_card_type((Asset::CARD_TYPE)cards.first);
+				pai.set_card_type((Asset::CARD_TYPE)card_type);
 				pai.set_card_value(card_value);
 
-				pais.push_back(pai); //暗杠
+				auto it = std::find_if(pais.begin(), pais.end(), [card_type, card_value](const Asset::PaiElement& pai){
+							return card_type == pai.card_type() && card_value == pai.card_value();
+						});
+				if (it == pais.end()) pais.push_back(pai); //暗杠
 			}
 		}
 	}

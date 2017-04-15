@@ -186,7 +186,15 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				if (player_next->CheckAllGangPai(pais)) 
 				{
 					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
-					for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
+
+					if (pais.size() == 1) 
+					{
+						alert.mutable_pai()->CopyFrom(pais[0]); //如只有一个杠牌，则发送此
+					}
+					else if (pais.size() > 1)     
+					{
+						for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
+					}
 				}
 
 				if (alert.check_return().size()) 
