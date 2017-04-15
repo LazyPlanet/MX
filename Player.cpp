@@ -1052,13 +1052,21 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	if (it_duanmen != options.extend_type().end()) 
 	{
 		if (cards.find(Asset::CARD_TYPE_WANZI) == cards.end() || cards.find(Asset::CARD_TYPE_BINGZI) == cards.end() || 
-				cards.find(Asset::CARD_TYPE_TIAOZI) == cards.end()) return false; //不可缺门
+				cards.find(Asset::CARD_TYPE_TIAOZI) == cards.end()) 
+		{
+			DEBUG("胡牌检查失败：缺门.");
+			return false; //不可缺门
+		}
 	}
 	//是否可以站立胡
 	auto it_zhanli = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_ZHANLIHU);
 	if (it_zhanli != options.extend_type().end()) 
 	{
-		if (_cards_outhand.size() == 0 && _minggang.size() == 0) return false; //没开门
+		if (_cards_outhand.size() == 0 && _minggang.size() == 0) 
+		{
+			DEBUG("胡牌检查失败：没开门.");
+			return false; //没开门
+		}
 	}
 	
 	//是否有幺九
@@ -1100,7 +1108,11 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 
 	if (_jiangang > 0 || _fenggang > 0) has_yao = true;
 
-	if (!has_yao) return false;
+	if (!has_yao) 
+	{
+		DEBUG("胡牌检查失败：没幺九.");
+		return false;
+	}
 
 	////////////////////////////////////////////////////////////////////////////是否可以满足胡牌的要求
 	
@@ -1113,7 +1125,11 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 			card_list.push_back(Card_t(crds.first, value));
 	}
 	bool can_hu = CanHuPai(card_list);	
-	if (!can_hu) return false;
+	if (!can_hu) 
+	{
+		DEBUG("胡牌检查失败：自己牌内无法满足胡牌条件.");
+		return false;
+	}
 	
 	//胡牌时至少有一刻子或杠，或有中发白其中一对
 	bool has_keng = false;
@@ -1128,7 +1144,11 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	
 	if (!has_keng && (_jiangang > 0 || _fenggang > 0 || _minggang.size() > 0 || _angang.size() > 0)) has_keng = true;
 	
-	if (!has_keng) return false;
+	if (!has_keng) 
+	{
+		DEBUG("胡牌检查失败：自己牌内无法满足胡牌条件.");
+		return false;
+	}
 
 	return true;
 }
