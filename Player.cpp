@@ -1344,9 +1344,9 @@ bool Player::CheckAllGangPai(std::vector<Asset::PaiElement>& pais)
 
 		int32_t card_type = cards.first;
 
-		auto size = cards.second.size() - 3;
+		//auto size = cards.second.size() - 3;
 
-		for (size_t i = 0; i < size; i = i + 3)
+		for (size_t i = 0; i < cards.second.size(); i = i + 3)
 		{
 			auto card_value = cards.second.at(i);
 
@@ -1356,7 +1356,7 @@ bool Player::CheckAllGangPai(std::vector<Asset::PaiElement>& pais)
 			if (it == _cards.end()) continue;
 			
 			auto iit = std::find(it->second.begin(), it->second.end(), card_value);
-			if (iit == it->second.end()) continue; 
+			if (iit == it->second.end()) continue; //手里有1张才满足
 			
 			Asset::PaiElement pai;
 			pai.set_card_type((Asset::CARD_TYPE)card_type);
@@ -1372,30 +1372,42 @@ bool Player::CheckAllGangPai(std::vector<Asset::PaiElement>& pais)
 void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
 	if (!CheckGangPai(pai, from_player_id)) return;
+	
+	int32_t card_type = pai.card_type();
+	int32_t card_value = pai.card_value();
 
-	auto it = _cards.find(pai.card_type());
-	if (it == _cards.end()) 
+	/////////////////////////////////////////////////////////////////////////////手里满足杠牌
+	auto it = _cards.find(card_type);
+	if (it != _cards.end()) 
 	{
 		DEBUG_ASSERT(false);
 		return; //理论上不会如此
 	}
 	
-	int32_t card_value = pai.card_value();
 	auto count = std::count(it->second.begin(), it->second.end(), card_value); //玩家手里多少张牌
 
-	DEBUG_ASSERT(count > 2);
-
 	if (count == 3)
-	{
 		_minggang.push_back(pai);
-	}
 	else if (count == 4)
-	{
 		_angang.push_back(pai);
+	
+	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
+	
+	/////////////////////////////////////////////////////////////////////////////墙外满足杠牌
+	auto iit = _cards_outhand.find(pai.card_type());
+	if (iit != _cards_outhand.end()) 
+	{
+		auto count = std::count(iit->second.begin(), iit->second.end(), card_value); //玩家手里多少张牌
+
+		if (count == 3)
+		{
+			_minggang.push_back(pai);
+			std::remove(iit->second.begin(), iit->second.end(), card_value); //从墙外删除
+		}
 	}
 	
+	//记录日志
 	P(Asset::ACTION, "%s:line:%d, player:%ld 玩家杠牌, 牌类型:%d, 牌值:%d, 数量:%d.", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), count);
-	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
 	
 	//从后楼给玩家取一张牌
 	auto cards = _game->FaPai();
@@ -1609,6 +1621,15 @@ void Player::SynchronizePai()
 void Player::PrintPai()
 {
 	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
+	
+	for (auto pai : _cards_outhand)
+	{
+		DEBUG("%s:line:%d, 玩家 %ld牌外真正的牌数据，牌类型:%d, 牌值:", __func__, __LINE__, GetID(), pai.first);
+
+		for (auto value : pai.second)
+			std::cout << value << " ";
+		std::cout << std::endl;
+	}
 
 	for (auto pai : _cards)
 	{
