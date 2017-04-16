@@ -1241,7 +1241,7 @@ void Player::OnChiPai(const Asset::PaiElement& pai, pb::Message* message)
 	it->second.erase(second); //删除
 	
 	for (auto card : cards)
-		_cards_outhand[card.card_type()].push_back(pai.card_value());
+		_cards_outhand[card.card_type()].push_back(card.card_value());
 
 	SynchronizePai();
 }
