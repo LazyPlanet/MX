@@ -1050,7 +1050,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	{
 		std::cout << "牌类型：" << card.first << std::endl;
 		for (auto value : card.second)
-			std::cout << card.first << " ";
+			std::cout << value << " ";
 		std::cout << std::endl;
 	}
 
@@ -1083,10 +1083,10 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 
 	for (auto crds : cards) //不同牌类别的牌
 	{
+		if (crds.second.size() == 0) continue;
+
 		if (crds.first == Asset::CARD_TYPE_WANZI || crds.first == Asset::CARD_TYPE_BINGZI || crds.first == Asset::CARD_TYPE_TIAOZI)
 		{
-			if (crds.second.size() == 0) continue;
-
 			if (std::find(crds.second.begin(), crds.second.end(), 1) != crds.second.end() || 
 					(std::find(crds.second.begin(), crds.second.end(), 9) != crds.second.end()))
 			{
@@ -1097,11 +1097,8 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 		
 		if (crds.first == Asset::CARD_TYPE_FENG || crds.first == Asset::CARD_TYPE_JIAN)
 		{
-			if (crds.second.size() > 0) 
-			{
-				has_yao = true;
-				break;
-			}
+			has_yao = true;
+			break;
 		}
 	}
 
