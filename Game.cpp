@@ -256,9 +256,6 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			{
 				player->OnGangPai(_oper_limit.pai(), _oper_limit.from_player_id());
 				
-				//auto cards = FaPai(1);  //理论上应该给他从后面发一张，现在就顺序发一张吧
-				//player->OnFaPai(cards); //放到OnGangPai接口中发牌
-				
 				_curr_player_index = GetPlayerOrder(player->GetID()); //重置当前玩家索引
 
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
