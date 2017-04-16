@@ -351,17 +351,6 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 			if (_oper_limit.player_id() == player_next->GetID()) 
 			{
-				//auto cards = FaPai(1); //发牌 
-				//player_next->OnFaPai(cards);
-
-				//_curr_player_index = next_player_index;
-			//}
-			//else
-			//{
-				//auto cards = FaPai(1); //发牌 
-				//player_next->OnFaPai(cards);
-
-				//_curr_player_index = next_player_index;
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
 				
