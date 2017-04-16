@@ -163,8 +163,15 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			{
 				auto next_player_index = (_curr_player_index + 1) % 4; 
 
-				auto player_next = GetNextPlayer(next_player_index);
-				if (!player_next) return; 
+				auto player_next = GetPlayerByOrder(next_player_index);
+				
+				if (!player_next) 
+				{
+					DEBUG_ASSERT(false);
+					return; 
+				}
+				
+				DEBUG("%s:line:%d next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", __func__, __LINE__, player_next->GetID(), _curr_player_index, next_player_index);
 
 				auto cards = FaPai(1); 
 
