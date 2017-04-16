@@ -1045,6 +1045,15 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	for (auto& card : cards)
 		std::sort(card.second.begin(), card.second.end(), [](int x, int y){ return x < y; }); //由小到大，排序
 
+	std::cout << "---------------------胡牌检查，当前玩家所有牌：" << std::endl;
+	for (auto card : cards)
+	{
+		std::cout << "牌类型：" << card.first << std::endl;
+		for (auto value : card.second)
+			std::cout << card.first << " ";
+		std::cout << std::endl;
+	}
+
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
 	auto options = _locate_room->GetOptions();
 	//是否可以缺门
