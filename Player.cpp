@@ -1038,13 +1038,16 @@ bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
 bool Player::CheckHuPai(const Asset::PaiElement& pai)
 {
 	auto cards = _cards; //复制当前牌
-	for (auto crds : _cards_outhand) cards.emplace(crds);
+
+	for (auto crds : _cards_outhand) //复制牌外牌
+		cards[crds.first].insert(cards[crds.first].end(), crds.second.begin(), crds.second.end());
 
 	cards[pai.card_type()].push_back(pai.card_value()); //放入可以操作的牌
 	
 	for (auto& card : cards)
 		std::sort(card.second.begin(), card.second.end(), [](int x, int y){ return x < y; }); //由小到大，排序
 
+	/*
 	std::cout << "---------------------胡牌检查，当前玩家所有牌：" << std::endl;
 	for (auto card : cards)
 	{
@@ -1053,6 +1056,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 			std::cout << value << " ";
 		std::cout << std::endl;
 	}
+	*/
 
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
 	auto options = _locate_room->GetOptions();
@@ -1130,6 +1134,15 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 		for (auto value : crds.second)
 			card_list.push_back(Card_t(crds.first, value));
 	}
+
+	/*
+	std::cout << "转换后的玩家手里的牌:" << std::endl;
+	for (auto card : card_list)
+	{
+		std::cout << card.card_type << " " << card.card_value << std::endl;
+	}
+	*/
+
 	bool can_hu = CanHuPai(card_list);	
 	if (!can_hu) 
 	{
@@ -1152,7 +1165,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	
 	if (!has_keng) 
 	{
-		DEBUG("胡牌检查失败：自己牌内无法满足胡牌条件.");
+		DEBUG("胡牌检查失败：没有刻.");
 		return false;
 	}
 
@@ -1270,7 +1283,7 @@ void Player::OnPengPai(const Asset::PaiElement& pai)
 	if (!CheckPengPai(pai)) 
 	{
 		DEBUG_ASSERT(false);
-		DEBUG("%s:line:%d,玩家无法碰牌 类型:%d--值%d", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+		DEBUG("%s:line:%d,玩家无法碰牌 类型:%d--值%d\n", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 		return;
 	}
 	
@@ -1282,7 +1295,7 @@ void Player::OnPengPai(const Asset::PaiElement& pai)
 		auto iit = std::find(it->second.begin(), it->second.end(), pai.card_value()); //从玩家手里删除
 		if (iit == it->second.end()) return;
 		it->second.erase(iit);
-		DEBUG("%s:line:%d,删除玩家%ld手中牌 类型:%d--值%d", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+		DEBUG("%s:line:%d,删除玩家%ld手中牌 类型:%d--值%d\n", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 	}
 
 	for (int i = 0; i < 3; ++i)
