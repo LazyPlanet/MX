@@ -1376,7 +1376,11 @@ bool Player::CheckAllGangPai(std::vector<Asset::PaiElement>& pais)
 	
 void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
-	if (!CheckGangPai(pai, from_player_id)) return;
+	if (!CheckGangPai(pai, from_player_id)) 
+	{
+		DEBUG_ASSERT(false);
+		return;
+	}
 	
 	int32_t card_type = pai.card_type();
 	int32_t card_value = pai.card_value();
@@ -1399,7 +1403,7 @@ void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
 	
 	/////////////////////////////////////////////////////////////////////////////墙外满足杠牌
-	auto iit = _cards_outhand.find(pai.card_type());
+	auto iit = _cards_outhand.find(card_type);
 	if (iit != _cards_outhand.end()) 
 	{
 		auto count = std::count(iit->second.begin(), iit->second.end(), card_value); //玩家手里多少张牌
@@ -1413,6 +1417,8 @@ void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 	
 	//记录日志
 	P(Asset::ACTION, "%s:line:%d, player:%ld 玩家杠牌, 牌类型:%d, 牌值:%d, 数量:%d.", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), count);
+	
+	DEBUG("%s:line:%d, player:%ld 玩家杠牌, 牌类型:%d, 牌值:%d, 数量:%d.", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), count);
 	
 	//从后楼给玩家取一张牌
 	auto cards = _game->FaPai();
