@@ -1400,7 +1400,8 @@ void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 	else if (count == 4)
 		_angang.push_back(pai);
 	
-	std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
+	auto remove_it = std::remove(it->second.begin(), it->second.end(), card_value); //从玩家手里删除
+	it->second.erase(remove_it, it->second.end());
 	
 	/////////////////////////////////////////////////////////////////////////////墙外满足杠牌
 	auto iit = _cards_outhand.find(card_type);
@@ -1411,7 +1412,9 @@ void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		if (count == 3)
 		{
 			_minggang.push_back(pai);
-			std::remove(iit->second.begin(), iit->second.end(), card_value); //从墙外删除
+			
+			auto remove_it = std::remove(iit->second.begin(), iit->second.end(), card_value); //从墙外删除
+			iit->second.erase(remove_it, iit->second.end());
 		}
 	}
 	
