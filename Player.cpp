@@ -1383,7 +1383,7 @@ void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 
 	/////////////////////////////////////////////////////////////////////////////手里满足杠牌
 	auto it = _cards.find(card_type);
-	if (it != _cards.end()) 
+	if (it == _cards.end()) 
 	{
 		DEBUG_ASSERT(false);
 		return; //理论上不会如此
