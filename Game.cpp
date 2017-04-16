@@ -204,7 +204,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					player_next->SendProtocol(alert); //提示Client
 
 					_oper_limit.set_player_id(player_next->GetID()); //当前可操作玩家
-					_oper_limit.set_from_player_id(player->GetID()); //当前牌来自玩家
+					_oper_limit.set_from_player_id(player_next->GetID()); //当前牌来自玩家，自己抓牌
 					_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
 				}
 				else 
@@ -352,9 +352,21 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			if (_oper_limit.player_id() == player_next->GetID()) 
 			{
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
+
+				_curr_player_index = next_player_index;
 			}
-				
-			_curr_player_index = next_player_index; //换家
+			else if (alert.check_return().size()) 
+			{
+				player_next->SendProtocol(alert); //提示Client
+
+				_oper_limit.set_player_id(player_next->GetID()); //当前可操作玩家
+				_oper_limit.set_from_player_id((player_next->GetID())); //当前牌来自玩家，自己抓牌，所以是自己
+				_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
+			}
+			else 
+			{
+				_curr_player_index = next_player_index;
+			}
 		}
 		break;
 
