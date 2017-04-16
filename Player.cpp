@@ -1127,7 +1127,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	bool can_hu = CanHuPai(card_list);	
 	if (!can_hu) 
 	{
-		DEBUG("胡牌检查失败：自己牌内无法满足胡牌条件.");
+		DEBUG("胡牌检查失败：自己牌内无法满足胡牌条件.\n");
 		return false;
 	}
 	

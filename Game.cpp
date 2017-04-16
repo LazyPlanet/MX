@@ -161,7 +161,9 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
 			{
-				auto player_next = GetNextPlayer(player->GetID());
+				auto next_player_index = (_curr_player_index + 1) % 4; 
+
+				auto player_next = GetNextPlayer(next_player_index);
 				if (!player_next) return; 
 
 				auto cards = FaPai(1); 
@@ -207,7 +209,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				}
 				else 
 				{
-					_curr_player_index = (_curr_player_index + 1) % 4;
+					_curr_player_index = next_player_index;
 				}
 
 			}
@@ -316,22 +318,57 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			//如果是其他玩家放弃了操作(比如，对门不碰)，则检查下家还能不能要这张牌，来吃
 			DEBUG("%s:line:%d _oper_limit.player_id:%ld next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", 
 					__func__, __LINE__, _oper_limit.player_id(), player_next->GetID(), _curr_player_index, next_player_index);
+			
+			auto cards = FaPai(1); 
 
-			if (_oper_limit.player_id() != player_next->GetID()) 
+			auto card = GameInstance.GetCard(cards[0]);
+
+			Asset::PaiOperationAlert alert;
+			alert.mutable_pai()->CopyFrom(card);
+
+			//胡牌检查
+			if (player_next->CheckHuPai(card)) 
+				alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
+
+			//旋风杠检查，只检查第一次发牌之前
+			if (player_next->CheckFengGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
+			if (player_next->CheckJianGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+				
+			player_next->OnFaPai(cards); //放入玩家牌里面
+			
+			//杠检查：包括明杠和暗杠
+			std::vector<Asset::PaiElement> pais;
+			if (player_next->CheckAllGangPai(pais)) 
 			{
-				auto cards = FaPai(1); //发牌 
-				player_next->OnFaPai(cards);
+				alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
 
-				_curr_player_index = next_player_index;
+				if (pais.size() == 1) 
+				{
+					alert.mutable_pai()->CopyFrom(pais[0]); //如只有一个杠牌，则发送此
+				}
+				else if (pais.size() > 1)     
+				{
+					for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
+				}
 			}
-			else
-			{
-				auto cards = FaPai(1); //发牌 
-				player_next->OnFaPai(cards);
 
-				_curr_player_index = next_player_index;
+			if (_oper_limit.player_id() == player_next->GetID()) 
+			{
+				//auto cards = FaPai(1); //发牌 
+				//player_next->OnFaPai(cards);
+
+				//_curr_player_index = next_player_index;
+			//}
+			//else
+			//{
+				//auto cards = FaPai(1); //发牌 
+				//player_next->OnFaPai(cards);
+
+				//_curr_player_index = next_player_index;
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
+				
+			_curr_player_index = next_player_index; //换家
 		}
 		break;
 
@@ -379,7 +416,7 @@ bool Game::SendCheckRtn()
 	}
 	if (operation.oper_list().size() == 0) 
 	{
-		DEBUG("%s:line%d 没有可操作的牌值.", __func__, __LINE__);
+		DEBUG("%s:line%d 没有可操作的牌值.\n", __func__, __LINE__);
 		return false;
 	}
 
@@ -402,7 +439,7 @@ bool Game::SendCheckRtn()
 			});
 	if (it != _oper_list.end()) 
 	{
-		DEBUG("%s:line%d 删除玩家%ld操作.", __func__, __LINE__, player_id);
+		DEBUG("%s:line%d 删除玩家%ld操作.\n", __func__, __LINE__, player_id);
 		_oper_list.erase(it);
 	}
 
