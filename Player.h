@@ -281,7 +281,17 @@ public:
 
 	void SynchronizePai();
 	void PrintPai();
-	void ClearCards() {	_cards.clear();	}
+	void ClearCards() {	
+
+		_cards.clear();	
+		_cards_outhand.clear();
+
+		_minggang.clear();
+		_angang.clear();
+
+		_jiangang = 0;
+		_fenggang = 0;
+	}
 };
 
 /////////////////////////////////////////////////////
