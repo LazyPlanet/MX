@@ -59,8 +59,11 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			if (!enum_value) return;
 
 			const std::string& enum_name = enum_value->name();
+			
 			if (g_player)
 				DEBUG("%s:line:%d, 玩家:%ld 发送协议数据:%s", __func__, __LINE__, g_player->GetID(), enum_name.c_str());
+			else
+				DEBUG("%s:line:%d, 发送协议数据:%s", __func__, __LINE__, enum_name.c_str());
 			
 			google::protobuf::Message* msg = ProtocolInstance.GetMessage(meta.type_t());	
 			if (!msg) 
