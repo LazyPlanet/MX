@@ -27,6 +27,7 @@ public:
 	S _socket; 
 public:
 	explicit Socket(boost::asio::ip::tcp::socket&& socket) : _socket(std::move(socket)), _closed(false), _closing(false) { }
+
 	virtual ~Socket() 
 	{
 		_closed = true;
@@ -153,6 +154,8 @@ protected:
 
 	bool HandleQueue()
 	{
+		std::cout << "_write_queue size:" << _write_queue.size() << std::endl;
+
 		if (_write_queue.empty()) return false;
 
 		auto content = _write_queue.front();
@@ -161,6 +164,8 @@ protected:
 
 		boost::system::error_code error;
 		std::size_t bytes_sent = _socket.write_some(boost::asio::buffer(content.c_str(), bytes_to_send), error);
+
+		std::cout << "bytes_sent:" << bytes_sent << " error:" << error << std::endl;
 
 		if (error)
 		{
