@@ -67,18 +67,22 @@ public:
 	{
 		_socket.async_read_some(boost::asio::buffer(_buffer), std::bind(&Socket<T, S>::OnReceive, this, std::placeholders::_1, std::placeholders::_2));
 	}
+
 	virtual void OnReceive(const boost::system::error_code& error, const std::size_t bytes_transferred)
 	{
 		AsyncReceive();
 	}
+
 	virtual void AsyncReceiveWithCallback(void(T::*callback)(boost::system::error_code, std::size_t))
 	{
 		_socket.async_read_some(boost::asio::buffer(_buffer), std::bind(callback, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2));
 	}
+
 	virtual void AsyncSend(std::string& content)
 	{
 		AsyncSend(content.c_str(), content.size());
 	}
+
 	virtual void AsyncSend(const char* buff, size_t size)
 	{
 		boost::asio::async_write(_socket, boost::asio::buffer(buff, size), std::bind(&Socket::OnSend, this, std::placeholders::_1, std::placeholders::_2));
@@ -90,6 +94,7 @@ public:
 		}
 		*/
 	}
+
 	virtual void OnSend(const boost::system::error_code& error, std::size_t bytes_transferred)
 	{
 		std::cout << __func__ << ":bytes_transferred:" << bytes_transferred << " has error:" << error << std::endl;
@@ -142,6 +147,7 @@ protected:
 	void WriteHandlerWrapper(boost::system::error_code /*error*/, std::size_t /*transfered*/)
 	{
 		_is_async = false;
+
 		HandleQueue();
 	}
 
