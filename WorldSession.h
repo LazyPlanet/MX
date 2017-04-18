@@ -17,6 +17,7 @@ namespace Adoter
 {
 
 using namespace google::protobuf;
+namespace pb = google::protobuf;
 
 /*
  * 类说明：
@@ -31,6 +32,7 @@ class Player;
 
 class WorldSession : public Socket<WorldSession>
 {
+	typedef Socket<WorldSession> SuperSocket;
 public:
 	std::shared_ptr<Player> g_player = nullptr; //全局玩家定义，唯一的一个Player对象
 	typedef std::function<int32_t(Message*)> CallBack;

@@ -3,6 +3,7 @@
 #include "CommonUtil.h"
 #include "Player.h"
 #include "MXLog.h"
+#include "Protocol.h"
 
 namespace Adoter
 {
@@ -61,11 +62,11 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			const std::string& enum_name = enum_value->name();
 			
 			if (g_player)
-				DEBUG("%s:line:%d, 玩家:%ld 发送协议数据:%s", __func__, __LINE__, g_player->GetID(), enum_name.c_str());
+				DEBUG("%s:line:%d, 玩家:%ld 接收客户端发送的协议数据:%s\n", __func__, __LINE__, g_player->GetID(), enum_name.c_str());
 			else
-				DEBUG("%s:line:%d, 发送协议数据:%s", __func__, __LINE__, enum_name.c_str());
+				DEBUG("%s:line:%d, 接收客户端发送的协议数据:%s\n", __func__, __LINE__, enum_name.c_str());
 			
-			google::protobuf::Message* msg = ProtocolInstance.GetMessage(meta.type_t());	
+			pb::Message* msg = ProtocolInstance.GetMessage(meta.type_t());	
 			if (!msg) 
 			{
 				Close();
@@ -222,6 +223,8 @@ bool WorldSession::Update()
 
 	g_player->Update(); 
 
+	if (!Socket::Update()) return false;
+
 	return true;
 }
 
@@ -257,9 +260,9 @@ void WorldSession::SendProtocol(pb::Message& message)
 	meta.set_stuff(message.SerializeAsString());
 
 	std::string content = meta.SerializeAsString();
-	//AsyncSend(content);
+	AsyncSend(content);
 
-	QueuePacket(content);
+	//EnterQueue(std::move(content));
 }
 
 void WorldSessionManager::Add(std::shared_ptr<WorldSession> session)
