@@ -254,7 +254,9 @@ void WorldSession::SendProtocol(pb::Message& message)
 	meta.set_stuff(message.SerializeAsString());
 
 	std::string content = meta.SerializeAsString();
-	AsyncSend(content);
+	//AsyncSend(content);
+
+	QueuePacket(content);
 }
 
 void WorldSessionManager::Add(std::shared_ptr<WorldSession> session)

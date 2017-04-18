@@ -1330,9 +1330,14 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 
 		auto third_it = ++second_it;
 		if (third_it == it->second.end()) return false;
+		
+		DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌 类型:%d--值%d %d %d %d\n", 
+				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), *first_it, *second_it, *third_it);
 
 		if ((*first_it == *second_it) && (*second_it == *third_it)) return true;  //玩家牌面有3张牌
 	}
+		
+	DEBUG("%s:line:%d,玩家%ld不能杠牌 类型:%d--值%d\n", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 
 	return false;
 }
