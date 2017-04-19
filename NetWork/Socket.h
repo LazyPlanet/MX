@@ -25,6 +25,7 @@ public:
 	
 	virtual bool Update() {
 		if (_closed) return false;
+		//std::cout << "Socket-------------update" << std::endl;
 		//发送可以放到消息队列里面处理
 		if (_is_writing_async || (_write_queue.empty() && !_closing)) return true;
 		for (; HandleQueue(); ) {}
@@ -96,6 +97,7 @@ public:
 
 	bool HandleQueue()
 	{
+		//std::cout << "HandleQueue====================" << std::endl;
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_write_queue.empty()) return false;
 		std::string& meta = _write_queue.front();  //其实是META数据
@@ -127,7 +129,7 @@ public:
 			return AsyncProcessQueue();
 		}
 
-		std::cout << "Send success:" << bytes_sent << std::endl;
+		//std::cout << "Send success:" << bytes_sent << std::endl;
 		_write_queue.pop();
 		if (_closing && _write_queue.empty()) Close();
 		return !_write_queue.empty();
