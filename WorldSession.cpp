@@ -35,12 +35,14 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 		}
 		else
 		{
+			/*
 
 			for (int i = 0; i < 10; ++i)
 			{
 				std::string content = "aaaaaaaaaaaaaaa";
 				EnterQueue(std::move(content));
 			}
+			*/
 
 			Asset::Meta meta;
 			bool result = meta.ParseFromArray(_buffer.data(), bytes_transferred);
@@ -230,7 +232,7 @@ bool WorldSession::Update()
 
 	g_player->Update(); 
 
-	std::cout << "-------------update" << std::endl;
+	//std::cout << "-------------update" << std::endl;
 
 	if (!Socket::Update()) return false;
 
