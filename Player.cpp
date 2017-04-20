@@ -1318,19 +1318,37 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		if (count == 3 /*牌是来自其他玩家*/ || count == 4 /*牌是玩家自己抓的*/) return true;  //玩家手里需要有3|4张牌
 	}
 
+	DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌:类型:%d--值%d from_player_id:%ld\n", 
+			__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), from_player_id);
+
 	if (from_player_id == GetID()) //玩家自己抓牌
 	{
 		auto it = _cards_outhand.find(pai.card_type()); //牌面的牌不做排序,顺序必须3张
 
 		auto first_it = std::find(it->second.begin(), it->second.end(), card_value);
 
-		if (first_it == it->second.end()) return false;
+		if (first_it == it->second.end()) 
+		{
+			DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌:类型:%d--值%d from_player_id:%ld\n", 
+				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), from_player_id);
+			return false;
+		}
 
 		auto second_it = ++first_it;
-		if (second_it == it->second.end()) return false;
+		if (second_it == it->second.end())
+		{
+			DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌:类型:%d--值%d from_player_id:%ld\n", 
+				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), from_player_id);
+			return false;
+		}
 
 		auto third_it = ++second_it;
-		if (third_it == it->second.end()) return false;
+		if (third_it == it->second.end())
+		{
+			DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌:类型:%d--值%d from_player_id:%ld\n", 
+				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), from_player_id);
+			return false;
+		}
 		
 		DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌 类型:%d--值%d %d %d %d\n", 
 				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), *first_it, *second_it, *third_it);
