@@ -224,7 +224,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI: //胡牌
 		{
-			bool ret = player->CheckHuPai(_oper_limit.pai());
+			//bool ret = player->CheckHuPai(_oper_limit.pai());
+			bool ret = player->CheckHuPai(pai);
 			if (!ret) 
 			{
 				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
@@ -251,7 +252,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GANGPAI: //杠牌
 		{
-			bool ret = player->CheckGangPai(_oper_limit.pai(), _oper_limit.from_player_id());
+			//bool ret = player->CheckGangPai(_oper_limit.pai(), _oper_limit.from_player_id());
+			bool ret = player->CheckGangPai(pai, _oper_limit.from_player_id());
 			if (!ret) 
 			{
 				DEBUG_ASSERT(false);
@@ -260,7 +262,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				player->OnGangPai(_oper_limit.pai(), _oper_limit.from_player_id());
+				//player->OnGangPai(_oper_limit.pai(), _oper_limit.from_player_id());
+				player->OnGangPai(pai, _oper_limit.from_player_id());
 				
 				_curr_player_index = GetPlayerOrder(player->GetID()); //重置当前玩家索引
 
@@ -279,7 +282,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				player->OnPengPai(_oper_limit.pai());
+				//player->OnPengPai(_oper_limit.pai());
+				player->OnPengPai(pai);
 				
 				_curr_player_index = GetPlayerOrder(player->GetID()); //重置当前玩家索引
 
@@ -298,7 +302,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				player->OnChiPai(_oper_limit.pai(), message);
+				//player->OnChiPai(_oper_limit.pai(), message);
+				player->OnChiPai(pai, message);
 				
 				//_curr_player_index = (_curr_player_index + 1) % 4; //吃完牌,还是当前玩家操作
 
