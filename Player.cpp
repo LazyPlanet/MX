@@ -1061,9 +1061,11 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
 	auto options = _locate_room->GetOptions();
-	//是否可以缺门
+
+	////////是否可以缺门
 	auto it_duanmen = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_DUANMEN);
-	if (it_duanmen != options.extend_type().end()) 
+
+	if (it_duanmen == options.extend_type().end()) //不可以缺门
 	{
 		if (cards.find(Asset::CARD_TYPE_WANZI) == cards.end() || cards.find(Asset::CARD_TYPE_BINGZI) == cards.end() || 
 				cards.find(Asset::CARD_TYPE_TIAOZI) == cards.end()) 
@@ -1072,14 +1074,34 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 			return false; //不可缺门
 		}
 	}
-	//是否可以站立胡
+
+	////////是否可以站立胡
 	auto it_zhanli = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_ZHANLIHU);
-	if (it_zhanli != options.extend_type().end()) 
+
+	if (it_zhanli == options.extend_type().end()) //不可以站立胡牌
 	{
 		if (_cards_outhand.size() == 0 && _minggang.size() == 0) 
 		{
 			DEBUG("胡牌检查失败：没开门.");
 			return false; //没开门
+		}
+	}
+	
+	////////是否可以清一色
+	auto it_yise = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_QIYISE);
+
+	if (it_yise == options.extend_type().end()) //不可以清一色
+	{
+		int32_t has_count = 0;
+
+		if (cards[Asset::CARD_TYPE_WANZI].size() > 0) ++has_count;
+		if (cards[Asset::CARD_TYPE_BINGZI].size() > 0) ++has_count; 
+		if (cards[Asset::CARD_TYPE_TIAOZI].size() > 0) ++has_count; 
+
+		if (has_count == 2) //只有两门显然不行
+		{
+			DEBUG("胡牌检查失败：清一色.");
+			return false; //不可缺门
 		}
 	}
 	
@@ -1512,7 +1534,7 @@ bool Player::CheckFengGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<i
 	auto options = _locate_room->GetOptions();
 
 	auto it_xuanfeng = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_XUANFENGGANG);
-	if (it_xuanfeng == options.extend_type().end()) return false; //不支持
+	if (it_xuanfeng == options.extend_type().end()) return false; //不支持旋风杠
 
 	auto it = cards.find(Asset::CARD_TYPE_FENG);
 
