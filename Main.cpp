@@ -92,6 +92,8 @@ int main(int argc, const char* argv[])
 
 	try 
 	{
+		std::srand(std::time(0)); //random_shuffle不是真随机：http://stackoverflow.com/questions/13459953/random-shuffle-not-really-random
+
 		//系统配置读取
 		if (!ConfigInstance.LoadInitial(argv[1]))
 		{

@@ -21,7 +21,6 @@ void Game::Init(std::shared_ptr<Room> room)
 	std::iota(_cards.begin(), _cards.end(), 1);
 	std::vector<int32_t> cards(_cards.begin(), _cards.end());
 
-	std::srand(std::time(0)); //random_shuffle不是真随机：http://stackoverflow.com/questions/13459953/random-shuffle-not-really-random
 	std::random_shuffle(cards.begin(), cards.end()); //洗牌
 
 	_cards = std::list<int32_t>(cards.begin(), cards.end());
