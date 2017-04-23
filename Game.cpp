@@ -402,7 +402,7 @@ void Game::Caculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pla
 
 	int32_t total_score = 0;
 
-	Asset::GameCaculate message;
+	Asset::GameCalculate message;
 
 	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
