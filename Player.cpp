@@ -1754,6 +1754,18 @@ void Player::PrintPai()
 	std::cout << "当前玩家牌:" << GetID() << std::endl;
 	notify.PrintDebugString();
 }
+
+void Player::ClearCards() 
+{
+	_cards.clear();	
+	_cards_outhand.clear();
+
+	_minggang.clear();
+	_angang.clear();
+
+	_jiangang = 0;
+	_fenggang = 0;
+}
 /////////////////////////////////////////////////////
 //玩家通用管理类
 /////////////////////////////////////////////////////

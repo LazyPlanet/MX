@@ -226,7 +226,7 @@ public:
 private:
 	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
 	std::shared_ptr<Game> _game = nullptr; //当前游戏
-	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家手里的麻将
+	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家手里的牌
 	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards_outhand; //玩家墙外牌
 	std::vector<Asset::PaiElement> _minggang; //明杠
 	std::vector<Asset::PaiElement> _angang; //暗杠
@@ -281,19 +281,9 @@ public:
 	Asset::POSITION_TYPE GetPosition() { return _stuff.player_prop().position(); }
 	void SetPosition(Asset::POSITION_TYPE position) { _stuff.mutable_player_prop()->set_position(position); }
 
-	void SynchronizePai();
 	void PrintPai();
-	void ClearCards() {	
-
-		_cards.clear();	
-		_cards_outhand.clear();
-
-		_minggang.clear();
-		_angang.clear();
-
-		_jiangang = 0;
-		_fenggang = 0;
-	}
+	void ClearCards(); //清理玩家手中牌
+	void SynchronizePai();
 };
 
 /////////////////////////////////////////////////////
