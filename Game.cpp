@@ -55,7 +55,7 @@ bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 
 		int32_t card_count = 13; //正常开启，普通玩家牌数量
 
-		if (_banker_index % 4 == i) 
+		if (_banker_index % MAX_PLAYER_COUNT == i) 
 		{
 			card_count = 14; //庄家牌数量
 			_curr_player_index = i; //当前操作玩家
@@ -159,7 +159,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else //没有玩家需要操作：给当前玩家的下家继续发牌
 			{
-				auto next_player_index = (_curr_player_index + 1) % 4; 
+				auto next_player_index = (_curr_player_index + 1) % MAX_PLAYER_COUNT; 
 
 				auto player_next = GetPlayerByOrder(next_player_index);
 				
@@ -235,7 +235,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				auto cards = FaPai(1); 
 				player_next->OnFaPai(cards);
 				
-				_curr_player_index = (_curr_player_index + 1) % 4;
+				_curr_player_index = (_curr_player_index + 1) % MAX_PLAYER_COUNT;
 
 				return; 
 			}
@@ -304,7 +304,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				//player->OnChiPai(_oper_limit.pai(), message);
 				player->OnChiPai(pai, message);
 				
-				//_curr_player_index = (_curr_player_index + 1) % 4; //吃完牌,还是当前玩家操作
+				//_curr_player_index = (_curr_player_index + 1) % MAX_PLAYER_COUNT; //吃完牌,还是当前玩家操作
 
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
@@ -315,7 +315,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		{
 			if (SendCheckRtn()) return;
 			
-			auto next_player_index = (_curr_player_index + 1) % 4; //如果有玩家放弃操作，则继续下个玩家
+			auto next_player_index = (_curr_player_index + 1) % MAX_PLAYER_COUNT; //如果有玩家放弃操作，则继续下个玩家
 
 			auto player_next = GetPlayerByOrder(next_player_index);
 			DEBUG("%s:line:%d _oper_limit.player_id:%ld next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", 
@@ -472,11 +472,11 @@ bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 	//assert(_curr_player_index == player_index); //理论上一定相同：错误，如果碰牌的玩家出牌就不一定
 	DEBUG("%s!!!:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
 
-	int32_t next_player_index = (_curr_player_index + 1) % 4;
+	int32_t next_player_index = (_curr_player_index + 1) % MAX_PLAYER_COUNT;
 
-	for (int32_t i = next_player_index; i < 3 + next_player_index; ++i)
+	for (int32_t i = next_player_index; i < MAX_PLAYER_COUNT - 1 + next_player_index; ++i)
 	{
-		auto cur_index = i % 4;
+		auto cur_index = i % MAX_PLAYER_COUNT;
 
 		auto player = GetPlayerByOrder(cur_index);
 		if (!player) return false; //理论上不会出现
@@ -554,7 +554,7 @@ std::shared_ptr<Player> Game::GetNextPlayer(int64_t player_id)
 	int32_t order = GetPlayerOrder(player_id);
 	if (order == -1) return nullptr;
 
-	return GetPlayerByOrder((order + 1) % 4);
+	return GetPlayerByOrder((order + 1) % MAX_PLAYER_COUNT);
 }
 
 int32_t Game::GetPlayerOrder(int32_t player_id)
