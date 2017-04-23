@@ -1062,16 +1062,33 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
 	auto options = _locate_room->GetOptions();
 
-	////////是否可以缺门
+	////////是否可以缺门、清一色
 	auto it_duanmen = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_DUANMEN);
 
 	if (it_duanmen == options.extend_type().end()) //不可以缺门
 	{
-		if (cards.find(Asset::CARD_TYPE_WANZI) == cards.end() || cards.find(Asset::CARD_TYPE_BINGZI) == cards.end() || 
-				cards.find(Asset::CARD_TYPE_TIAOZI) == cards.end()) 
+		int32_t has_count = 0; //万饼条数量
+		if (cards[Asset::CARD_TYPE_WANZI].size() > 0) ++has_count;
+		if (cards[Asset::CARD_TYPE_BINGZI].size() > 0) ++has_count; 
+		if (cards[Asset::CARD_TYPE_TIAOZI].size() > 0) ++has_count; 
+		////////是否可以清一色
+		auto it_yise = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_QIYISE);
+
+		if (it_yise == options.extend_type().end()) //不可以清一色
 		{
-			DEBUG("胡牌检查失败：缺门.");
-			return false; //不可缺门
+			if (has_count != 3) //少于三门显然不行
+			{
+				DEBUG("胡牌检查失败：缺门.");
+				return false; //不可缺门
+			}
+		}
+		else //可以清一色
+		{
+			if (has_count == 2) //有两门显然不行
+			{
+				DEBUG("胡牌检查失败：清一色.");
+				return false; //不可缺门
+			}
 		}
 	}
 
@@ -1087,25 +1104,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 		}
 	}
 	
-	////////是否可以清一色
-	auto it_yise = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_QIYISE);
-
-	if (it_yise == options.extend_type().end()) //不可以清一色
-	{
-		int32_t has_count = 0;
-
-		if (cards[Asset::CARD_TYPE_WANZI].size() > 0) ++has_count;
-		if (cards[Asset::CARD_TYPE_BINGZI].size() > 0) ++has_count; 
-		if (cards[Asset::CARD_TYPE_TIAOZI].size() > 0) ++has_count; 
-
-		if (has_count == 2) //只有两门显然不行
-		{
-			DEBUG("胡牌检查失败：清一色.");
-			return false; //不可缺门
-		}
-	}
-	
-	//是否有幺九
+	////////是否有幺九
 	bool has_yao = false;
 
 	for (auto crds : cards) //不同牌类别的牌
