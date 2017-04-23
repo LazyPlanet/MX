@@ -16,7 +16,7 @@ namespace Adoter
 
 #define CARDS_COUNT 136
 	
-extern const int32_t MAX_PLAYER_COUNT;
+extern const int32_t MAX_PLAYER_COUNT; //玩家总数：有些地方不是4人麻将
 
 /////////////////////////////////////////////////////
 //一场游戏
