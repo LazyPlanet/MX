@@ -64,6 +64,8 @@ public:
 	int32_t GetPlayerOrder(int32_t player_id);
 	//设置房间
 	void SetRoom(std::shared_ptr<Room> room) {	_room = room; }
+
+	void Caculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, int32_t base_score/*基础分*/);
 };
 
 /////////////////////////////////////////////////////

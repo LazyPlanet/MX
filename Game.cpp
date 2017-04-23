@@ -179,7 +179,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				alert.mutable_pai()->CopyFrom(card);
 
 				//胡牌检查
-				if (player_next->CheckHuPai(card)) 
+				int base_score = 1;
+				if (player_next->CheckHuPai(card, base_score)) 
 					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
 
 				//旋风杠检查，只检查第一次发牌之前
@@ -224,7 +225,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI: //胡牌
 		{
 			//bool ret = player->CheckHuPai(_oper_limit.pai());
-			bool ret = player->CheckHuPai(pai);
+			int base_score = 1;
+			bool ret = player->CheckHuPai(pai, base_score);
 			if (!ret) 
 			{
 				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
@@ -236,12 +238,10 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				player_next->OnFaPai(cards);
 				
 				_curr_player_index = (_curr_player_index + 1) % MAX_PLAYER_COUNT;
-
-				return; 
 			}
 			else
 			{
-				//Caculate(); //结算
+				Caculate(player->GetID(), _oper_limit.from_player_id(), base_score); //结算
 				_room->GameOver(player->GetID()); //胡牌
 
 				OnOver();
@@ -334,7 +334,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			alert.mutable_pai()->CopyFrom(card);
 
 			//胡牌检查
-			if (player_next->CheckHuPai(card)) 
+			int base_score = 1;
+			if (player_next->CheckHuPai(card, base_score)) 
 				alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
 
 			//旋风杠检查，只检查第一次发牌之前
@@ -392,6 +393,11 @@ void Game::ClearOperation()
 {
 	DEBUG("%s:line:%d player_id:%ld\n", __func__, __LINE__, _oper_limit.player_id());
 	_oper_limit.Clear(); //清理状态
+}
+	
+void Game::Caculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, int32_t base_score/*基础分*/)
+{
+
 }
 
 bool Game::SendCheckRtn()

@@ -916,7 +916,8 @@ std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& p
 
 	std::vector<Asset::PAI_CHECK_RETURN> rtn_check;
 
-	if (CheckHuPai(pai)) 
+	int32_t base_score = 1;
+	if (CheckHuPai(pai, base_score)) 
 	{
 		std::cout << "玩家胡牌line:" << __LINE__ << std::endl;
 		rtn_check.push_back(Asset::PAI_CHECK_RETURN_HU);
@@ -1036,7 +1037,7 @@ bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
 	return pair || trips || straight; //一对、刻或者顺子
 }
 
-bool Player::CheckHuPai(const Asset::PaiElement& pai)
+bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 {
 	auto cards = _cards; //复制当前牌
 
@@ -1059,48 +1060,74 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	}
 	*/
 
+	bool zhanlihu = false, xuanfenggang = false, baopai = false, duanmen = false, yise = false; //积分
+
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
 	auto options = _locate_room->GetOptions();
 
 	////////是否可以缺门、清一色
-	auto it_duanmen = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_DUANMEN);
-
-	if (it_duanmen == options.extend_type().end()) //不可以缺门
 	{
 		int32_t has_count = 0; //万饼条数量
+
 		if (cards[Asset::CARD_TYPE_WANZI].size() > 0) ++has_count;
 		if (cards[Asset::CARD_TYPE_BINGZI].size() > 0) ++has_count; 
 		if (cards[Asset::CARD_TYPE_TIAOZI].size() > 0) ++has_count; 
-		////////是否可以清一色
-		auto it_yise = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_QIYISE);
 
-		if (it_yise == options.extend_type().end()) //不可以清一色
+		auto it_duanmen = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_DUANMEN);
+		if (it_duanmen == options.extend_type().end()) //不可以缺门
 		{
-			if (has_count != 3) //少于三门显然不行
+			if (has_count < 3) //少于三门显然不行，检查是否清一色
 			{
-				DEBUG("胡牌检查失败：缺门.");
-				return false; //不可缺门
+				auto it_yise = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_QIYISE);
+				if (it_yise != options.extend_type().end()) //可以清一色
+				{
+					if (has_count == 2) //有两门显然不是清一色
+					{
+						DEBUG("胡牌检查失败：缺门也不是清一色.");
+						return false; //不可缺门
+					}
+					else // <= 1
+					{
+						yise = true; //是清一色
+					}
+				}
+				else //断门还不可以清一色
+				{
+					DEBUG("胡牌检查失败：缺门.");
+					return false;
+				}
 			}
 		}
-		else //可以清一色
+		else //可以断门
 		{
-			if (has_count == 2) //有两门显然不行
+			if (has_count < 3) duanmen = true;
+
+			auto it_yise = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_QIYISE);
+			if (it_yise != options.extend_type().end()) //可以清一色
 			{
-				DEBUG("胡牌检查失败：清一色.");
-				return false; //不可缺门
+				if (has_count <= 1) 
+				{
+					yise = true;
+					duanmen = false; //清一色不算断门
+				}
 			}
 		}
 	}
 
 	////////是否可以站立胡
-	auto it_zhanli = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_ZHANLIHU);
-
-	if (it_zhanli == options.extend_type().end()) //不可以站立胡牌
 	{
-		if (_cards_outhand.size() == 0 && _minggang.size() == 0) 
+		auto it_zhanli = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_ZHANLIHU);
+		if (it_zhanli == options.extend_type().end()) //不可以站立胡牌
 		{
-			DEBUG("胡牌检查失败：没开门.");
-			return false; //没开门
+			if (_cards_outhand.size() == 0 && _minggang.size() == 0) 
+			{
+				DEBUG("胡牌检查失败：没开门.");
+				return false; //没开门
+			}
+		}
+		else
+		{
+			if (_cards_outhand.size() == 0 && _minggang.size() == 0) zhanlihu = true;
 		}
 	}
 	
@@ -1138,7 +1165,11 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 		if (gang.card_value() == 1 || gang.card_value() == 9) has_yao = true;
 	}
 
-	if (_jiangang > 0 || _fenggang > 0) has_yao = true;
+	if (_jiangang > 0 || _fenggang > 0) 
+	{
+		has_yao = true;
+		xuanfenggang = true;
+	}
 
 	if (!has_yao) 
 	{
@@ -1189,6 +1220,17 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai)
 	{
 		DEBUG("胡牌检查失败：没有刻.");
 		return false;
+	}
+
+	////////////////////////////////////////////////////////////////////////////积分计算
+	base_score = 1;
+	if (zhanlihu) base_score *= 2; //是否站立胡
+	if (duanmen) base_score *= 2; //是否缺门
+	if (yise) base_score *= 2; //是否清一色
+	if (baopai) base_score *= 2; //是否宝牌
+	if (xuanfenggang) //是否旋风杠
+	{
+		for (auto i = 0; i < _jiangang + _fenggang; ++i) base_score *= 2;
 	}
 
 	return true;
