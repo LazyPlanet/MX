@@ -19,7 +19,7 @@ const int32_t MAX_PLAYER_COUNT = 4;
 class Room : public std::enable_shared_from_this<Room>
 {
 	int32_t _banker_index = 0; //庄家索引
-	int64_t _banker = 0; //庄家
+	int64_t _banker = 0; //庄家：玩家ID
 
 	std::mutex _mutex;
 
@@ -72,8 +72,9 @@ public:
 	//游戏结束
 	void GameOver(int64_t player_id/*胡牌玩家*/);
 	
-	int32_t GetBankerIndex() { return _banker_index; }
-	int64_t GetBanker() { return _banker; }
+	int64_t GetBanker() { return _banker; } //获取庄家
+	int32_t GetBankerIndex() { return _banker_index; } //庄家索引
+	bool IsBanker(int64_t player_id){ return _banker == player_id; } //是否是庄家
 };
 
 /////////////////////////////////////////////////////

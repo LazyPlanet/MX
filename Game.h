@@ -30,8 +30,6 @@ private:
 	std::list<int32_t> _cards; //随机牌,每次开局更新,索引为GameManager牌中索引
 	std::vector<int64_t> _hupai_players;
 
-	int32_t _banker_index = 0; //庄家索引
-	int32_t _banker = 0; //庄家
 	int32_t _curr_player_index = 0; //当前在操作的玩家索引
 
 	Asset::PaiOperationLimit _oper_limit; //牌操作限制
@@ -64,6 +62,11 @@ public:
 	int32_t GetPlayerOrder(int32_t player_id);
 	//设置房间
 	void SetRoom(std::shared_ptr<Room> room) {	_room = room; }
+	//是否庄家
+	bool IsBanker(int64_t player_id);
+
+	void BroadCast(pb::Message* message, int64_t exclude_player_id = 0);
+	void BroadCast(pb::Message& message, int64_t exclude_player_id = 0);
 
 	void Caculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, int32_t base_score/*基础分*/);
 };

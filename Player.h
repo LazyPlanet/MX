@@ -275,6 +275,7 @@ public:
 	void OnChiPai(const Asset::PaiElement& pai, pb::Message* message); //吃牌
 
 	bool IsKaimen() { return _cards_outhand.size() != 0 || _minggang.size() != 0; } //是否开门
+	bool IsBimen() { return _cards_outhand.size() == 0 && _minggang.size() == 0; } //是否闭门
 	//是否已经在准备状态 
 	bool IsReady() { return _stuff.player_prop().game_oper_state() == Asset::GAME_OPER_TYPE_START; }
 	//获取玩家座次

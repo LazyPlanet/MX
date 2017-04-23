@@ -45,7 +45,7 @@ bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 		player->SetPosition(Asset::POSITION_TYPE(player_index));
 	}
 
-	_banker_index = _room->GetBankerIndex();
+	auto banker_index = _room->GetBankerIndex();
 
 	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
@@ -55,7 +55,7 @@ bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 
 		int32_t card_count = 13; //正常开启，普通玩家牌数量
 
-		if (_banker_index % MAX_PLAYER_COUNT == i) 
+		if (banker_index % MAX_PLAYER_COUNT == i) 
 		{
 			card_count = 14; //庄家牌数量
 			_curr_player_index = i; //当前操作玩家
@@ -140,7 +140,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 	if (Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GIVEUP != pai_operate->oper_type())
 	{
 		_curr_player_index = GetPlayerOrder(player->GetID()); //上面检查过，就说明当前该玩家可操作
-		_room->BroadCast(message); //广播玩家操作，玩家放弃操作不能广播
+		BroadCast(message); //广播玩家操作，玩家放弃操作不能广播
 	}
 
 	//const auto& pai = _oper_limit.pai(); //缓存的牌
@@ -169,7 +169,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					return; 
 				}
 				
-				DEBUG("%s:line:%d next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", __func__, __LINE__, player_next->GetID(), _curr_player_index, next_player_index);
+				DEBUG("%s:line:%d next_player_id:%ld _curr_player_index:%d next_player_index:%d\n", 
+						__func__, __LINE__, player_next->GetID(), _curr_player_index, next_player_index);
 
 				auto cards = FaPai(1); 
 
@@ -397,7 +398,59 @@ void Game::ClearOperation()
 	
 void Game::Caculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, int32_t base_score/*基础分*/)
 {
+	if (IsBanker(hupai_player_id)) base_score *= 2; //庄家胡牌，翻番
 
+	int32_t total_score = 0;
+
+	Asset::GameCaculate message;
+
+	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+	{
+		auto player = _players[i];
+		if (!player) return;
+		
+		auto player_id = player->GetID();
+		
+		auto record = message.mutable_record()->mutable_list()->Add();
+		record->set_player_id(player_id);
+
+		if (hupai_player_id == player_id) continue;
+		
+		int32_t score = base_score;
+		
+		if (dianpao_player_id == hupai_player_id || player_id == dianpao_player_id) score *= 2; //自摸或者点炮翻番
+
+		if (player->IsBimen()) score *= 2; //闭门翻番
+
+		if (dianpao_player_id == player_id)
+		{
+			if (IsBanker(dianpao_player_id)) score *= 2; //庄点炮
+		}
+		
+		record->set_score(-score); //积分
+		total_score += score; //胡牌玩家积分
+	}
+
+	auto record = std::find_if(message.mutable_record()->mutable_list()->begin(), message.mutable_record()->mutable_list()->end(), 
+			[hupai_player_id](const Asset::GameRecord_GameElement& ele){
+				return hupai_player_id == ele.player_id();
+			});
+	if (record == message.mutable_record()->mutable_list()->end()) return;
+	record->set_score(total_score); //胡牌玩家赢积分
+		
+	BroadCast(message);
+}
+	
+void Game::BroadCast(pb::Message* message, int64_t exclude_player_id)
+{
+	if (!_room) return;
+	_room->BroadCast(message, exclude_player_id);
+}
+
+void Game::BroadCast(pb::Message& message, int64_t exclude_player_id)
+{
+	if (!_room) return;
+	_room->BroadCast(message, exclude_player_id);
 }
 
 bool Game::SendCheckRtn()
@@ -599,6 +652,13 @@ std::shared_ptr<Player> Game::GetPlayer(int64_t player_id)
 	
 	return nullptr;
 }
+
+bool Game::IsBanker(int64_t player_id) 
+{ 
+	if (!_room) return false;
+	return _room->IsBanker(player_id); 
+}
+
 /////////////////////////////////////////////////////
 //游戏通用管理类
 /////////////////////////////////////////////////////
