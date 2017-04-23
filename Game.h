@@ -15,6 +15,8 @@ namespace Adoter
 {
 
 #define CARDS_COUNT 136
+	
+extern const int32_t MAX_PLAYER_COUNT;
 
 /////////////////////////////////////////////////////
 //一场游戏
@@ -23,7 +25,6 @@ class Game : public std::enable_shared_from_this<Game>
 {
 	std::shared_ptr<Room> _room = nullptr; //游戏在哪个房间开启
 
-	static const int32_t MAX_PLAYER_COUNT = 4;
 private:
 	
 	std::list<int32_t> _cards; //随机牌,每次开局更新,索引为GameManager牌中索引

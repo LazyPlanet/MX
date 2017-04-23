@@ -14,10 +14,10 @@ namespace Adoter
 class Player;
 class Game;
 
+const int32_t MAX_PLAYER_COUNT = 4;
+
 class Room : public std::enable_shared_from_this<Room>
 {
-	static const int32_t MAX_PLAYER_COUNT = 4;
-
 	int32_t _banker_index = 0; //庄家索引
 	int64_t _banker = 0; //庄家
 
