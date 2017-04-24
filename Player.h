@@ -276,6 +276,14 @@ public:
 
 	bool IsKaimen() { return _cards_outhand.size() != 0 || _minggang.size() != 0; } //是否开门
 	bool IsBimen() { return _cards_outhand.size() == 0 && _minggang.size() == 0; } //是否闭门
+
+	int32_t GetMingGangCount() {
+		return _jiangang + _minggang.size();
+	}
+	
+	int32_t GetAnGangCount() {
+		return _fenggang + _angang.size();
+	}
 	//是否已经在准备状态 
 	bool IsReady() { return _stuff.player_prop().game_oper_state() == Asset::GAME_OPER_TYPE_START; }
 	//获取玩家座次

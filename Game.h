@@ -68,7 +68,7 @@ public:
 	void BroadCast(pb::Message* message, int64_t exclude_player_id = 0);
 	void BroadCast(pb::Message& message, int64_t exclude_player_id = 0);
 
-	void Caculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, int32_t base_score/*基础分*/);
+	void Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, int32_t base_score/*基础分*/);
 };
 
 /////////////////////////////////////////////////////

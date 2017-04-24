@@ -242,7 +242,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				Caculate(player->GetID(), _oper_limit.from_player_id(), base_score); //结算
+				Calculate(player->GetID(), _oper_limit.from_player_id(), base_score); //结算
 				_room->GameOver(player->GetID()); //胡牌
 
 				OnOver();
@@ -396,7 +396,7 @@ void Game::ClearOperation()
 	_oper_limit.Clear(); //清理状态
 }
 	
-void Game::Caculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, int32_t base_score/*基础分*/)
+void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, int32_t base_score/*基础分*/)
 {
 	if (IsBanker(hupai_player_id)) base_score *= 2; //庄家胡牌，翻番
 

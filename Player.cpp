@@ -1060,7 +1060,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	}
 	*/
 
-	bool zhanlihu = false, xuanfenggang = false, baopai = false, duanmen = false, yise = false; //积分
+	bool zhanlihu = false, xuanfenggang = false, baopai = false, duanmen = false, yise = false, piao = false; //积分
 
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
 	auto options = _locate_room->GetOptions();
@@ -1221,23 +1221,29 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	}
 	
 	//胡牌时至少有一刻子或杠，或有中发白其中一对
-	bool has_keng = false;
+	bool has_ke = false;
+	int32_t ke_count = 0; //刻数量，一般最多4个，即12张
 
 	for (auto r : hu_result)
 	{
-		 has_keng = std::get<1>(r);
-		 if (has_keng) break;
+		 bool is_ke = std::get<1>(r);
+		 if (is_ke) ++ke_count;
 	}
 
-	if (!has_keng && (cards[Asset::CARD_TYPE_FENG].size() || cards[Asset::CARD_TYPE_JIAN].size())) has_keng = true;
+	if (ke_count) has_ke = true;
+
+	if (!has_ke && (cards[Asset::CARD_TYPE_FENG].size() || cards[Asset::CARD_TYPE_JIAN].size())) has_ke = true;
 	
-	if (!has_keng && (_jiangang > 0 || _fenggang > 0 || _minggang.size() > 0 || _angang.size() > 0)) has_keng = true;
+	if (!has_ke && (_jiangang > 0 || _fenggang > 0 || _minggang.size() > 0 || _angang.size() > 0)) has_ke = true;
 	
-	if (!has_keng) 
+	if (!has_ke) 
 	{
 		DEBUG("胡牌检查失败：没有刻.");
 		return false;
 	}
+
+	auto ke_total = ke_count + _jiangang + _fenggang + _minggang.size() + _angang.size();
+	if (ke_total == 4) piao = true; //TODO：玩家吃了三套副一样的..
 
 	////////////////////////////////////////////////////////////////////////////积分计算
 	base_score = 1;
@@ -1245,6 +1251,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	if (duanmen) base_score *= 2; //是否缺门
 	if (yise) base_score *= 2; //是否清一色
 	if (baopai) base_score *= 2; //是否宝牌
+	if (piao) base_score *= 2; //是否飘胡
 	if (xuanfenggang) //是否旋风杠
 	{
 		for (auto i = 0; i < _jiangang + _fenggang; ++i) base_score *= 2;
