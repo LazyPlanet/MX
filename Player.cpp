@@ -1069,9 +1069,26 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	{
 		int32_t has_count = 0; //万饼条数量
 
-		if (cards[Asset::CARD_TYPE_WANZI].size() > 0) ++has_count;
-		if (cards[Asset::CARD_TYPE_BINGZI].size() > 0) ++has_count; 
-		if (cards[Asset::CARD_TYPE_TIAOZI].size() > 0) ++has_count; 
+		auto gang_list = _minggang;
+		gang_list.insert(gang_list.end(), _angang.begin(), _angang.end());
+
+		//是否含有万子
+		auto it_wanzi = std::find_if(gang_list.begin(), gang_list.end(), [](const Asset::PaiElement& pai){
+					return pai.card_type() == Asset::CARD_TYPE_WANZI;
+				});
+		if (cards[Asset::CARD_TYPE_WANZI].size() > 0 || it_wanzi != gang_list.end()) ++has_count;
+
+		//是否含有饼子
+		auto it_bingzi = std::find_if(gang_list.begin(), gang_list.end(), [](const Asset::PaiElement& pai){
+					return pai.card_type() == Asset::CARD_TYPE_BINGZI;
+				});
+		if (cards[Asset::CARD_TYPE_BINGZI].size() > 0 || it_bingzi != gang_list.end()) ++has_count; 
+		
+		//是否含有条子
+		auto it_tiaozi = std::find_if(gang_list.begin(), gang_list.end(), [](const Asset::PaiElement& pai){
+					return pai.card_type() == Asset::CARD_TYPE_TIAOZI;
+				});
+		if (cards[Asset::CARD_TYPE_TIAOZI].size() > 0 || it_bingzi != gang_list.end()) ++has_count; 
 
 		auto it_duanmen = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_DUANMEN);
 		if (it_duanmen == options.extend_type().end()) //不可以缺门
@@ -1578,7 +1595,7 @@ bool Player::CheckFengGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<i
 	if (it_xuanfeng == options.extend_type().end()) return false; //不支持旋风杠
 
 	auto it = cards.find(Asset::CARD_TYPE_FENG);
-	if (it == card.end()) return false;
+	if (it == cards.end()) return false;
 
 	for (int32_t card_value = Asset::POSITION_TYPE_EAST; card_value <= Asset::POSITION_TYPE_NORTH; ++card_value) //东南西北
 	{
