@@ -50,7 +50,7 @@ public:
 		
 		if (!result) return false;
 
-		DEBUG("%s:Load FamilyName size:%d, WomanName size:%d, ManName size:%d\n", _family_name.name().size(), _woman_name.name().size(), _man_name.name().size());
+		DEBUG("%s:Load FamilyName size:%d, WomanName size:%d, ManName size:%d\n", __func__, _family_name.name().size(), _woman_name.name().size(), _man_name.name().size());
 
 		return true;
 	}
