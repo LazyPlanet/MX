@@ -12,8 +12,6 @@
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include <google/protobuf/text_format.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include "Timer.h"
 #include "World.h"

@@ -3,6 +3,7 @@
 #include "Room.h"
 #include "Game.h"
 #include "PlayerMatch.h"
+#include "PlayerName.h"
 
 namespace Adoter
 {
@@ -32,6 +33,8 @@ bool World::Load()
 		//LOG(ERROR, "GameInstance load error.");
 		return false;
 	}
+
+	NameInstance.Load();
 
 //////////////////////////////////////////////////
 //游戏内初始化

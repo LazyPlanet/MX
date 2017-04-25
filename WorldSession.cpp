@@ -4,6 +4,7 @@
 #include "Player.h"
 #include "MXLog.h"
 #include "Protocol.h"
+#include "PlayerName.h"
 
 namespace Adoter
 {
@@ -129,6 +130,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					redis->SaveUser(login->account().username(), stuff); //账号数据存盘
 
 					g_player = std::make_shared<Player>(player_id, shared_from_this());
+					g_player->SetName(NameInstance.Get());
 					g_player->Save(); //存盘，防止数据库无数据
 				}
 				else

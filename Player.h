@@ -64,6 +64,11 @@ public:
 	virtual void SetID(int64_t player_id) { 
 		_stuff.mutable_common_prop()->set_player_id(player_id); 
 	} 
+	//获取名字
+	virtual std::string GetName() { return _stuff.common_prop().name(); }
+	virtual void SetName(std::string name) { 
+		_stuff.mutable_common_prop()->set_name(name); 
+	} 
 	//获取级别
 	virtual int32_t GetLevel() { return _stuff.common_prop().level(); }
 	//获取性别
