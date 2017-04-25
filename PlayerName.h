@@ -26,22 +26,32 @@ public:
 		return _instance;
 	}
 
-	void Load()
+	bool Load()
 	{
 		std::ifstream fi("FamilyName", std::ifstream::in);
 		pb::io::IstreamInputStream fa_iis(&fi);
-		pb::TextFormat::Parse(&fa_iis, &_family_name);
+		auto result = pb::TextFormat::Parse(&fa_iis, &_family_name);
 		fi.close();
+
+		if (!result) return false;
 		
 		std::ifstream wi("WomanName", std::ifstream::in);
 		pb::io::IstreamInputStream woman_iis(&wi);
-		pb::TextFormat::Parse(&fa_iis, &_woman_name);
+		result = pb::TextFormat::Parse(&fa_iis, &_woman_name);
 		wi.close();
 		
 		std::ifstream mi("ManName", std::ifstream::in);
 		pb::io::IstreamInputStream man_iis(&mi);
-		pb::TextFormat::Parse(&fa_iis, &_man_name);
+		result = pb::TextFormat::Parse(&fa_iis, &_man_name);
 		mi.close();
+		
+		if (!result) return false;
+
+		_family_name.PrintDebugString();
+		_man_name.PrintDebugString();
+		_woman_name.PrintDebugString();
+
+		return true;
 	}
 
 	std::string Get()

@@ -4,6 +4,7 @@
 #include "Game.h"
 #include "PlayerMatch.h"
 #include "PlayerName.h"
+#include "MXLog.h"
 
 namespace Adoter
 {
@@ -34,7 +35,11 @@ bool World::Load()
 		return false;
 	}
 
-	NameInstance.Load();
+	if (NameInstance.Load())
+	{
+		DEBUG("%s:line:%d NameInstance.Load Failed\n", __func__, __LINE__);
+		return false;
+	}
 
 //////////////////////////////////////////////////
 //游戏内初始化
