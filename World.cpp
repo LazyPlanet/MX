@@ -35,7 +35,7 @@ bool World::Load()
 		return false;
 	}
 
-	if (NameInstance.Load())
+	if (!NameInstance.Load())
 	{
 		DEBUG("%s:line:%d NameInstance.Load Failed\n", __func__, __LINE__);
 		return false;

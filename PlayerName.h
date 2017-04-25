@@ -7,8 +7,11 @@
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
+#include <boost/algorithm/string.hpp>
+
 #include "P_Header.h"
 #include "CommonUtil.h"
+#include "MXLog.h"
 
 namespace Adoter
 {
@@ -47,9 +50,7 @@ public:
 		
 		if (!result) return false;
 
-		_family_name.PrintDebugString();
-		_man_name.PrintDebugString();
-		_woman_name.PrintDebugString();
+		DEBUG("%s:Load FamilyName size:%d, WomanName size:%d, ManName size:%d\n", _family_name.name().size(), _woman_name.name().size(), _man_name.name().size());
 
 		return true;
 	}
@@ -62,7 +63,11 @@ public:
 
 		std::string name = woman_index > man_index ? _woman_name.name(woman_index) : _man_name.name(man_index);
 
-		return _family_name.name(family_index) + name; 
+		std::string full_name = _family_name.name(family_index) + name;
+
+		boost::trim(full_name);
+
+		return full_name; 
 	}
 };
 
