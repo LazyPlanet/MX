@@ -1060,7 +1060,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	}
 	*/
 
-	bool zhanlihu = false, xuanfenggang = false, baopai = false, duanmen = false, yise = false, piao = false; //积分
+	bool zhanlihu = false, jiahu = false, xuanfenggang = false, baopai = false, duanmen = false, yise = false, piao = false; //积分
 
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
 	auto options = _locate_room->GetOptions();
@@ -1245,8 +1245,44 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	auto ke_total = ke_count + _jiangang + _fenggang + _minggang.size() + _angang.size();
 	if (ke_total == 4) piao = true; //TODO：玩家吃了三套副一样的..
 
+	////////是否是夹胡
+	{
+		bool he_deleted = false, smaller_deleted = false, bigger_deleted = false;
+
+		for (auto it = card_list.begin(); it != card_list.end(); ++it)
+		{
+			if (it->_type == pai.card_type() && it->_value == pai.card_value() - 1)
+			{
+				if (!smaller_deleted) it = card_list.erase(it); //只删除一个
+				smaller_deleted = true;
+			}
+			else if (it->_type == pai.card_type() && it->_value == pai.card_value())
+			{
+				if (!he_deleted) it = card_list.erase(it); //只删除一个
+				he_deleted = true;
+			}
+			else if (it->_type == pai.card_type() && it->_value == pai.card_value() + 1)
+			{
+				if (!bigger_deleted) it = card_list.erase(it); //只删除一个
+				bigger_deleted = true;
+			}
+			else
+			{
+				++it;
+			}
+		}
+
+		if (smaller_deleted && he_deleted && bigger_deleted)
+		{
+			bool can_hu = CanHuPai(card_list);	
+			if (can_hu) jiahu = true; //如果删除了这个顺子还能胡，就说明真的是夹胡
+		}
+	}
+
 	////////////////////////////////////////////////////////////////////////////积分计算
-	base_score = 1;
+	
+	base_score = 1; //基础分
+
 	if (zhanlihu) base_score *= 2; //是否站立胡
 	if (duanmen) base_score *= 2; //是否缺门
 	if (yise) base_score *= 2; //是否清一色
@@ -1255,6 +1291,19 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	if (xuanfenggang) //是否旋风杠
 	{
 		for (auto i = 0; i < _jiangang + _fenggang; ++i) base_score *= 2;
+	}
+	if (jiahu) //夹胡积分
+	{
+		auto it_jiahu = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_JIAHU);
+		if (it_jiahu != options.extend_type().end()) //普通夹胡
+		{
+			base_score *= 2;
+		}
+		else
+		{
+			if (pai.card_value() == 3 || pai.card_value() == 7) base_score *= 4;
+			if (pai.card_value() == 5) base_score *= 8;
+		}
 	}
 
 	return true;
