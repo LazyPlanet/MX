@@ -589,6 +589,8 @@ bool Player::Update()
 	
 int32_t Player::DefaultMethod(pb::Message* message)
 {
+	if (!message) return 0;
+
 	const pb::FieldDescriptor* field = message->GetDescriptor()->FindFieldByName("type_t");
 	if (!field) 
 	{
