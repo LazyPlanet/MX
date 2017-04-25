@@ -228,13 +228,13 @@ void WorldSession::Start()
 	
 bool WorldSession::Update() 
 { 
+	if (!Socket::Update()) return false;
+
 	if (!g_player) return true; //长时间未能上线
 
 	g_player->Update(); 
 
 	//std::cout << "-------------update" << std::endl;
-
-	if (!Socket::Update()) return false;
 
 	return true;
 }

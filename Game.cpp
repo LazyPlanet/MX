@@ -404,6 +404,7 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 
 	Asset::GameCalculate message;
 
+	//胡牌积分
 	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
 		auto player = _players[i];
@@ -437,6 +438,34 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 			});
 	if (record == message.mutable_record()->mutable_list()->end()) return;
 	record->set_score(total_score); //胡牌玩家赢积分
+	
+	//杠牌积分
+	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+	{
+		auto player = _players[i];
+		if (!player) return;
+		
+		auto ming_count = player->GetMingGangCount();
+		
+		auto an_count = player->GetAnGangCount();
+
+		auto score = ming_count * 1 + an_count * 2;
+
+		DEBUG("%s:line:%d player_id:%ld, ming_count:%d, an_count:%d, score:%d\n", __func__, __LINE__, player->GetID(), ming_count, an_count, score);
+
+		auto record = message.mutable_record()->mutable_list(i);
+		record->set_score((record->score() + score) * (MAX_PLAYER_COUNT - 1)); //增加杠分
+
+		for (int index = 0; index < MAX_PLAYER_COUNT; ++index)
+		{
+			if (index == i) continue;
+
+			auto record = message.mutable_record()->mutable_list(index);
+			record->set_score(record->score() - score); //扣除杠分
+		}
+	}
+
+	message.PrintDebugString();
 		
 	BroadCast(message);
 }
