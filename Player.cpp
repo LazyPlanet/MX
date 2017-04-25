@@ -540,8 +540,8 @@ void Player::SendProtocol(pb::Message& message)
 
 	std::string content = meta.SerializeAsString();
 
-	//GetSession()->EnterQueue(std::move(content));
-	GetSession()->AsyncSend(content);
+	GetSession()->EnterQueue(std::move(content));
+	//GetSession()->AsyncSend(content);
 	
 	auto log = make_unique<Asset::LogMessage>();
 	log->set_player_id(GetID());
