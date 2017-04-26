@@ -181,8 +181,12 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 				//胡牌检查
 				int base_score = 1;
+
 				if (player_next->CheckHuPai(card, base_score)) 
+				{
 					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
+					alert.mutable_pai()->CopyFrom(card);
+				}
 
 				//旋风杠检查，只检查第一次发牌之前
 				if (player_next->CheckFengGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
