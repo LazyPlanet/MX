@@ -40,12 +40,12 @@ public:
 		
 		std::ifstream wi("WomanName", std::ifstream::in);
 		pb::io::IstreamInputStream woman_iis(&wi);
-		result = pb::TextFormat::Parse(&fa_iis, &_woman_name);
+		result = pb::TextFormat::Parse(&woman_iis, &_woman_name);
 		wi.close();
 		
 		std::ifstream mi("ManName", std::ifstream::in);
 		pb::io::IstreamInputStream man_iis(&mi);
-		result = pb::TextFormat::Parse(&fa_iis, &_man_name);
+		result = pb::TextFormat::Parse(&man_iis, &_man_name);
 		mi.close();
 		
 		if (!result) return false;

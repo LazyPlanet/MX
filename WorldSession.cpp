@@ -130,7 +130,9 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					redis->SaveUser(login->account().username(), stuff); //账号数据存盘
 
 					g_player = std::make_shared<Player>(player_id, shared_from_this());
-					g_player->SetName(NameInstance.Get());
+					std::string player_name = NameInstance.Get();
+					DEBUG("%s:line:%d, player_id:%ld, player_name:%s\n", __func__, __LINE__, player_id, player_name.c_str());
+					g_player->SetName(player_name);
 					g_player->Save(); //存盘，防止数据库无数据
 				}
 				else
