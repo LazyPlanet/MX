@@ -31,6 +31,7 @@ public:
 
 	bool Load()
 	{
+		//加载姓
 		std::ifstream fi("FamilyName", std::ifstream::in);
 		pb::io::IstreamInputStream fa_iis(&fi);
 		auto result = pb::TextFormat::Parse(&fa_iis, &_family_name);
@@ -38,11 +39,13 @@ public:
 
 		if (!result) return false;
 		
+		//女子名字
 		std::ifstream wi("WomanName", std::ifstream::in);
 		pb::io::IstreamInputStream woman_iis(&wi);
 		result = pb::TextFormat::Parse(&woman_iis, &_woman_name);
 		wi.close();
 		
+		//男子名字
 		std::ifstream mi("ManName", std::ifstream::in);
 		pb::io::IstreamInputStream man_iis(&mi);
 		result = pb::TextFormat::Parse(&man_iis, &_man_name);
@@ -61,11 +64,13 @@ public:
 		auto woman_index = CommonUtil::Random(0, _woman_name.name().size() - 1);
 		auto man_index = CommonUtil::Random(0, _man_name.name().size() - 1);
 
+		std::string family_name = _family_name.name(family_index);
 		std::string name = woman_index > man_index ? _woman_name.name(woman_index) : _man_name.name(man_index);
 
-		std::string full_name = _family_name.name(family_index) + name;
+		boost::trim(family_name); //姓
+		boost::trim(name); //名字
 
-		boost::trim(full_name);
+		std::string full_name = family_name + name; //全名
 
 		return full_name; 
 	}
