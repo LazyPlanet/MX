@@ -177,20 +177,31 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				auto card = GameInstance.GetCard(cards[0]);
 
 				Asset::PaiOperationAlert alert;
-				alert.mutable_pai()->CopyFrom(card);
+				//alert.mutable_pai()->CopyFrom(card);
 
 				//胡牌检查
 				int base_score = 1;
-
 				if (player_next->CheckHuPai(card, base_score)) 
 				{
-					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
-					alert.mutable_pai()->CopyFrom(card);
+					auto pai_perator = alert.mutable_pais()->Add();
+					pai_perator->mutable_pai()->CopyFrom(card);
+					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
 				}
 
 				//旋风杠检查，只检查第一次发牌之前
-				if (player_next->CheckFengGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
-				if (player_next->CheckJianGangPai()) alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+				if (player_next->CheckFengGangPai()) 
+				{
+					auto pai_perator = alert.mutable_pais()->Add();
+					//pai_perator->mutable_pai()->CopyFrom(card);
+					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
+					//alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
+				}
+				if (player_next->CheckJianGangPai()) 
+				{
+					auto pai_perator = alert.mutable_pais()->Add();
+					//alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+				}
 				
 				player_next->OnFaPai(cards); //放入玩家牌里面
 				
@@ -198,19 +209,25 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				std::vector<Asset::PaiElement> pais;
 				if (player_next->CheckAllGangPai(pais)) 
 				{
-					alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+					for (auto pai : pais) 
+					{
+						auto pai_perator = alert.mutable_pais()->Add();
+						pai_perator->mutable_pai()->CopyFrom(pai);
+						pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG);
+					}
+					//alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
 
-					if (pais.size() == 1) 
-					{
-						alert.mutable_pai()->CopyFrom(pais[0]); //如只有一个杠牌，则发送此
-					}
-					else if (pais.size() > 1)     
-					{
-						for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
-					}
+					//if (pais.size() == 1) 
+					//{
+					//	alert.mutable_pai()->CopyFrom(pais[0]); //如只有一个杠牌，则发送此
+					//}
+					//else if (pais.size() > 1)     
+					//{
+					//	for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
+					//}
 				}
 
-				if (alert.check_return().size()) 
+				if (alert.pais().size()) 
 				{
 					player_next->SendProtocol(alert); //提示Client
 
@@ -336,6 +353,59 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			auto card = GameInstance.GetCard(cards[0]);
 
 			Asset::PaiOperationAlert alert;
+			//alert.mutable_pai()->CopyFrom(card);
+
+			//胡牌检查
+			int base_score = 1;
+			if (player_next->CheckHuPai(card, base_score)) 
+			{
+				auto pai_perator = alert.mutable_pais()->Add();
+				pai_perator->mutable_pai()->CopyFrom(card);
+				pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
+			}
+
+			//旋风杠检查，只检查第一次发牌之前
+			if (player_next->CheckFengGangPai()) 
+			{
+				auto pai_perator = alert.mutable_pais()->Add();
+				//pai_perator->mutable_pai()->CopyFrom(card);
+				pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
+				//alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
+			}
+			if (player_next->CheckJianGangPai()) 
+			{
+				auto pai_perator = alert.mutable_pais()->Add();
+				//alert.mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+				pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+			}
+			
+			player_next->OnFaPai(cards); //放入玩家牌里面
+			
+			//杠检查：包括明杠和暗杠
+			std::vector<Asset::PaiElement> pais;
+			if (player_next->CheckAllGangPai(pais)) 
+			{
+				for (auto pai : pais) 
+				{
+					auto pai_perator = alert.mutable_pais()->Add();
+					pai_perator->mutable_pai()->CopyFrom(pai);
+					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG);
+				}
+				//alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
+
+				//if (pais.size() == 1) 
+				//{
+				//	alert.mutable_pai()->CopyFrom(pais[0]); //如只有一个杠牌，则发送此
+				//}
+				//else if (pais.size() > 1)     
+				//{
+				//	for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
+				//}
+			}
+
+					/*
+
+			Asset::PaiOperationAlert alert;
 			alert.mutable_pai()->CopyFrom(card);
 
 			//胡牌检查
@@ -367,6 +437,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
 				}
 			}
+			*/
 
 			if (_oper_limit.player_id() == player_next->GetID()) 
 			{
@@ -374,7 +445,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 				_curr_player_index = next_player_index;
 			}
-			else if (alert.check_return().size()) 
+			//else if (alert.check_return().size()) 
+			else if (alert.pais().size()) 
 			{
 				player_next->SendProtocol(alert); //提示Client
 
@@ -531,9 +603,13 @@ bool Game::SendCheckRtn()
 	_oper_limit.set_time_out(CommonTimerInstance.GetTime() + 30); //8秒后超时
 	
 	Asset::PaiOperationAlert alert;
-	alert.mutable_pai()->CopyFrom(operation.pai());
+
+	auto pai_perator = alert.mutable_pais()->Add();
+	pai_perator->mutable_pai()->CopyFrom(operation.pai());
+
 	for (auto rtn : operation.oper_list()) 
-		alert.mutable_check_return()->Add(rtn); //可操作牌类型
+		pai_perator->mutable_check_return()->Add(rtn);
+		//alert.mutable_check_return()->Add(rtn); //可操作牌类型
 	if (auto player_to = GetPlayer(player_id)) 
 		player_to->SendProtocol(alert); //发给目标玩家
 
