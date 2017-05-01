@@ -180,8 +180,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				//alert.mutable_pai()->CopyFrom(card);
 
 				//胡牌检查
-				int base_score = 1;
-				if (player_next->CheckHuPai(card, base_score)) 
+				if (player_next->CheckHuPai(card).size() > 0) 
 				{
 					auto pai_perator = alert.mutable_pais()->Add();
 					pai_perator->mutable_pai()->CopyFrom(card);
@@ -246,10 +245,9 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI: //胡牌
 		{
-			//bool ret = player->CheckHuPai(_oper_limit.pai());
-			int base_score = 1;
-			bool ret = player->CheckHuPai(pai, base_score);
-			if (!ret) 
+			auto fan_list = player->CheckHuPai(pai);
+
+			if (fan_list.size() == 0) 
 			{
 				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
 				
@@ -263,7 +261,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				Calculate(player->GetID(), _oper_limit.from_player_id(), base_score); //结算
+				Calculate(player->GetID(), _oper_limit.from_player_id(), fan_list); //结算
 				_room->GameOver(player->GetID()); //胡牌
 
 				OnOver();
@@ -356,8 +354,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			//alert.mutable_pai()->CopyFrom(card);
 
 			//胡牌检查
-			int base_score = 1;
-			if (player_next->CheckHuPai(card, base_score)) 
+			if (player_next->CheckHuPai(card).size() > 0) 
 			{
 				auto pai_perator = alert.mutable_pais()->Add();
 				pai_perator->mutable_pai()->CopyFrom(card);
@@ -391,16 +388,6 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					pai_perator->mutable_pai()->CopyFrom(pai);
 					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG);
 				}
-				//alert.mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG); //可操作牌类型
-
-				//if (pais.size() == 1) 
-				//{
-				//	alert.mutable_pai()->CopyFrom(pais[0]); //如只有一个杠牌，则发送此
-				//}
-				//else if (pais.size() > 1)     
-				//{
-				//	for (auto pai : pais) alert.mutable_pais()->Add()->CopyFrom(pai); //多个杠牌情况
-				//}
 			}
 
 					/*
@@ -475,11 +462,15 @@ void Game::ClearOperation()
 	_oper_limit.Clear(); //清理状态
 }
 	
-void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, int32_t base_score/*基础分*/)
+void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_player_id/*胡牌玩家*/, std::vector<Asset::FAN_TYPE>& fan_list)
 {
-	if (IsBanker(hupai_player_id)) base_score *= 2; //庄家胡牌，翻番
+	int32_t base_score = 1, total_score = 0;
 
-	int32_t total_score = 0;
+	//番数由于玩家角色性检查(比如庄家胡牌翻番)
+	if (IsBanker(hupai_player_id)) 
+	{
+		fan_list.push_back(Asset::FAN_TYPE_ZHUANG);
+	}
 
 	Asset::GameCalculate message;
 
@@ -495,16 +486,72 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 		record->set_player_id(player_id);
 
 		if (hupai_player_id == player_id) continue;
-		
-		int32_t score = base_score;
-		
-		if (dianpao_player_id == hupai_player_id || player_id == dianpao_player_id) score *= 2; //自摸或者点炮翻番
 
-		if (player->IsBimen()) score *= 2; //闭门翻番
+		int32_t score = base_score;
+
+		////////牌型基础分值计算
+		for (const auto& fan : fan_list)
+		{
+			if (Asset::FAN_TYPE_ZHUANG == fan)
+				score *= 2; //是否庄家
+			else if (Asset::FAN_TYPE_ZHAN_LI == fan)
+				score *= 2; //是否站立胡
+			else if (Asset::FAN_TYPE_DUAN_MEN == fan)
+				score *= 2; //是否缺门
+			else if (Asset::FAN_TYPE_QING_YI_SE == fan)
+				score *= 2; //是否清一色  
+			else if (Asset::FAN_TYPE_LOU_BAO == fan)
+				score *= 2; //是否搂宝  
+			else if (Asset::FAN_TYPE_PIAO_HU == fan)
+				score *= 2; //是否飘胡
+			else if (Asset::FAN_TYPE_JIA_HU_NORMAL == fan)
+				score *= 2; //夹胡
+			else if (Asset::FAN_TYPE_JIA_HU_MIDDLE == fan)
+				score *= 4; //中番夹胡
+			else if (Asset::FAN_TYPE_JIA_HU_HIGHER == fan)
+				score *= 8; //高番夹胡
+			
+			//推送列表
+			auto detail = record->mutable_details()->Add();
+			detail->set_fan_type(fan);
+			detail->set_score(score);
+		}
+		
+		////////操作和玩家牌状态分值计算
+		if (dianpao_player_id == hupai_player_id)
+		{
+			score *= 2; //自摸
+			
+			auto detail = record->mutable_details()->Add();
+			detail->set_fan_type(Asset::FAN_TYPE_ZI_MO);
+			detail->set_score(score);
+		}
+
+		if (player_id == dianpao_player_id) 
+		{
+			score *= 2; //点炮翻番
+			
+			auto detail = record->mutable_details()->Add();
+			detail->set_fan_type(Asset::FAN_TYPE_DIAN_PAO);
+			detail->set_score(score);
+		}
+
+		if (player->IsBimen()) 
+		{
+			score *= 2; //闭门翻番
+			
+			auto detail = record->mutable_details()->Add();
+			detail->set_fan_type(Asset::FAN_TYPE_BIMEN);
+			detail->set_score(score);
+		}
 
 		if (dianpao_player_id == player_id)
 		{
-			if (IsBanker(dianpao_player_id)) score *= 2; //庄点炮
+			score *= 2; //庄点炮
+		
+			auto detail = record->mutable_details()->Add();
+			detail->set_fan_type(Asset::FAN_TYPE_DIAN_PAO);
+			detail->set_score(score);
 		}
 		
 		record->set_score(-score); //积分
@@ -529,11 +576,26 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 		auto an_count = player->GetAnGangCount();
 
 		auto score = ming_count * 1 + an_count * 2;
-
+				
 		DEBUG("%s:line:%d player_id:%ld, ming_count:%d, an_count:%d, score:%d\n", __func__, __LINE__, player->GetID(), ming_count, an_count, score);
 
 		auto record = message.mutable_record()->mutable_list(i);
 		record->set_score((record->score() + score) * (MAX_PLAYER_COUNT - 1)); //增加杠分
+
+		////////杠牌玩家所赢积分
+		if (ming_count)
+		{
+			auto detail = record->mutable_details()->Add();
+			detail->set_fan_type(Asset::FAN_TYPE_MING_GANG);
+			detail->set_score((ming_count * 1) * (MAX_PLAYER_COUNT - 1));
+		}
+
+		if (an_count)
+		{
+			auto detail = record->mutable_details()->Add();
+			detail->set_fan_type(Asset::FAN_TYPE_AN_GANG);
+			detail->set_score((an_count * 2) * (MAX_PLAYER_COUNT - 1));
+		}
 
 		for (int index = 0; index < MAX_PLAYER_COUNT; ++index)
 		{
@@ -541,6 +603,21 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 
 			auto record = message.mutable_record()->mutable_list(index);
 			record->set_score(record->score() - score); //扣除杠分
+
+			////////被杠牌玩家所输积分
+			if (ming_count)
+			{
+				auto detail = record->mutable_details()->Add();
+				detail->set_fan_type(Asset::FAN_TYPE_MING_GANG);
+				detail->set_score(-(ming_count * 1) * (MAX_PLAYER_COUNT - 1));
+			}
+
+			if (an_count)
+			{
+				auto detail = record->mutable_details()->Add();
+				detail->set_fan_type(Asset::FAN_TYPE_AN_GANG);
+				detail->set_score(-(an_count * 2) * (MAX_PLAYER_COUNT - 1));
+			}
 		}
 	}
 

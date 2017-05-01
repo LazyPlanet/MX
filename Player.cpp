@@ -918,8 +918,7 @@ std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& p
 
 	std::vector<Asset::PAI_CHECK_RETURN> rtn_check;
 
-	int32_t base_score = 1;
-	if (CheckHuPai(pai, base_score)) 
+	if (CheckHuPai(pai).size() > 0) 
 	{
 		std::cout << "玩家胡牌line:" << __LINE__ << std::endl;
 		rtn_check.push_back(Asset::PAI_CHECK_RETURN_HU);
@@ -1039,7 +1038,7 @@ bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
 	return pair || trips || straight; //一对、刻或者顺子
 }
 
-bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
+std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 {
 	auto cards = _cards; //复制当前牌
 
@@ -1062,6 +1061,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	}
 	*/
 
+	std::vector<Asset::FAN_TYPE> fan_list;
 	bool zhanlihu = false, jiahu = false, xuanfenggang = false, baopai = false, duanmen = false, yise = false, piao = false; //积分
 
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
@@ -1103,7 +1103,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 					if (has_count == 2) //有两门显然不是清一色
 					{
 						DEBUG("胡牌检查失败：缺门也不是清一色.");
-						return false; //不可缺门
+						return fan_list; //不可缺门
 					}
 					else // <= 1
 					{
@@ -1113,7 +1113,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 				else //断门还不可以清一色
 				{
 					DEBUG("胡牌检查失败：缺门.");
-					return false;
+					return fan_list;
 				}
 			}
 		}
@@ -1141,7 +1141,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 			if (_cards_outhand.size() == 0 && _minggang.size() == 0) 
 			{
 				DEBUG("胡牌检查失败：没开门.");
-				return false; //没开门
+				return fan_list; //没开门
 			}
 		}
 		else
@@ -1193,7 +1193,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	if (!has_yao) 
 	{
 		DEBUG("胡牌检查失败：没幺九.");
-		return false;
+		return fan_list;
 	}
 
 	////////////////////////////////////////////////////////////////////////////是否可以满足胡牌的要求
@@ -1219,7 +1219,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	if (!can_hu) 
 	{
 		DEBUG("胡牌检查失败：自己牌内无法满足胡牌条件.\n");
-		return false;
+		return fan_list;
 	}
 	
 	//胡牌时至少有一刻子或杠，或有中发白其中一对
@@ -1241,7 +1241,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	if (!has_ke) 
 	{
 		DEBUG("胡牌检查失败：没有刻.");
-		return false;
+		return fan_list;
 	}
 
 	auto ke_total = ke_count + _jiangang + _fenggang + _minggang.size() + _angang.size();
@@ -1283,41 +1283,40 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 
 	////////////////////////////////////////////////////////////////////////////积分计算
 	
-	base_score = 1; //基础分
+	//base_score = 1; //基础分
 
-	std::vector<Asset::FAN_TYPE> fan_list;
 
 	if (zhanlihu)
 	{
 		fan_list.push_back(Asset::FAN_TYPE_ZHAN_LI);
-		base_score *= 2; //是否站立胡
+		//base_score *= 2; //是否站立胡
 	}
 	if (duanmen) 
 	{
 		fan_list.push_back(Asset::FAN_TYPE_DUAN_MEN);
-		base_score *= 2; //是否缺门
+		//base_score *= 2; //是否缺门
 	}
 	if (yise) 
 	{
 		fan_list.push_back(Asset::FAN_TYPE_QING_YI_SE);
-		base_score *= 2; //是否清一色
+		//base_score *= 2; //是否清一色
 	}
 	if (baopai) 
 	{
 		fan_list.push_back(Asset::FAN_TYPE_LOU_BAO);
-		base_score *= 2; //是否宝牌
+		//base_score *= 2; //是否宝牌
 	}
 	if (piao) 
 	{
 		fan_list.push_back(Asset::FAN_TYPE_PIAO_HU);
-		base_score *= 2; //是否飘胡
+		//base_score *= 2; //是否飘胡
 	}
 	if (xuanfenggang) //是否旋风杠
 	{
 		for (auto i = 0; i < _jiangang + _fenggang; ++i) 
 		{
 			fan_list.push_back(Asset::FAN_TYPE_XUAN_FENG_GANG);
-			base_score *= 2;
+			//base_score *= 2;
 		}
 	}
 	if (jiahu) //夹胡积分
@@ -1326,17 +1325,24 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 		if (it_jiahu != options.extend_type().end()) //普通夹胡
 		{
 			fan_list.push_back(Asset::FAN_TYPE_JIA_HU_NORMAL);
-			base_score *= 2;
+			//base_score *= 2;
 		}
 		else
 		{
-			if (pai.card_value() == 3 || pai.card_value() == 7) base_score *= 4;
-			if (pai.card_value() == 5) base_score *= 8;
-			fan_list.push_back(Asset::FAN_TYPE_JIA_HU_HIGHER);
+			if (pai.card_value() == 3 || pai.card_value() == 7) 
+			{
+				fan_list.push_back(Asset::FAN_TYPE_JIA_HU_MIDDLE);
+				//base_score *= 4;
+			}
+			if (pai.card_value() == 5) 
+			{
+				fan_list.push_back(Asset::FAN_TYPE_JIA_HU_HIGHER);
+				//base_score *= 8;
+			}
 		}
 	}
 
-	return true;
+	return fan_list;
 }
 
 bool Player::CheckChiPai(const Asset::PaiElement& pai)
