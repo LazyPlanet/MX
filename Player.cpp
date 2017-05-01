@@ -1264,7 +1264,7 @@ std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 	{
 		bool he_deleted = false, smaller_deleted = false, bigger_deleted = false;
 
-		for (auto it = card_list.begin(); it != card_list.end(); ++it)
+		for (auto it = card_list.begin(); it != card_list.end();)
 		{
 			if (it->_type == pai.card_type() && it->_value == pai.card_value() - 1)
 			{
