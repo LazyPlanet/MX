@@ -1639,7 +1639,7 @@ void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 	DEBUG("%s:line:%d, player:%ld 玩家杠牌, 牌类型:%d, 牌值:%d, 数量:%d.", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), count);
 	
 	//从后楼给玩家取一张牌
-	auto cards = _game->FaPai();
+	auto cards = _game->TailPai(1);
 	OnFaPai(cards);
 	
 	SynchronizePai();
@@ -1714,7 +1714,7 @@ void Player::OnGangFengPai()
 	P(Asset::ACTION, "%s:line:%d, player:%ld 旋风杠", __func__, __LINE__, GetID());
 	
 	//从后楼给玩家取一张牌
-	auto cards = _game->FaPai();
+	auto cards = _game->TailPai(1);
 	OnFaPai(cards);
 }
 

@@ -767,15 +767,18 @@ void Game::OnOperateTimeOut()
 {
 }
 
-std::vector<int32_t> Game::FaPai()
+std::vector<int32_t> Game::TailPai(size_t card_count)
 {
 	std::vector<int32_t> cards;
 	
-	if (_cards.size() < 1) return cards;
+	if (_cards.size() < card_count) return cards;
 
-	int32_t value = _cards.back();	
-	cards.push_back(value);
-	_cards.pop_back();
+	for (size_t i = 0; i < card_count; ++i)
+	{
+		int32_t value = _cards.back();	
+		cards.push_back(value);
+		_cards.pop_back();
+	}
 
 	return cards;
 }

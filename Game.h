@@ -44,7 +44,7 @@ public:
 	virtual bool OnOver(); //游戏结束
 
 	virtual std::vector<int32_t> FaPai(size_t card_count); //发牌
-	virtual std::vector<int32_t> FaPai(); //后楼发牌
+	virtual std::vector<int32_t> TailPai(size_t card_count); //后楼发牌
 	
 	void OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
 	bool CanPaiOperate(std::shared_ptr<Player> player, pb::Message* message);
