@@ -32,6 +32,7 @@ Player::Player()
 	AddHandler(Asset::META_TYPE_SHARE_BUY_SOMETHING, std::bind(&Player::CmdBuySomething, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_ENTER_ROOM, std::bind(&Player::CmdEnterRoom, this, std::placeholders::_1));
 	AddHandler(Asset::META_TYPE_SHARE_SIGN, std::bind(&Player::CmdSign, this, std::placeholders::_1));
+	AddHandler(Asset::META_TYPE_SHARE_RANDOM_SAIZI, std::bind(&Player::CmdSaizi, this, std::placeholders::_1));
 
 	//AddHandler(Asset::META_TYPE_C2S_LOGIN, std::bind(&Player::CmdLogin, this, std::placeholders::_1));
 	//AddHandler(Asset::META_TYPE_C2S_ENTER_GAME, std::bind(&Player::CmdEnterGame, this, std::placeholders::_1));
@@ -904,6 +905,18 @@ int32_t Player::CmdLuckyPlate(pb::Message* message)
 	lucky_plate->set_result(index + 1); //Client从1开始
 	SendProtocol(lucky_plate);
 
+	return 0;
+}
+
+int32_t Player::CmdSaizi(pb::Message* message)
+{
+	auto saizi = dynamic_cast<Asset::RandomSaizi*>(message);
+	if (!saizi) return 1;
+
+	int32_t result = CommonUtil::Random(1, 6);
+	saizi->set_result(result);
+
+	SendProtocol(saizi);
 	return 0;
 }
 
