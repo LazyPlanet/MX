@@ -244,7 +244,7 @@ public:
 	virtual int32_t CmdGetReward(pb::Message* message); //领取奖励
 	virtual int32_t CmdLoadScene(pb::Message* message); //加载场景
 	virtual int32_t CmdLuckyPlate(pb::Message* message); //幸运转盘
-	virtual int32_t CmdSaizi(pb::Message* message); //撩股子
+	virtual int32_t CmdSaizi(pb::Message* message); //打股子
 	void OnEnterScene();
 	//获取房间
 	virtual std::shared_ptr<Room> GetRoom() { return _locate_room; }	//获取当前房间
