@@ -1285,26 +1285,54 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, int32_t& base_score)
 	
 	base_score = 1; //基础分
 
-	if (zhanlihu) base_score *= 2; //是否站立胡
-	if (duanmen) base_score *= 2; //是否缺门
-	if (yise) base_score *= 2; //是否清一色
-	if (baopai) base_score *= 2; //是否宝牌
-	if (piao) base_score *= 2; //是否飘胡
+	std::vector<Asset::FAN_TYPE> fan_list;
+
+	if (zhanlihu)
+	{
+		fan_list.push_back(Asset::FAN_TYPE_ZHAN_LI);
+		base_score *= 2; //是否站立胡
+	}
+	if (duanmen) 
+	{
+		fan_list.push_back(Asset::FAN_TYPE_DUAN_MEN);
+		base_score *= 2; //是否缺门
+	}
+	if (yise) 
+	{
+		fan_list.push_back(Asset::FAN_TYPE_QING_YI_SE);
+		base_score *= 2; //是否清一色
+	}
+	if (baopai) 
+	{
+		fan_list.push_back(Asset::FAN_TYPE_LOU_BAO);
+		base_score *= 2; //是否宝牌
+	}
+	if (piao) 
+	{
+		fan_list.push_back(Asset::FAN_TYPE_PIAO_HU);
+		base_score *= 2; //是否飘胡
+	}
 	if (xuanfenggang) //是否旋风杠
 	{
-		for (auto i = 0; i < _jiangang + _fenggang; ++i) base_score *= 2;
+		for (auto i = 0; i < _jiangang + _fenggang; ++i) 
+		{
+			fan_list.push_back(Asset::FAN_TYPE_XUAN_FENG_GANG);
+			base_score *= 2;
+		}
 	}
 	if (jiahu) //夹胡积分
 	{
 		auto it_jiahu = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_JIAHU);
 		if (it_jiahu != options.extend_type().end()) //普通夹胡
 		{
+			fan_list.push_back(Asset::FAN_TYPE_JIA_HU_NORMAL);
 			base_score *= 2;
 		}
 		else
 		{
 			if (pai.card_value() == 3 || pai.card_value() == 7) base_score *= 4;
 			if (pai.card_value() == 5) base_score *= 8;
+			fan_list.push_back(Asset::FAN_TYPE_JIA_HU_HIGHER);
 		}
 	}
 
