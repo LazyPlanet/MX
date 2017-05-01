@@ -258,7 +258,7 @@ public:
 
 	std::vector<Asset::PAI_CHECK_RETURN> CheckPai(const Asset::PaiElement& pai, int64_t from_player_id);
 
-	std::vector<Asset::FAN_TYPE> CheckHuPai(const Asset::PaiElement& pai); //胡牌
+	bool CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYPE>& fan_list); //胡牌
 
 	bool CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id); //是否可以杠牌
 	//bool CheckMingGangPai(const Asset::PaiElement& pai); //是否可以暗杠：检查门前是否有碰，自摸了一张，从而构成明杠

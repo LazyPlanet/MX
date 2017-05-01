@@ -930,8 +930,9 @@ std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& p
 	PrintPai();
 
 	std::vector<Asset::PAI_CHECK_RETURN> rtn_check;
+	std::vector<Asset::FAN_TYPE> fan_list;
 
-	if (CheckHuPai(pai).size() > 0) 
+	if (CheckHuPai(pai, fan_list)) 
 	{
 		std::cout << "玩家胡牌line:" << __LINE__ << std::endl;
 		rtn_check.push_back(Asset::PAI_CHECK_RETURN_HU);
@@ -1051,7 +1052,7 @@ bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
 	return pair || trips || straight; //一对、刻或者顺子
 }
 
-std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
+bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYPE>& fan_list)
 {
 	auto cards = _cards; //复制当前牌
 
@@ -1074,7 +1075,6 @@ std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 	}
 	*/
 
-	std::vector<Asset::FAN_TYPE> fan_list;
 	bool zhanlihu = false, jiahu = false, xuanfenggang = false, baopai = false, duanmen = false, yise = false, piao = false; //积分
 
 	////////////////////////////////////////////////////////////////////////////是否可以胡牌的前置检查
@@ -1116,7 +1116,7 @@ std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 					if (has_count == 2) //有两门显然不是清一色
 					{
 						DEBUG("胡牌检查失败：缺门也不是清一色.");
-						return fan_list; //不可缺门
+						return false; //不可缺门
 					}
 					else // <= 1
 					{
@@ -1126,7 +1126,7 @@ std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 				else //断门还不可以清一色
 				{
 					DEBUG("胡牌检查失败：缺门.");
-					return fan_list;
+					return false;
 				}
 			}
 		}
@@ -1154,7 +1154,7 @@ std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 			if (_cards_outhand.size() == 0 && _minggang.size() == 0) 
 			{
 				DEBUG("胡牌检查失败：没开门.");
-				return fan_list; //没开门
+				return false; //没开门
 			}
 		}
 		else
@@ -1206,7 +1206,7 @@ std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 	if (!has_yao) 
 	{
 		DEBUG("胡牌检查失败：没幺九.");
-		return fan_list;
+		return false;
 	}
 
 	////////////////////////////////////////////////////////////////////////////是否可以满足胡牌的要求
@@ -1232,7 +1232,7 @@ std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 	if (!can_hu) 
 	{
 		DEBUG("胡牌检查失败：自己牌内无法满足胡牌条件.\n");
-		return fan_list;
+		return false;
 	}
 	
 	//胡牌时至少有一刻子或杠，或有中发白其中一对
@@ -1254,7 +1254,7 @@ std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 	if (!has_ke) 
 	{
 		DEBUG("胡牌检查失败：没有刻.");
-		return fan_list;
+		return false;
 	}
 
 	auto ke_total = ke_count + _jiangang + _fenggang + _minggang.size() + _angang.size();
@@ -1355,7 +1355,7 @@ std::vector<Asset::FAN_TYPE> Player::CheckHuPai(const Asset::PaiElement& pai)
 		}
 	}
 
-	return fan_list;
+	return true;
 }
 
 bool Player::CheckChiPai(const Asset::PaiElement& pai)

@@ -180,7 +180,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				//alert.mutable_pai()->CopyFrom(card);
 
 				//胡牌检查
-				if (player_next->CheckHuPai(card).size() > 0) 
+				std::vector<Asset::FAN_TYPE> fan_list;
+				if (player_next->CheckHuPai(card, fan_list)) 
 				{
 					auto pai_perator = alert.mutable_pais()->Add();
 					pai_perator->mutable_pai()->CopyFrom(card);
@@ -245,9 +246,9 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI: //胡牌
 		{
-			auto fan_list = player->CheckHuPai(pai);
+			std::vector<Asset::FAN_TYPE> fan_list;
 
-			if (fan_list.size() == 0) 
+			if (!player->CheckHuPai(pai, fan_list)) 
 			{
 				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
 				
@@ -354,7 +355,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			//alert.mutable_pai()->CopyFrom(card);
 
 			//胡牌检查
-			if (player_next->CheckHuPai(card).size() > 0) 
+			std::vector<Asset::FAN_TYPE> fan_list;
+			if (player_next->CheckHuPai(card, fan_list)) 
 			{
 				auto pai_perator = alert.mutable_pais()->Add();
 				pai_perator->mutable_pai()->CopyFrom(card);
