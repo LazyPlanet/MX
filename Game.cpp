@@ -575,7 +575,8 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 		
 		auto an_count = player->GetAnGangCount();
 
-		auto score = ming_count * 1 + an_count * 2;
+		int32_t ming_score = ming_count * 1, an_score = an_count * 2;
+		auto score = ming_score + an_score;
 				
 		DEBUG("%s:line:%d player_id:%ld, ming_count:%d, an_count:%d, score:%d\n", __func__, __LINE__, player->GetID(), ming_count, an_count, score);
 
@@ -587,14 +588,14 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 		{
 			auto detail = record->mutable_details()->Add();
 			detail->set_fan_type(Asset::FAN_TYPE_MING_GANG);
-			detail->set_score((ming_count * 1) * (MAX_PLAYER_COUNT - 1));
+			detail->set_score(ming_score * (MAX_PLAYER_COUNT - 1));
 		}
 
 		if (an_count)
 		{
 			auto detail = record->mutable_details()->Add();
 			detail->set_fan_type(Asset::FAN_TYPE_AN_GANG);
-			detail->set_score((an_count * 2) * (MAX_PLAYER_COUNT - 1));
+			detail->set_score(an_score * (MAX_PLAYER_COUNT - 1));
 		}
 
 		for (int index = 0; index < MAX_PLAYER_COUNT; ++index)
@@ -609,14 +610,14 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 			{
 				auto detail = record->mutable_details()->Add();
 				detail->set_fan_type(Asset::FAN_TYPE_MING_GANG);
-				detail->set_score(-(ming_count * 1) * (MAX_PLAYER_COUNT - 1));
+				detail->set_score(-ming_score * (MAX_PLAYER_COUNT - 1));
 			}
 
 			if (an_count)
 			{
 				auto detail = record->mutable_details()->Add();
 				detail->set_fan_type(Asset::FAN_TYPE_AN_GANG);
-				detail->set_score(-(an_count * 2) * (MAX_PLAYER_COUNT - 1));
+				detail->set_score(-an_score * (MAX_PLAYER_COUNT - 1));
 			}
 		}
 	}
