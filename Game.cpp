@@ -474,7 +474,7 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 
 	Asset::GameCalculate message;
 
-	//胡牌积分
+	/////////////////////////////////////////////////////////////////胡牌积分
 	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
 		auto player = _players[i];
@@ -554,8 +554,8 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 			detail->set_score(score);
 		}
 		
-		record->set_score(-score); //积分
-		total_score += score; //胡牌玩家积分
+		record->set_score(-score); //玩家总共所输积分
+		total_score += score; //胡牌玩家赢了该玩家积分
 	}
 
 	auto record = std::find_if(message.mutable_record()->mutable_list()->begin(), message.mutable_record()->mutable_list()->end(), 
@@ -565,7 +565,7 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 	if (record == message.mutable_record()->mutable_list()->end()) return;
 	record->set_score(total_score); //胡牌玩家赢积分
 	
-	//杠牌积分
+	/////////////////////////////////////////////////////////////////杠牌积分
 	for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
 		auto player = _players[i];
