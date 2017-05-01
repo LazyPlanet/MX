@@ -31,7 +31,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 		if (error)
 		{
 			Close();
-			CP("Remote client disconnect, RemoteIp:%s", _socket.remote_endpoint().address().to_string().c_str());
+			DEBUG("Remote client disconnect, RemoteIp:%s\n", _socket.remote_endpoint().address().to_string().c_str());
 			return;
 		}
 		else
