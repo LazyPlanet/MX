@@ -1689,7 +1689,7 @@ bool Player::CheckFengGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<i
 	auto it = cards.find(Asset::CARD_TYPE_FENG);
 	if (it == cards.end()) return false;
 
-	for (int32_t card_value = Asset::POSITION_TYPE_EAST; card_value <= Asset::POSITION_TYPE_NORTH; ++card_value) //东南西北
+	for (int32_t card_value = 1; card_value <= 4; ++card_value) //东南西北
 	{
 		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
 		if (it_if == it->second.end()) return false;
@@ -1703,7 +1703,7 @@ void Player::OnGangFengPai()
 
 	auto it = _cards.find(Asset::CARD_TYPE_FENG);
 
-	for (int32_t card_value = Asset::POSITION_TYPE_EAST; card_value <= Asset::POSITION_TYPE_NORTH; ++card_value) //东南西北
+	for (int32_t card_value = 1; card_value <= 4; ++card_value) //东南西北
 	{
 		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);
 		if (it_if != it->second.end())  it->second.erase(it_if); //删除
