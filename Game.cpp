@@ -76,6 +76,9 @@ void Game::OnStart()
 {
 	if (!_room) return;
 
+	Asset::GameInformation message;
+	message.set_banker_player_id(_room->GetBanker());
+	BroadCast(message);
 }
 
 bool Game::OnOver()

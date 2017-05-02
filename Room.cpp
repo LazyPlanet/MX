@@ -137,9 +137,13 @@ bool Room::Remove(int64_t player_id)
 
 void Room::GameOver(int64_t player_id)
 {
-	if (_banker != player_id) ++_banker_index; //下庄
+	if (_banker != player_id) 
+		_banker_index = (_banker_index + 1) % MAX_PLAYER_COUNT; //下庄
 
-	_banker = player_id;
+	if (_banker_index >= (int)_players.size()) return;
+
+	auto player = _players[_banker_index];
+	_banker = player->GetID(); //设置庄家ID
 }
 
 void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
