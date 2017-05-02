@@ -262,7 +262,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 
 	if (!_locate_room || !_game) return 2; //还没加入房间或者还没开始游戏
 
-	pai_operate->set_position(GetPosition()); //设置玩家座位
+	if (!pai_operate->position()) pai_operate->set_position(GetPosition()); //设置玩家座位
 
 	//进行操作
 	switch (pai_operate->oper_type())
@@ -321,6 +321,14 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 				return 4;
 			}
 			OnGangJianPai();
+		}
+		break;
+		
+		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_TINGPAI: //听牌
+		{
+			if (!CheckTingPai()) return 5;
+
+			_stuff.mutable_player_prop()->set_tingpai(true);
 		}
 		break;
 
@@ -1689,6 +1697,37 @@ bool Player::CheckJianGangPai()
 
 	return CheckJianGangPai(_cards); 
 }
+	
+bool Player::CheckTingPai()
+{
+	for (int card_type = Asset::CARD_TYPE_WANZI; card_type <= Asset::CARD_TYPE_TIAOZI; ++card_type)
+	{
+		for (int card_value = 1; card_value <= 9; ++card_value)
+		{
+			Asset::PaiElement pai;
+			pai.set_card_type((Asset::CARD_TYPE)card_type);
+			pai.set_card_value(card_value);
+
+			std::vector<Asset::FAN_TYPE> fan_list;
+			if (CheckHuPai(pai, fan_list)) return true;
+		}
+	}
+	
+	for (int card_type = Asset::CARD_TYPE_FENG; card_type <= Asset::CARD_TYPE_JIAN; ++card_type)
+	{
+		for (int card_value = 1; card_value <= 9; ++card_value)
+		{
+			Asset::PaiElement pai;
+			pai.set_card_type((Asset::CARD_TYPE)card_type);
+			pai.set_card_value(card_value);
+
+			std::vector<Asset::FAN_TYPE> fan_list;
+			if (CheckHuPai(pai, fan_list)) return true;
+		}
+	}
+
+	return false;
+}
 
 bool Player::CheckFengGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/>& cards)
 {
@@ -1809,6 +1848,15 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 		notify.set_data_type(Asset::PaiNotify_CARDS_DATA_TYPE_CARDS_DATA_TYPE_FAPAI); //操作类型：发牌
 
 		SynchronizePai(); //每次都同步
+
+		if (IsTingPai())
+		{
+			Asset::PaiOperation pai_operation; //如果听牌，自动给玩家出牌
+			pai_operation.set_oper_type(Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI);
+			pai_operation.set_position(GetPosition());
+			pai_operation.mutable_pai()->CopyFrom(card);
+			CmdPaiOperate(&pai_operation);
+		}
 	}
 	
 	SendProtocol(notify); //发送

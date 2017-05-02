@@ -261,7 +261,6 @@ public:
 	bool CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYPE>& fan_list); //胡牌
 
 	bool CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id); //是否可以杠牌
-	//bool CheckMingGangPai(const Asset::PaiElement& pai); //是否可以暗杠：检查门前是否有碰，自摸了一张，从而构成明杠
 	bool CheckAllGangPai(std::vector<Asset::PaiElement>& pais); //有玩家一直不杠牌, 每次都要提示, 比如玩家碰了7条,但是手里有7-8-9条,而选择暂时不杠
 
 	void OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id); //杠牌
@@ -271,8 +270,10 @@ public:
 	void OnGangFengPai(); //旋风杠
 	void OnGangJianPai(); //箭杠
 
-	bool CheckFengGangPai(); 
-	bool CheckJianGangPai();
+	bool CheckFengGangPai(); //是否可以旋风杠-风杠 
+	bool CheckJianGangPai(); //是否可以旋风杠-箭杠
+	
+	bool CheckTingPai(); //是否可以听牌：能不能听牌，主要是看是否给牌可以胡
 
 	bool CheckPengPai(const Asset::PaiElement& pai); //是否可以碰牌
 	void OnPengPai(const Asset::PaiElement& pai); //碰牌
@@ -283,10 +284,13 @@ public:
 	bool IsKaimen() { return _cards_outhand.size() != 0 || _minggang.size() != 0; } //是否开门
 	bool IsBimen() { return _cards_outhand.size() == 0 && _minggang.size() == 0; } //是否闭门
 
+	bool IsTingPai() { return _stuff.player_prop().tingpai(); } //是否听牌
+
+	//明杠数量
 	int32_t GetMingGangCount() {
 		return _jiangang + _minggang.size();
 	}
-	
+	//暗杠数量
 	int32_t GetAnGangCount() {
 		return _fenggang + _angang.size();
 	}
