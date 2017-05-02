@@ -266,7 +266,6 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		
 		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GANGPAI: //杠牌
 		{
-			//bool ret = player->CheckGangPai(_oper_limit.pai(), _oper_limit.from_player_id());
 			bool ret = player->CheckGangPai(pai, _oper_limit.from_player_id());
 			if (!ret) 
 			{
@@ -276,11 +275,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				//player->OnGangPai(_oper_limit.pai(), _oper_limit.from_player_id());
 				player->OnGangPai(pai, _oper_limit.from_player_id());
-				
 				_curr_player_index = GetPlayerOrder(player->GetID()); //重置当前玩家索引
-
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
 		}
@@ -296,11 +292,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				//player->OnPengPai(_oper_limit.pai());
 				player->OnPengPai(pai);
-				
 				_curr_player_index = GetPlayerOrder(player->GetID()); //重置当前玩家索引
-
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
 		}
@@ -316,11 +309,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			}
 			else
 			{
-				//player->OnChiPai(_oper_limit.pai(), message);
 				player->OnChiPai(pai, message);
-				
-				//_curr_player_index = (_curr_player_index + 1) % MAX_PLAYER_COUNT; //吃完牌,还是当前玩家操作
-
 				ClearOperation(); //清理缓存以及等待玩家操作的状态
 			}
 		}
@@ -397,7 +386,6 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 				_curr_player_index = next_player_index;
 			}
-			//else if (alert.check_return().size()) 
 			else if (alert.pais().size()) 
 			{
 				player_next->SendProtocol(alert); //提示Client
