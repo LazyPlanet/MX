@@ -1759,6 +1759,7 @@ void Player::OnGangFengPai()
 	if (!CheckFengGangPai(_cards)) return;
 
 	auto it = _cards.find(Asset::CARD_TYPE_FENG);
+	if (it == _cards.end()) return;
 
 	for (int32_t card_value = 1; card_value <= 4; ++card_value) //东南西北
 	{
@@ -1785,6 +1786,8 @@ bool Player::CheckJianGangPai(std::map<int32_t/*麻将牌类型*/, std::vector<i
 	if (it_xuanfeng == options.extend_type().end()) return false; //不支持
 
 	auto it = cards.find(Asset::CARD_TYPE_JIAN);
+	if (it == cards.end()) return false;
+
 	for (auto card_value = 1; card_value <= 3; ++card_value) //中发白
 	{
 		auto it_if = std::find(it->second.begin(), it->second.end(), card_value);

@@ -287,7 +287,7 @@ public:
 	bool IsTingPai() { return _stuff.player_prop().tingpai(); } //是否听牌
 	int32_t GetCountAfterTingOperation() { return _stuff.player_prop().oper_count_tingpai(); } //听牌后玩家操作
 	void IncreaseTingOperationCount(){ //听牌后操作
-		 _stuff.mutable_player_prop()->set_oper_count_tingpai(GetCountAfterTing() + 1);
+		 _stuff.mutable_player_prop()->set_oper_count_tingpai(GetCountAfterTingOperation() + 1);
 	}
 
 	//明杠数量
