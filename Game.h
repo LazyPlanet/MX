@@ -31,6 +31,7 @@ private:
 	std::vector<int64_t> _hupai_players;
 
 	int32_t _curr_player_index = 0; //当前在操作的玩家索引
+	int64_t _banker_player_id = 0; //庄家
 
 	Asset::PaiOperationLimit _oper_limit; //牌操作限制
 	

@@ -72,6 +72,8 @@ public:
 	//游戏结束
 	void GameOver(int64_t player_id/*胡牌玩家*/);
 	
+	//庄家信息
+	void SetBanker(int64_t player_id) { _banker = player_id; } //设置庄家
 	int64_t GetBanker() { return _banker; } //获取庄家
 	int32_t GetBankerIndex() { return _banker_index; } //庄家索引
 	bool IsBanker(int64_t player_id){ return _banker == player_id; } //是否是庄家

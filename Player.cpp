@@ -267,7 +267,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 	//进行操作
 	switch (pai_operate->oper_type())
 	{
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI: //打牌
+		case Asset::PAI_OPER_TYPE_DAPAI: //打牌
 		{
 			const auto& pai = pai_operate->pai(); 
 
@@ -287,7 +287,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 		}
 		break;
 		
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_CHIPAI: //吃牌
+		case Asset::PAI_OPER_TYPE_CHIPAI: //吃牌
 		{
 			//检查玩家是否真的有这些牌
 			for (const auto& pai : pai_operate->pais()) 
@@ -302,7 +302,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 		}
 		break;
 		
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_XUANFENG_FENG: //旋风杠
+		case Asset::PAI_OPER_TYPE_XUANFENG_FENG: //旋风杠
 		{
 			if (_stuff.player_prop().pai_oper_count() >= 2) 
 			{
@@ -313,7 +313,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 		}
 		break;
 		
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_XUANFENG_JIAN: //旋风杠
+		case Asset::PAI_OPER_TYPE_XUANFENG_JIAN: //旋风杠
 		{
 			if (_stuff.player_prop().pai_oper_count() >= 2) 
 			{
@@ -324,7 +324,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 		}
 		break;
 		
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_TINGPAI: //听牌
+		case Asset::PAI_OPER_TYPE_TINGPAI: //听牌
 		{
 			if (!CheckTingPai()) return 5;
 
@@ -931,34 +931,34 @@ int32_t Player::CmdSaizi(pb::Message* message)
 /////////////////////////////////////////////////////
 /////游戏逻辑定义
 /////////////////////////////////////////////////////
-std::vector<Asset::PAI_CHECK_RETURN> Player::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
+std::vector<Asset::PAI_OPER_TYPE> Player::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
 	std::cout << "玩家来的牌:line:" << __LINE__ << " card_type:" << pai.card_type() << " card_value:" << pai.card_value() << std::endl;
 
 	PrintPai();
 
-	std::vector<Asset::PAI_CHECK_RETURN> rtn_check;
+	std::vector<Asset::PAI_OPER_TYPE> rtn_check;
 	std::vector<Asset::FAN_TYPE> fan_list;
 
 	if (CheckHuPai(pai, fan_list)) 
 	{
 		std::cout << "玩家胡牌line:" << __LINE__ << std::endl;
-		rtn_check.push_back(Asset::PAI_CHECK_RETURN_HU);
+		rtn_check.push_back(Asset::PAI_OPER_TYPE_HUPAI);
 	}
 	if (CheckGangPai(pai, from_player_id)) 
 	{
 		std::cout << "玩家杠牌line:" << __LINE__ << std::endl;
-		rtn_check.push_back(Asset::PAI_CHECK_RETURN_GANG);
+		rtn_check.push_back(Asset::PAI_OPER_TYPE_GANGPAI);
 	}
 	if (CheckPengPai(pai)) 
 	{
 		std::cout << "玩家碰牌line:" << __LINE__ << std::endl;
-		rtn_check.push_back(Asset::PAI_CHECK_RETURN_PENG);
+		rtn_check.push_back(Asset::PAI_OPER_TYPE_PENGPAI);
 	}
 	if (CheckChiPai(pai)) 
 	{
 		std::cout << "玩家吃牌line:" << __LINE__ << std::endl;
-		rtn_check.push_back(Asset::PAI_CHECK_RETURN_CHI);
+		rtn_check.push_back(Asset::PAI_OPER_TYPE_CHIPAI);
 	}
 		
 	return rtn_check;
@@ -1852,7 +1852,7 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 		if (IsTingPai())
 		{
 			Asset::PaiOperation pai_operation; //如果听牌，自动给玩家出牌
-			pai_operation.set_oper_type(Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI);
+			pai_operation.set_oper_type(Asset::PAI_OPER_TYPE_DAPAI);
 			pai_operation.set_position(GetPosition());
 			pai_operation.mutable_pai()->CopyFrom(card);
 			CmdPaiOperate(&pai_operation);

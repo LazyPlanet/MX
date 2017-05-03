@@ -59,6 +59,7 @@ bool Game::Start(std::vector<std::shared_ptr<Player>> players)
 		{
 			card_count = 14; //庄家牌数量
 			_curr_player_index = i; //当前操作玩家
+			_banker_player_id = player->GetID(); //庄家
 		}
 
 		auto cards = FaPai(card_count);
@@ -76,9 +77,11 @@ void Game::OnStart()
 {
 	if (!_room) return;
 
+	_room->SetBanker(_banker_player_id); //设置庄家
+
 	Asset::GameInformation message;
-	message.set_banker_player_id(_room->GetBanker());
-	BroadCast(message);
+	message.set_banker_player_id(_banker_player_id);
+	//BroadCast(message);
 }
 
 bool Game::OnOver()
@@ -140,7 +143,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 	if (!pai_operate) return; 
 
 	//如果不是放弃，才是当前玩家的操作
-	if (Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GIVEUP != pai_operate->oper_type())
+	if (Asset::PAI_OPER_TYPE_GIVEUP != pai_operate->oper_type())
 	{
 		_curr_player_index = GetPlayerOrder(player->GetID()); //上面检查过，就说明当前该玩家可操作
 		BroadCast(message); //广播玩家操作，玩家放弃操作不能广播
@@ -152,7 +155,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 	//一个人打牌之后，要检查其余每个玩家手中的牌，且等待他们的操作，直到超时
 	switch (pai_operate->oper_type())
 	{
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_DAPAI: //打牌
+		case Asset::PAI_OPER_TYPE_DAPAI: //打牌
 		{
 			//const auto& pai = pai_operate->pai(); //玩家发上来的牌
 			//检查各个玩家手里的牌是否满足胡、杠、碰、吃
@@ -187,7 +190,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				{
 					auto pai_perator = alert.mutable_pais()->Add();
 					pai_perator->mutable_pai()->CopyFrom(card);
-					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
+					pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_HUPAI);
 				}
 
 				//听牌检查:TODO 打牌后的一次
@@ -195,19 +198,19 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				{
 					auto pai_perator = alert.mutable_pais()->Add();
 					pai_perator->mutable_pai()->CopyFrom(card);
-					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_TINGPAI);
+					pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_TINGPAI);
 				}
 
 				//旋风杠检查，只检查第一次发牌之前
 				if (player_next->CheckFengGangPai()) 
 				{
 					auto pai_perator = alert.mutable_pais()->Add();
-					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
+					pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_XUANFENG_FENG);
 				}
 				if (player_next->CheckJianGangPai()) 
 				{
 					auto pai_perator = alert.mutable_pais()->Add();
-					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+					pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_XUANFENG_JIAN);
 				}
 				
 				player_next->OnFaPai(cards); //放入玩家牌里面
@@ -220,7 +223,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					{
 						auto pai_perator = alert.mutable_pais()->Add();
 						pai_perator->mutable_pai()->CopyFrom(pai);
-						pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG);
+						pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_ANGANGPAI);
 					}
 				}
 
@@ -241,7 +244,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		}
 		break;
 		
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_HUPAI: //胡牌
+		case Asset::PAI_OPER_TYPE_HUPAI: //胡牌
 		{
 			std::vector<Asset::FAN_TYPE> fan_list;
 
@@ -267,7 +270,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		}
 		break;
 		
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GANGPAI: //杠牌
+		case Asset::PAI_OPER_TYPE_ANGANGPAI: //杠牌
 		{
 			bool ret = player->CheckGangPai(pai, _oper_limit.from_player_id());
 			if (!ret) 
@@ -285,7 +288,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		}
 		break;
 
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_PENGPAI: //碰牌
+		case Asset::PAI_OPER_TYPE_PENGPAI: //碰牌
 		{
 			bool ret = player->CheckPengPai(pai);
 			if (!ret) 
@@ -302,7 +305,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		}
 		break;
 
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_CHIPAI: //吃牌
+		case Asset::PAI_OPER_TYPE_CHIPAI: //吃牌
 		{
 			bool ret = player->CheckChiPai(pai);
 			if (!ret) 
@@ -318,7 +321,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		}
 		break;
 		
-		case Asset::PaiOperation_PAI_OPER_TYPE_PAI_OPER_TYPE_GIVEUP: //放弃
+		case Asset::PAI_OPER_TYPE_GIVEUP: //放弃
 		{
 			if (SendCheckRtn()) return;
 			
@@ -346,7 +349,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			{
 				auto pai_perator = alert.mutable_pais()->Add();
 				pai_perator->mutable_pai()->CopyFrom(card);
-				pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_HU);
+				pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_HUPAI);
 			}
 
 			//听牌检查:TODO 打牌后的一次
@@ -354,19 +357,19 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			{
 				auto pai_perator = alert.mutable_pais()->Add();
 				pai_perator->mutable_pai()->CopyFrom(card);
-				pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_TINGPAI);
+				pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_TINGPAI);
 			}
 
 			//旋风杠检查，只检查第一次发牌之前
 			if (player_next->CheckFengGangPai()) 
 			{
 				auto pai_perator = alert.mutable_pais()->Add();
-				pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_FENG);
+				pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_XUANFENG_FENG);
 			}
 			if (player_next->CheckJianGangPai()) 
 			{
 				auto pai_perator = alert.mutable_pais()->Add();
-				pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_GANG_XUANFENG_JIAN);
+				pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_XUANFENG_JIAN);
 			}
 			
 			player_next->OnFaPai(cards); //放入玩家牌里面
@@ -379,7 +382,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				{
 					auto pai_perator = alert.mutable_pais()->Add();
 					pai_perator->mutable_pai()->CopyFrom(pai);
-					pai_perator->mutable_check_return()->Add(Asset::PAI_CHECK_RETURN_GANG);
+					pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_GANGPAI);
 				}
 			}
 
@@ -601,7 +604,7 @@ bool Game::SendCheckRtn()
 
 	if (_oper_list.size() == 0) return false;
 
-	auto check = [this](Asset::PAI_CHECK_RETURN rtn_type, Asset::PaiOperationList& operation)->bool{
+	auto check = [this](Asset::PAI_OPER_TYPE rtn_type, Asset::PaiOperationList& operation)->bool{
 
 		for (const auto& oper : _oper_list)
 		{
@@ -618,9 +621,9 @@ bool Game::SendCheckRtn()
 	};
 
 	Asset::PaiOperationList operation;
-	for (int32_t i = Asset::PAI_CHECK_RETURN_HU; i <= Asset::PAI_CHECK_RETURN_CHI; ++i)
+	for (int32_t i = Asset::PAI_OPER_TYPE_HUPAI; i <= Asset::PAI_OPER_TYPE_CHIPAI; ++i)
 	{
-		auto result = check((Asset::PAI_CHECK_RETURN)i, operation);
+		auto result = check((Asset::PAI_OPER_TYPE)i, operation);
 		if (result) break;
 	}
 	if (operation.oper_list().size() == 0) 
@@ -642,8 +645,8 @@ bool Game::SendCheckRtn()
 	pai_perator->mutable_pai()->CopyFrom(operation.pai());
 
 	for (auto rtn : operation.oper_list()) 
-		pai_perator->mutable_check_return()->Add(rtn);
-		//alert.mutable_check_return()->Add(rtn); //可操作牌类型
+		pai_perator->mutable_oper_list()->Add(rtn);
+		//alert.mutable_oper_list()->Add(rtn); //可操作牌类型
 	if (auto player_to = GetPlayer(player_id)) 
 		player_to->SendProtocol(alert); //发给目标玩家
 
@@ -698,7 +701,7 @@ bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		for (auto value : rtn_check)
 			DEBUG("玩家可以进行的操作: %s:line:%d cur_index:%d next_player_index:%d player_id:%ld value:%d\n", __func__, __LINE__, cur_index, next_player_index, player->GetID(),value);
 		
-		auto it_chi = std::find(rtn_check.begin(), rtn_check.end(), Asset::PAI_CHECK_RETURN_CHI);
+		auto it_chi = std::find(rtn_check.begin(), rtn_check.end(), Asset::PAI_OPER_TYPE_CHIPAI);
 		if (it_chi != rtn_check.end() && cur_index != next_player_index) rtn_check.erase(it_chi);
 		
 		if (rtn_check.size() == 0) continue; 

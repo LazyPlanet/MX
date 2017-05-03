@@ -256,7 +256,7 @@ public:
 
 	virtual int32_t OnFaPai(std::vector<int32_t>& cards); //发牌
 
-	std::vector<Asset::PAI_CHECK_RETURN> CheckPai(const Asset::PaiElement& pai, int64_t from_player_id);
+	std::vector<Asset::PAI_OPER_TYPE> CheckPai(const Asset::PaiElement& pai, int64_t from_player_id);
 
 	bool CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYPE>& fan_list); //胡牌
 
