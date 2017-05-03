@@ -587,11 +587,16 @@ void Player::SendToRoomers(pb::Message& message)
 bool Player::Update()
 {
 	++_heart_count; //心跳
+	
+	if (_heart_count % 1000 == 0) //10s
+	{
+		if (_dirty) Save(); //触发存盘
+		CommonLimitUpdate(); //通用限制,定时更新
+	}
 
-	if (_heart_count % 6000 == 0) //1MIN
+	if (_heart_count % 6000 == 0) //1min
 	{
 		std::cout << "===================Time has gone 1min, i am id:" << GetID() << std::endl;
-		CommonLimitUpdate(); //通用限制,定时更新
 	}
 	return true;
 }

@@ -27,6 +27,7 @@ class Player : public std::enable_shared_from_this<Player>
 private:
 	Asset::Player _stuff; //玩家数据
 	int64_t _heart_count = 0; //心跳次数
+	bool _dirty = false;
 
 	CallBack _method;
 	std::shared_ptr<WorldSession> _session = nullptr;	//网络连接
@@ -61,14 +62,10 @@ public:
 	void SyncCommonProperty();
 	//获取ID
 	virtual int64_t GetID() { return _stuff.common_prop().player_id(); }
-	virtual void SetID(int64_t player_id) { 
-		_stuff.mutable_common_prop()->set_player_id(player_id); 
-	} 
+	virtual void SetID(int64_t player_id) { _stuff.mutable_common_prop()->set_player_id(player_id); } 
 	//获取名字
 	virtual std::string GetName() { return _stuff.common_prop().name(); }
-	virtual void SetName(std::string name) { 
-		_stuff.mutable_common_prop()->set_name(name); 
-	} 
+	virtual void SetName(std::string name) { _stuff.mutable_common_prop()->set_name(name); } 
 	//获取级别
 	virtual int32_t GetLevel() { return _stuff.common_prop().level(); }
 	//获取性别
@@ -105,6 +102,9 @@ public:
 	virtual int32_t Load();
 	//保存数据
 	virtual int32_t Save();
+	//是否脏数据
+	virtual bool IsDirty() { return _dirty; }
+	virtual void SetDirty() { _dirty = true; }
 	//同步玩家数据
 	virtual void SendPlayer();
 	//玩家心跳周期为10MS，如果该函数返回FALSE则表示掉线
