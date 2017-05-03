@@ -1671,20 +1671,6 @@ void Player::OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 	SynchronizePai();
 }
 
-/*
-bool Player::CheckMingGangPai(const Asset::PaiElement& pai)
-{
-	auto it = _cards_outhand.find(pai.card_type());
-	if (it == _cards_outhand.end()) return false;
-
-	int32_t count = std::count(it->second.begin(), it->second.end(), pai.card_value());
-
-	if (count == 3) return true;
-	
-	return false;
-}
-*/
-	
 bool Player::CheckFengGangPai() 
 { 
 	if (_stuff.player_prop().check_feng_gang()) return false;
