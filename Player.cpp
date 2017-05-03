@@ -1861,6 +1861,8 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 			pai_operation.set_position(GetPosition());
 			pai_operation.mutable_pai()->CopyFrom(card);
 			CmdPaiOperate(&pai_operation);
+
+			IncreaseTingOperationCount();
 		}
 	}
 	
