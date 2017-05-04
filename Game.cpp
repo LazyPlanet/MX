@@ -180,7 +180,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 				auto cards = FaPai(1); 
 
-				auto card = GameInstance.GetCard(cards[0]);
+				auto card = GameInstance.GetCard(cards[0]); //玩家待抓的牌
 
 				Asset::PaiOperationAlert alert;
 
@@ -191,6 +191,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					auto pai_perator = alert.mutable_pais()->Add();
 					pai_perator->mutable_pai()->CopyFrom(card);
 					pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_HUPAI);
+					//由于听牌玩家胡牌翻番，此处需要记录
+					if (player_next->IsTingPai()) pai_perator->mutable_oper_list()->Add(Asset::FAN_TYPE_SHANG_TING);
 				}
 
 				//听牌检查:TODO 打牌后的一次
@@ -248,7 +250,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		{
 			std::vector<Asset::FAN_TYPE> fan_list;
 
-			if (!player->CheckHuPai(pai, fan_list)) 
+			if (!player->CheckHuPai(pai, fan_list)) //无法胡牌
 			{
 				player->AlertMessage(Asset::ERROR_GAME_PAI_UNSATISFIED); //没有牌满足条件
 				
@@ -338,10 +340,9 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 			
 			auto cards = FaPai(1); 
 
-			auto card = GameInstance.GetCard(cards[0]);
+			auto card = GameInstance.GetCard(cards[0]); //玩家待抓的牌
 
 			Asset::PaiOperationAlert alert;
-			//alert.mutable_pai()->CopyFrom(card);
 
 			//胡牌检查
 			std::vector<Asset::FAN_TYPE> fan_list;
@@ -350,6 +351,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				auto pai_perator = alert.mutable_pais()->Add();
 				pai_perator->mutable_pai()->CopyFrom(card);
 				pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_HUPAI);
+				//由于听牌玩家胡牌翻番，此处需要记录
+				if (player_next->IsTingPai()) pai_perator->mutable_oper_list()->Add(Asset::FAN_TYPE_SHANG_TING);
 			}
 
 			//听牌检查:TODO 打牌后的一次
@@ -469,6 +472,10 @@ void Game::Calculate(int64_t hupai_player_id/*胡牌玩家*/, int64_t dianpao_pl
 				score *= 4; //中番夹胡
 			else if (Asset::FAN_TYPE_JIA_HU_HIGHER == fan)
 				score *= 8; //高番夹胡
+			else if (Asset::FAN_TYPE_LOU_BAO == fan)
+				score *= 2; //宝胡
+			else if (Asset::FAN_TYPE_SHANG_TING == fan)
+				score *= 2; //听牌
 			
 			//推送列表
 			auto detail = record->mutable_details()->Add();
@@ -678,7 +685,7 @@ bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 	if (player_index == -1) return false; //理论上不会出现
 
 	//assert(_curr_player_index == player_index); //理论上一定相同：错误，如果碰牌的玩家出牌就不一定
-	DEBUG("%s!!!:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
+	DEBUG("%s:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
 
 	int32_t next_player_index = (_curr_player_index + 1) % MAX_PLAYER_COUNT;
 
@@ -691,10 +698,10 @@ bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 
 		if (from_player_id == player->GetID()) continue; //自己不能对自己的牌进行操作
 
-		auto rtn_check = player->CheckPai(pai, from_player_id);
+		auto rtn_check = player->CheckPai(pai, from_player_id); //TODO：其他玩家打的宝牌，已经听的玩家可以胡，理论上只有自摸宝牌才能胡
 		if (rtn_check.size() == 0) 
 		{
-			DEBUG("%s!!!:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
+			DEBUG("%s:line:%d _curr_player_index:%d player_index:%d\n", __func__, __LINE__, _curr_player_index, player_index);
 			continue; //不能吃、碰、杠和胡牌
 		}
 
@@ -714,7 +721,7 @@ bool Game::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		for (auto result : rtn_check) 
 		{
 			pai_operation.mutable_oper_list()->Add(result);
-			DEBUG("%s!!!:line:%d 可操作玩家:%ld 可以操作类型:%d\n", __func__, __LINE__, player->GetID(), result);
+			DEBUG("%s:line:%d 可操作玩家:%ld 可以操作类型:%d\n", __func__, __LINE__, player->GetID(), result);
 		}
 		_oper_list.push_back(pai_operation);
 	}
