@@ -328,7 +328,8 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 		{
 			if (!CheckTingPai()) return 5;
 
-			_stuff.mutable_player_prop()->set_tingpai(true);
+			_stuff.mutable_player_prop()->set_has_tinged(true);
+			_game->AddTingPlayer(GetID());
 		}
 		break;
 
@@ -927,7 +928,7 @@ int32_t Player::CmdSaizi(pb::Message* message)
 	if (!saizi) return 1;
 
 	int32_t result = CommonUtil::Random(1, 6);
-	saizi->set_result(result);
+	saizi->set_random_result(result);
 
 	SendProtocol(saizi);
 	return 0;
@@ -1845,6 +1846,22 @@ int32_t Player::OnFaPai(std::vector<int32_t>& cards)
 
 		if (IsTingPai())
 		{
+			auto count = GetCountAfterTingOperation();
+			if (count == 1) //听牌后第一次抓牌
+			{
+				Asset::RandomSaizi proto;
+				int32_t result = CommonUtil::Random(1, 6);
+				proto.set_random_result(result);
+
+				auto baopai = _game->GetBaopai(result);
+				_game->SetBaoPai(baopai);
+
+				proto.mutable_pai()->CopyFrom(baopai);
+
+				//宝牌
+				_game->BroadCast(proto);
+			}
+
 			Asset::PaiOperation pai_operation; //如果听牌，自动给玩家出牌
 			pai_operation.set_oper_type(Asset::PAI_OPER_TYPE_DAPAI);
 			pai_operation.set_position(GetPosition());

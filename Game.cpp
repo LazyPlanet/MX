@@ -745,6 +745,12 @@ std::vector<int32_t> Game::TailPai(size_t card_count)
 std::vector<int32_t> Game::FaPai(size_t card_count)
 {
 	std::vector<int32_t> cards;
+
+	if (_cards.size() / 2 <= 12) //可以分牌，不能继续抓牌
+	{
+		DEBUG("%s:line:%d, size:%u\n", __func__, __LINE__, _cards.size());
+		return cards;
+	}
 	
 	if (_cards.size() < card_count) return cards;
 
@@ -809,6 +815,15 @@ bool Game::IsBanker(int64_t player_id)
 { 
 	if (!_room) return false;
 	return _room->IsBanker(player_id); 
+}
+
+Asset::PaiElement Game::GetBaopai(int32_t tail_index)
+{
+	std::vector<int32_t> list(_cards.begin(), _cards.end());
+
+	auto card_index = list.size() - tail_index + 1; 
+
+	return GameInstance.GetCard(list[card_index]);
 }
 
 /////////////////////////////////////////////////////
