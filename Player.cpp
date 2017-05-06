@@ -1068,13 +1068,18 @@ bool CanHuPai(std::vector<Card_t>& cards, bool use_pair = false)
 	
 bool Player::CheckBaoHu(const Asset::PaiElement& pai)
 {
-	if (!_game) return false;
+	if (!_game || !_locate_room) return false;
 
 	if (!IsTingPai()) return false; //没有听牌显然不能胡宝牌
 
 	auto baopai = _game->GetBaoPai();
 
 	if (pai.card_type() != baopai.card_type() || pai.card_value() != baopai.card_value())  return false; //不是宝牌
+	
+	auto options = _locate_room->GetOptions();
+	
+	auto it_baohu = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_BAOPAI);
+	if (it_baohu == options.extend_type().end()) return false; //不带宝胡
 
 	return true;
 }
@@ -1237,6 +1242,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 	}
 
 	////////是否可以宝胡
+	/*
 	{
 		auto it_baohu = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_BAOPAI);
 		if (it_baohu != options.extend_type().end()) //可以宝胡
@@ -1244,6 +1250,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 			baohu = CheckBaoHu(pai);
 		}
 	}
+	*/
 
 	////////////////////////////////////////////////////////////////////////////是否可以满足胡牌的要求
 	
@@ -1390,10 +1397,12 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 			}
 		}
 	}
+	/*
 	if (baohu)
 	{
 		fan_list.push_back(Asset::FAN_TYPE_LOU_BAO);
 	}
+	*/
 
 	return true;
 }
@@ -1718,6 +1727,11 @@ bool Player::CheckJianGangPai()
 	
 bool Player::CheckTingPai()
 {
+	auto options = _locate_room->GetOptions();
+	
+	auto it_baohu = std::find(options.extend_type().begin(), options.extend_type().end(), Asset::ROOM_EXTEND_TYPE_BAOPAI);
+	if (it_baohu == options.extend_type().end()) return false; //不带宝胡，绝对不可能呢听牌
+
 	for (int card_type = Asset::CARD_TYPE_WANZI; card_type <= Asset::CARD_TYPE_TIAOZI; ++card_type)
 	{
 		for (int card_value = 1; card_value <= 9; ++card_value)

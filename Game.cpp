@@ -191,8 +191,14 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 					auto pai_perator = alert.mutable_pais()->Add();
 					pai_perator->mutable_pai()->CopyFrom(card);
 					pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_HUPAI);
-					//由于听牌玩家胡牌翻番，此处需要记录
-					if (player_next->IsTingPai()) pai_perator->mutable_oper_list()->Add(Asset::FAN_TYPE_SHANG_TING);
+					if (player_next->IsTingPai()) pai_perator->mutable_oper_list()->Add(Asset::FAN_TYPE_SHANG_TING);  //听牌玩家胡牌翻番
+				}
+				else if (player_next->CheckBaoHu(pai))
+				{
+					auto pai_perator = alert.mutable_pais()->Add();
+					pai_perator->mutable_pai()->CopyFrom(card);
+					pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_HUPAI);
+					fan_list.push_back(Asset::FAN_TYPE_LOU_BAO); //宝胡
 				}
 
 				//听牌检查:TODO 打牌后的一次
@@ -351,8 +357,14 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 				auto pai_perator = alert.mutable_pais()->Add();
 				pai_perator->mutable_pai()->CopyFrom(card);
 				pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_HUPAI);
-				//由于听牌玩家胡牌翻番，此处需要记录
-				if (player_next->IsTingPai()) pai_perator->mutable_oper_list()->Add(Asset::FAN_TYPE_SHANG_TING);
+				if (player_next->IsTingPai()) pai_perator->mutable_oper_list()->Add(Asset::FAN_TYPE_SHANG_TING);  //听牌玩家胡牌翻番
+			}
+			else if (player_next->CheckBaoHu(pai))
+			{
+				auto pai_perator = alert.mutable_pais()->Add();
+				pai_perator->mutable_pai()->CopyFrom(card);
+				pai_perator->mutable_oper_list()->Add(Asset::PAI_OPER_TYPE_HUPAI);
+				fan_list.push_back(Asset::FAN_TYPE_LOU_BAO); //宝胡
 			}
 
 			//听牌检查:TODO 打牌后的一次
