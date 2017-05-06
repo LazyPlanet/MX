@@ -96,15 +96,25 @@ public:
 	{        
 		auto content = std::move(meta);
 		//////////////////////////////////////////////////////数据包头
-		int32_t body_size = content.size();
-		char header[2] = { 0 };
-		snprintf(header, 2, "%d", body_size);
+		unsigned short body_size = content.size();
+		std::cout << "数据长度：" << body_size <<std::endl;
+		unsigned char header[2] = { 0 };
+		header[0] = (body_size >> 8) & 0xff;
+		header[1] = body_size & 0xff;
 		//////////////////////////////////////////////////////包数据体
 		auto body = content.c_str(); 
 		//////////////////////////////////////////////////////数据整理发送
 		char buffer[4096] = { 0 }; //发送数据缓存
-		for (int i = 0; i < 2; ++i) buffer[i] = header[i];
-		for (int i = 0; i < body_size; ++i) buffer[i + 2] = body[i];
+		for (int i = 0; i < 2; ++i) 
+		{
+			std::cout << "数据包头：" << (int)header[i] << std::endl;
+			buffer[i] = header[i];
+		}
+		for (int i = 0; i < body_size; ++i) 
+		{
+			std::cout << "数据包体：" << (int)body[i] << std::endl;
+			buffer[i + 2] = body[i];
+		}
 
 		std::cout << "发送数据：" << std::endl;
 		for (int i = 0; i < body_size + 2; ++i)
