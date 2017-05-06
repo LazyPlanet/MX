@@ -7,7 +7,10 @@
 #include <iostream>
 #include <queue>
 #include <unordered_map>
+#include <sstream>
+
 #include <boost/asio.hpp>
+
 #include "AsyncAcceptor.h"
 #include "NetThread.h"
 
@@ -91,8 +94,26 @@ public:
 
 	void EnterQueue(std::string&& meta)    
 	{        
+		auto content = std::move(meta);
+		//////////////////////////////////////////////////////数据包头
+		int32_t body_size = content.size();
+		char header[2] = { 0 };
+		snprintf(header, 2, "%d", body_size);
+		//////////////////////////////////////////////////////包数据体
+		auto body = content.c_str(); 
+		//////////////////////////////////////////////////////数据整理发送
+		char buffer[4096] = { 0 }; //发送数据缓存
+		for (int i = 0; i < 2; ++i) buffer[i] = header[i];
+		for (int i = 0; i < body_size; ++i) buffer[i + 2] = body[i];
+
+		std::cout << "发送数据：" << std::endl;
+		for (int i = 0; i < body_size + 2; ++i)
+		{
+			std::cout << (int)buffer[i] << std::endl;
+		}
+
 		std::lock_guard<std::mutex> lock(_mutex);
-		_write_queue.push(std::move(meta));
+		_write_queue.push(std::string(buffer, body_size + 2));
 	}
 
 	bool HandleQueue()

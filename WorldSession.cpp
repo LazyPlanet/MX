@@ -275,9 +275,12 @@ void WorldSession::SendProtocol(pb::Message& message)
 	meta.set_stuff(message.SerializeAsString());
 
 	std::string content = meta.SerializeAsString();
-	AsyncSend(content);
+	//AsyncSend(content);
 
-	//EnterQueue(std::move(content));
+	EnterQueue(std::move(content));
+	const pb::EnumValueDescriptor* enum_value = message.GetReflection()->GetEnum(message, field);
+	if (!enum_value) return;
+	DEBUG("%s:line:%d, protocol_name:%s, content:%s\n", __func__, __LINE__, enum_value->name().c_str(), message.ShortDebugString().c_str());
 }
 
 void WorldSessionManager::Add(std::shared_ptr<WorldSession> session)

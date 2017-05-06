@@ -2,6 +2,8 @@
 
 #include <hiredis.h>
 
+#include <spdlog/spdlog.h>
+
 #include "Player.h"
 #include "Game.h"
 #include "Timer.h"
@@ -538,6 +540,8 @@ void Player::SendProtocol(pb::Message* message)
 
 void Player::SendProtocol(pb::Message& message)
 {
+	GetSession()->SendProtocol(message);
+	/*
 	const pb::FieldDescriptor* field = message.GetDescriptor()->FindFieldByName("type_t");
 	if (!field) return;
 	
@@ -556,7 +560,7 @@ void Player::SendProtocol(pb::Message& message)
 	const pb::EnumValueDescriptor* enum_value = message.GetReflection()->GetEnum(message, field);
 	if (!enum_value) return;
 	DEBUG("%s:line:%d, protocol_name:%s, content:%s\n", __func__, __LINE__, enum_value->name().c_str(), message.ShortDebugString().c_str());
-
+	*/
 	/*
 	auto log = make_unique<Asset::LogMessage>();
 	log->set_player_id(GetID());
