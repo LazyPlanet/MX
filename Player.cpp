@@ -553,33 +553,21 @@ void Player::SendProtocol(pb::Message& message)
 	GetSession()->EnterQueue(std::move(content));
 	//GetSession()->AsyncSend(content);
 	
+	const pb::EnumValueDescriptor* enum_value = message.GetReflection()->GetEnum(message, field);
+	if (!enum_value) return;
+	DEBUG("%s:line:%d, protocol_name:%s, content:%s\n", __func__, __LINE__, enum_value->name().c_str(), message.ShortDebugString().c_str());
+
+	/*
 	auto log = make_unique<Asset::LogMessage>();
 	log->set_player_id(GetID());
 	log->set_type(Asset::SEND_PROTOCOL);
 	log->set_content(message.ShortDebugString());
 
 	LOG(INFO, log.get()); //记录日志
+	*/
 }
 
 /*
-void Player::SendResponse(pb::Message* message)
-{
-	if (!message) return;
-
-	const pb::FieldDescriptor* field = message->GetDescriptor()->FindFieldByName("type_t");
-	if (!field) return;
-	
-	int type_t = field->default_value_enum()->number();
-	if (!Asset::META_TYPE_IsValid(type_t)) return;	//如果不合法，不检查会宕线
-
-	std::cout << __func__ << ":type_t:" << type_t << std::endl;
-	
-	Asset::CommonOperationResponse response;
-	response.set_client_type_t((Asset::META_TYPE)type_t);
-	response.set_client_message(message->SerializeAsString());
-	SendProtocol(response);
-}
-
 void Player::SendToRoomers(pb::Message& message) 
 {
 }
