@@ -1,0 +1,20 @@
+package Asset;
+
+//操作类型
+enum COMMAND_TYPE {
+	COMMAND_TYPE_RECHARGE = 1; //充值
+}
+
+enum ERROR_CODE {
+	ERROR_CODE_SUCCESS = 0; //成功
+	ERROR_CODE_NO_PERMISSION = 1; //没有权限
+}
+
+message Command {
+	optional COMMAND_TYPE command_type = 1; //操作类型
+	optional ERROR_CODE error_code = 2; //返回码
+
+	optional bytes account = 3; //账号
+	optional int64 plyaer_id = 4; //玩家角色ID
+	optional int32 count = 5; //数量(根据COMMAND_TYPE有不同的意义)
+}

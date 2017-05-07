@@ -20,6 +20,7 @@
 namespace Adoter
 {
 
+namespace spd = spdlog;
 extern const Asset::CommonConst* g_const;
 
 Player::Player()
@@ -105,13 +106,14 @@ std::string Player::GetString()
 
 int32_t Player::OnLogin(pb::Message* message)
 {
+	/*
 	if (Load()) return 1;
 
 	SendPlayer(); //发送数据给Client
 	
 	this->_stuff.set_login_time(CommonTimerInstance.GetTime());
 	this->_stuff.set_logout_time(0);
-
+	*/
 	return 0;
 }
 
@@ -165,6 +167,14 @@ int32_t Player::OnEnterGame()
 	
 	this->_stuff.set_login_time(CommonTimerInstance.GetTime());
 	this->_stuff.set_logout_time(0);
+
+	auto logger = spd::basic_logger_mt("player", "logs/player_" + std::to_string(GetID()));
+	logger->info(_stuff.Utf8DebugString());
+	
+	auto console = spd::stdout_color_mt("console");
+	console->info("Welcome to spdlog!");
+	console->error("Some error message with arg{0} {1}..", 1, 2);
+	spdlog::drop_all();
 	
 	return 0;
 }
@@ -540,6 +550,7 @@ void Player::SendProtocol(pb::Message* message)
 
 void Player::SendProtocol(pb::Message& message)
 {
+	DEBUG("%s:line:%d player_id:%ld\n", __func__, __LINE__, GetID());
 	GetSession()->SendProtocol(message);
 	/*
 	const pb::FieldDescriptor* field = message.GetDescriptor()->FindFieldByName("type_t");
