@@ -1188,7 +1188,7 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 		{
 			if (_cards_outhand.size() == 0 && _minggang.size() == 0) 
 			{
-				DEBUG("胡牌检查失败：没开门.");
+				DEBUG("胡牌检查失败：没开门.\n");
 				return false; //没开门
 			}
 		}
@@ -1949,6 +1949,8 @@ void Player::SynchronizePai()
 
 void Player::PrintPai()
 {
+	return;
+
 	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
 	
 	for (auto pai : _cards_outhand)

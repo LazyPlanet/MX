@@ -278,6 +278,7 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 		}
 		break;
 		
+		case Asset::PAI_OPER_TYPE_GANGPAI: //杠牌
 		case Asset::PAI_OPER_TYPE_ANGANGPAI: //杠牌
 		{
 			bool ret = player->CheckGangPai(pai, _oper_limit.from_player_id());
@@ -424,6 +425,8 @@ void Game::OnPaiOperate(std::shared_ptr<Player> player, pb::Message* message)
 
 		default:
 		{
+			DEBUG("%s:line:%d 服务器接收未能处理的协议，玩家角色:player_id:%ld, 操作类型:%d\n", __func__, __LINE__, player->GetID(), pai_operate->oper_type());
+			DEBUG_ASSERT(false);
 			return; //直接退出
 		}
 		break;
