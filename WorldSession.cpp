@@ -248,9 +248,6 @@ bool WorldSession::Update()
 
 	if (!g_player) 
 	{
-		auto console = spd::stdout_color_mt("console");
-		console->error("玩家{0}长时间未进行登录操作，服务器断开连接！", g_player == nullptr ? 0 : g_player->GetID()); 
-		spdlog::drop("console");
 		return true; //长时间未能上线
 	}
 
