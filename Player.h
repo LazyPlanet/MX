@@ -143,6 +143,13 @@ public:
 	{
 		return _session;
 	}
+
+	bool IsConnect()
+	{
+		if (!_session) return false;
+			
+		return _session->IsConnect();
+	}
 	//发送错误信息
 	void AlertMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type = Asset::ERROR_TYPE_NORMAL, Asset::ERROR_SHOW_TYPE error_show_type = Asset::ERROR_SHOW_TYPE_CHAT);
 

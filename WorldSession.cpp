@@ -1,3 +1,6 @@
+
+#include <spdlog/spdlog.h>
+
 #include "WorldSession.h"
 #include "RedisManager.h"
 #include "CommonUtil.h"
@@ -8,6 +11,8 @@
 
 namespace Adoter
 {
+
+namespace spd = spdlog;
 
 WorldSession::~WorldSession()
 {
@@ -32,6 +37,10 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 		{
 			Close();
 			DEBUG("Remote client disconnect, RemoteIp:%s\n", _socket.remote_endpoint().address().to_string().c_str());
+			auto console = spd::stdout_color_mt("console");
+			console->error("Remote client disconnect, remote_id:{0}, player_id:{1}", 
+					_socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
+			spdlog::drop("console");
 			return;
 		}
 		else
@@ -50,10 +59,13 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 
 			if (!result) 
 			{
+				Close();
 				log->set_content("Meta parse error, line:" + __LINE__);
 				LOG(ERROR, log.get());
 
-				Close();
+				auto console = spd::stdout_color_mt("console");
+				console->error("Meta parse error, line:{0}", __LINE__);
+				spdlog::drop("console");
 				return;		//非法协议
 			}
 			
@@ -234,7 +246,13 @@ bool WorldSession::Update()
 { 
 	if (!Socket::Update()) return false;
 
-	if (!g_player) return true; //长时间未能上线
+	if (!g_player) 
+	{
+		auto console = spd::stdout_color_mt("console");
+		console->error("玩家{0}长时间未进行登录操作，服务器断开连接！", g_player == nullptr ? 0 : g_player->GetID()); 
+		spdlog::drop("console");
+		return true; //长时间未能上线
+	}
 
 	g_player->Update(); 
 
@@ -253,6 +271,11 @@ void WorldSession::OnClose()
 
 		g_player = nullptr;
 	}
+			
+	auto console = spd::stdout_color_mt("console");
+	console->error("Remote client disconnect, remote_id:{0}, player_id:{1}", 
+			_socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
+	spdlog::drop("console");
 }
 
 void WorldSession::SendProtocol(pb::Message* message)

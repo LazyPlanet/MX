@@ -168,13 +168,15 @@ int32_t Player::OnEnterGame()
 	this->_stuff.set_login_time(CommonTimerInstance.GetTime());
 	this->_stuff.set_logout_time(0);
 
+	/*
+
 	auto logger = spd::basic_logger_mt("player", "logs/player_" + std::to_string(GetID()));
 	logger->info(_stuff.Utf8DebugString());
-	
 	auto console = spd::stdout_color_mt("console");
 	console->info("Welcome to spdlog!");
 	console->error("Some error message with arg{0} {1}..", 1, 2);
 	spdlog::drop_all();
+	*/
 	
 	return 0;
 }
@@ -550,6 +552,14 @@ void Player::SendProtocol(pb::Message* message)
 
 void Player::SendProtocol(pb::Message& message)
 {
+	if (!IsConnect())
+	{
+		auto console = spd::stdout_color_mt("console");
+		console->error("玩家{0}已经掉线！", GetID()); 
+		spdlog::drop("console");
+
+		DEBUG_ASSERT(false);
+	}
 	DEBUG("%s:line:%d player_id:%ld\n", __func__, __LINE__, GetID());
 	GetSession()->SendProtocol(message);
 	/*
