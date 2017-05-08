@@ -10,7 +10,6 @@
 namespace Adoter
 {
 
-void CP(const char *str, ...); //控制台日志
 void DEBUG(const char *str, ...);
 void P(Asset::LOG_LEVEL level, const char *format, ...);
 
@@ -47,7 +46,7 @@ public:
 
 //按级别日志
 #define LOG(level, message) \
-message->set_level(Asset::level); \
-MXLog::Instance().Print(message); \
+	message->set_level(Asset::level); \
+	MXLog::Instance().Print(message); \
 
 }

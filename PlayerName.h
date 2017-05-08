@@ -9,6 +9,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <pbjson.hpp>
+
 #include "P_Header.h"
 #include "CommonUtil.h"
 #include "MXLog.h"
@@ -54,6 +56,10 @@ public:
 		if (!result) return false;
 
 		DEBUG("%s:Load FamilyName size:%d, WomanName size:%d, ManName size:%d\n", __func__, _family_name.name().size(), _woman_name.name().size(), _man_name.name().size());
+
+		std::string json;
+		pbjson::pb2json(&_family_name, json);
+		std::cout << "JSON:" << json << std::endl;
 
 		return true;
 	}

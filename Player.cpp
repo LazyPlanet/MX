@@ -3,6 +3,7 @@
 #include <hiredis.h>
 
 #include <spdlog/spdlog.h>
+#include <pbjson.hpp>
 
 #include "Player.h"
 #include "Game.h"
@@ -167,6 +168,10 @@ int32_t Player::OnEnterGame()
 	
 	this->_stuff.set_login_time(CommonTimerInstance.GetTime());
 	this->_stuff.set_logout_time(0);
+
+	std::string json;
+	pbjson::pb2json(&_stuff, json);
+	std::cout << "JSON:" << json << std::endl;
 
 	/*
 

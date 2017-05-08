@@ -28,13 +28,6 @@ void utf8printf(FILE* out, const char *str, ...)
 	vutf8printf(out, str, &ap);
 }
 
-void CP(const char *str, ...)
-{
-	va_list ap;
-	va_start(ap, str);
-	vutf8printf(stdout, str, &ap);
-}
-
 void DEBUG(const char *str, ...)
 {
 	va_list ap;

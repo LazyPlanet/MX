@@ -92,7 +92,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			if (!msg) 
 			{
 				Close();
-				CP("Could not found message of type:%d", meta.type_t());
+				DEBUG("Could not found message of type:%d", meta.type_t());
 				return;		//非法协议
 			}
 
@@ -132,7 +132,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					int64_t player_id = redis->CreatePlayer();
 					if (player_id == 0) 
 					{
-						CP("Create player failed.");
+						DEBUG("Create player failed.");
 						return; //创建失败
 					}
 
@@ -203,7 +203,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 				if (_player_list.find(enter_game->player_id()) == _player_list.end())
 				{
 					Close();
-					CP("Player has not found.");
+					DEBUG("Player has not found.");
 					return; //账号下没有该角色数据
 				}
 
@@ -214,7 +214,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			{
 				if (!g_player) 
 				{
-					CP("Player has not inited");
+					DEBUG("Player has not inited");
 					return; //未初始化的Player
 				}
 				//其他协议的调用规则
@@ -224,7 +224,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 	}
 	catch (std::exception& e)
 	{
-		CP("异常：%s", e.what());
+		DEBUG("异常：%s", e.what());
 		Close();
 		return;
 	}
