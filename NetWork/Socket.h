@@ -162,7 +162,6 @@ public:
 			return AsyncProcessQueue();
 		}
 
-		std::cout << "Send success:" << bytes_sent << std::endl;
 		_write_queue.pop();
 		if (_closing && _write_queue.empty()) Close();
 		return !_write_queue.empty();
