@@ -31,43 +31,18 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 		log->set_client_ip(_socket.remote_endpoint().address().to_string());
 		LOG(ACTION, log.get());
 
-		if ("222.249.232.10" == _socket.remote_endpoint().address().to_string()) return;
-
 		if (error)
 		{
-			Close();
-			DEBUG("Remote client disconnect, RemoteIp:%s\n", _socket.remote_endpoint().address().to_string().c_str());
-			auto console = spd::stdout_color_mt("console");
-			console->error("Remote client disconnect, remote_id:{0}, player_id:{1}", 
-					_socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
-			spdlog::drop("console");
+			spdlog::get("console")->error("{0} Line:{1} Remote client disconnect, remote_ip:{2}, player_id:{3}", 
+					__func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
 			return;
 		}
 		else
 		{
-			/*
-
-			for (int i = 0; i < 10; ++i)
-			{
-				std::string content = "aaaaaaaaaaaaaaa";
-				EnterQueue(std::move(content));
-			}
-			*/
-
 			Asset::Meta meta;
 			bool result = meta.ParseFromArray(_buffer.data(), bytes_transferred);
 
-			if (!result) 
-			{
-				Close();
-				log->set_content("Meta parse error, line:" + __LINE__);
-				LOG(ERROR, log.get());
-
-				auto console = spd::stdout_color_mt("console");
-				console->error("Meta parse error, line:{0}", __LINE__);
-				spdlog::drop("console");
-				return;		//非法协议
-			}
+			if (!result) return;		//非法协议
 			
 			//std::cout << "接收数据：";
 			//meta.PrintDebugString(); //打印出来Message.
@@ -100,14 +75,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			
 			//result = message->ParseFromString(meta.stuff());
 			result = message->ParseFromArray(meta.stuff().c_str(), meta.stuff().size());
-			if (!result) 
-			{
-				log->set_content("Meta parse error, line:" + __LINE__);
-				LOG(ERROR, log.get());
-
-				Close();
-				return;		//非法协议
-			}
+			if (!result) return;		//非法协议
 		
 			message->PrintDebugString(); //打印出来Message.
 
@@ -269,10 +237,8 @@ void WorldSession::OnClose()
 		g_player = nullptr;
 	}
 			
-	auto console = spd::stdout_color_mt("console");
-	console->error("Remote client disconnect, remote_id:{0}, player_id:{1}", 
-			_socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
-	spdlog::drop("console");
+	spdlog::get("console")->error("{0} Line:{1} Remote client disconnect, remote_ip:{2}, player_id:{3}", 
+			__func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
 }
 
 void WorldSession::SendProtocol(pb::Message* message)

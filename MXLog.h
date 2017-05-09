@@ -5,6 +5,8 @@
 #include <functional>
 #include <stdarg.h>
 
+#include "spdlog/spdlog.h"
+
 #include "P_Header.h"
 
 namespace Adoter
@@ -27,6 +29,10 @@ class MXLog : public std::enable_shared_from_this<MXLog>
 public:
 
 	MXLog();
+	~MXLog() { 
+		DEBUG("%s:line:%d Delete all logs.\n", __func__, __LINE__);
+		spdlog::drop_all(); 
+	}
 
 	static MXLog& Instance()
 	{
