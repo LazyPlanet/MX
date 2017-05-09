@@ -171,10 +171,9 @@ int32_t Player::OnEnterGame()
 
 	std::string json;
 	pbjson::pb2json(&_stuff, json);
-	std::cout << "JSON:" << json << std::endl;
 
-	spdlog::get("player")->info(_stuff.ShortDebugString());
-	spdlog::get("console")->debug(_stuff.ShortDebugString());
+	spdlog::get("player")->info(json);
+	spdlog::get("console")->debug(json);
 
 	return 0;
 }
@@ -606,7 +605,7 @@ bool Player::Update()
 
 	if (_heart_count % 6000 == 0) //1min
 	{
-		std::cout << "===================Time has gone 1min, i am id:" << GetID() << std::endl;
+		spdlog::get("console")->debug("{0} Line:{1} heart_count:{2} player_id:{3}", __func__, __LINE__, _heart_count, GetID());
 	}
 	return true;
 }

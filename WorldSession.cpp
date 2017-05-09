@@ -33,6 +33,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 
 		if (error)
 		{
+			Close(); ////断开网络连接
 			spdlog::get("console")->error("{0} Line:{1} Remote client disconnect, remote_ip:{2}, player_id:{3}", 
 					__func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
 			return;
@@ -66,7 +67,6 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			pb::Message* msg = ProtocolInstance.GetMessage(meta.type_t());	
 			if (!msg) 
 			{
-				Close();
 				DEBUG("Could not found message of type:%d", meta.type_t());
 				return;		//非法协议
 			}
@@ -192,8 +192,9 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 	}
 	catch (std::exception& e)
 	{
-		DEBUG("异常：%s", e.what());
 		Close();
+		spdlog::get("console")->error("{0} Line:{1} Remote client disconnect, remote_ip:{2}, player_id:{3}", 
+				__func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
 		return;
 	}
 	//递归持续接收	
