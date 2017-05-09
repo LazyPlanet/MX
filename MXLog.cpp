@@ -152,15 +152,16 @@ void MXLog::Print(Asset::LogMessage* message)
 
 MXLog::MXLog()
 {
-	spdlog::drop_all();
 	//////////日志格式//////////
 	spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [logname:%n] [level:%l] [thread %t] %v");
 
 	//////////各种日志定义//////////
 	//控制台日志
 	auto console = spdlog::stdout_color_mt("console");
+	console->flush_on(spdlog::level::trace);
 	//玩家日志
 	auto player = spdlog::basic_logger_mt("player", "logs/players");
+	player->flush_on(spdlog::level::trace);
 
 	//////////注册各种日志//////////
 	//spdlog::register_logger(console);
