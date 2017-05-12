@@ -38,7 +38,7 @@ public:
 		//发送可以放到消息队列里面处理
 		if (_is_writing_async || (_write_queue.empty() && !_closing)) 
 		{
-			spdlog::get("console")->error("{0} Line:{1} client_id:{2} has closed.", __func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str());
+			//spdlog::get("console")->error("{0} Line:{1} client_id:{2} has closed.", __func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str());
 			return true;
 		}
 
