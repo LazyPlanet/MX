@@ -34,8 +34,6 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 		if (error)
 		{
 			Close(); ////断开网络连接
-			spdlog::get("console")->error("{0} Line:{1} Remote client disconnect, remote_ip:{2}, player_id:{3}", 
-					__func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
 			return;
 		}
 		else
@@ -193,8 +191,6 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 	catch (std::exception& e)
 	{
 		Close();
-		spdlog::get("console")->error("{0} Line:{1} Remote client disconnect, remote_ip:{2}, player_id:{3}", 
-				__func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
 		return;
 	}
 	//递归持续接收	
@@ -229,6 +225,9 @@ bool WorldSession::Update()
 
 void WorldSession::OnClose()
 {
+	spdlog::get("console")->error("{0} Line:{1} Remote client disconnect, remote_ip:{2}, player_id:{3}", 
+			__func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
+
 	if (g_player) //网络断开
 	{
 		g_player->OnLogout(nullptr);
@@ -237,9 +236,6 @@ void WorldSession::OnClose()
 
 		g_player = nullptr;
 	}
-			
-	spdlog::get("console")->error("{0} Line:{1} Remote client disconnect, remote_ip:{2}, player_id:{3}", 
-			__func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
 }
 
 void WorldSession::SendProtocol(pb::Message* message)
@@ -249,7 +245,7 @@ void WorldSession::SendProtocol(pb::Message* message)
 
 void WorldSession::SendProtocol(pb::Message& message)
 {
-	message.PrintDebugString(); //打印出来MESSAGE
+	spdlog::get("console")->warn(message.DebugString());
 
 	const pb::FieldDescriptor* field = message.GetDescriptor()->FindFieldByName("type_t");
 	if (!field) return;

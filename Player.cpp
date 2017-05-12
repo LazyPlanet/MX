@@ -169,11 +169,10 @@ int32_t Player::OnEnterGame()
 	this->_stuff.set_login_time(CommonTimerInstance.GetTime());
 	this->_stuff.set_logout_time(0);
 
+	//BI日志
 	std::string json;
 	pbjson::pb2json(&_stuff, json);
-
 	spdlog::get("player")->info(json);
-	spdlog::get("console")->debug(json);
 
 	return 0;
 }
@@ -555,7 +554,7 @@ void Player::SendProtocol(pb::Message& message)
 		DEBUG_ASSERT(false);
 	}
 
-	DEBUG("%s:line:%d player_id:%ld\n", __func__, __LINE__, GetID());
+	//DEBUG("%s:line:%d player_id:%ld\n", __func__, __LINE__, GetID());
 	GetSession()->SendProtocol(message);
 	/*
 	const pb::FieldDescriptor* field = message.GetDescriptor()->FindFieldByName("type_t");

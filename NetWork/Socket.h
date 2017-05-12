@@ -10,6 +10,7 @@
 #include <sstream>
 
 #include <boost/asio.hpp>
+#include <spdlog/spdlog.h>
 
 #include "AsyncAcceptor.h"
 #include "NetThread.h"
@@ -26,12 +27,15 @@ public:
 	explicit Socket(boost::asio::ip::tcp::socket&& socket) : _socket(std::move(socket)), _closed(false), _closing(false) { }
 	virtual ~Socket() { }
 	
-	virtual bool Update() {
+	virtual bool Update() 
+	{
 		if (_closed) return false;
-		//std::cout << "Socket-------------update" << std::endl;
+
 		//发送可以放到消息队列里面处理
 		if (_is_writing_async || (_write_queue.empty() && !_closing)) return true;
+
 		for (; HandleQueue(); ) {}
+
 		return true;
 	}
 
@@ -97,41 +101,25 @@ public:
 		auto content = std::move(meta);
 		//////////////////////////////////////////////////////数据包头
 		unsigned short body_size = content.size();
-		//std::cout << "数据长度：" << body_size <<std::endl;
 		unsigned char header[2] = { 0 };
+
 		header[0] = (body_size >> 8) & 0xff;
 		header[1] = body_size & 0xff;
 		//////////////////////////////////////////////////////包数据体
 		auto body = content.c_str(); 
+
 		//////////////////////////////////////////////////////数据整理发送
 		char buffer[4096] = { 0 }; //发送数据缓存
-		for (int i = 0; i < 2; ++i) 
-		{
-			//std::cout << "数据包头：" << (int)header[i] << std::endl;
-			buffer[i] = header[i];
-		}
-		for (int i = 0; i < body_size; ++i) 
-		{
-			//std::cout << "数据包体：" << (int)body[i] << std::endl;
-			buffer[i + 2] = body[i];
-		}
+		for (int i = 0; i < 2; ++i) buffer[i] = header[i];
+		for (int i = 0; i < body_size; ++i) buffer[i + 2] = body[i];
 
-		//std::cout << "发送数据：" << std::endl;
-		/*
-		for (int i = 0; i < body_size + 2; ++i)
-		{
-			std::cout << (int)buffer[i] << std::endl;
-		}
-		*/
-
-		std::lock_guard<std::mutex> lock(_mutex);
+		//std::lock_guard<std::mutex> lock(_mutex);
 		_write_queue.push(std::string(buffer, body_size + 2));
 	}
 
 	bool HandleQueue()
 	{
-		//std::cout << "HandleQueue====================" << std::endl;
-		std::lock_guard<std::mutex> lock(_mutex);
+		//std::lock_guard<std::mutex> lock(_mutex);
 		if (_write_queue.empty()) return false;
 		std::string& meta = _write_queue.front();  //其实是META数据
 
@@ -142,28 +130,36 @@ public:
 
 		if (error == boost::asio::error::would_block || error == boost::asio::error::try_again)
 		{
-			std::cerr << __func__ << ":bytes_to_send:" << bytes_to_send << " has error:" << error << std::endl;
+			spdlog::get("console")->error("{0} Line:{1} bytes_to_send:{2} bytes_sent:{3}", __func__, __LINE__, bytes_to_send, bytes_sent);
 			return AsyncProcessQueue();
 
 			_write_queue.pop();
+
 			if (_closing && _write_queue.empty()) Close();
+
 			return false;
 		}
 		else if (bytes_sent == 0)
 		{
-			std::cerr << __func__ << ":bytes_sent == 0, sent nothing." << std::endl;
+			spdlog::get("console")->error("{0} Line:{1} bytes_to_send:{2} bytes_sent:{3}", __func__, __LINE__, bytes_to_send, bytes_sent);
+
 			_write_queue.pop();
+
 			if (_closing && _write_queue.empty()) Close();
+
 			return false;
 		}
 		else if (bytes_sent < bytes_to_send) //一般不会出现这个情况，重新发送，记个ERROR
 		{
-			std::cerr << __func__ << ":bytes_to_send:" << bytes_to_send << " and bytes_sent:" <<  bytes_sent << std::endl;
+			spdlog::get("console")->error("{0} Line:{1} bytes_to_send:{2} bytes_sent:{3}", __func__, __LINE__, bytes_to_send, bytes_sent);
 			return AsyncProcessQueue();
 		}
 
+		spdlog::get("console")->debug("{0} Line:{1} bytes_to_send:{2} bytes_sent:{3}", __func__, __LINE__, bytes_to_send, bytes_sent);
 		_write_queue.pop();
+
 		if (_closing && _write_queue.empty()) Close();
+
 		return !_write_queue.empty();
 	}
 
@@ -173,7 +169,7 @@ protected:
 	std::atomic<bool> _closed;    
 	std::atomic<bool> _closing;
 	bool _is_writing_async = false;
-	std::mutex _mutex;
+	//std::mutex _mutex;
 	//接收缓存
 	std::array<unsigned char, 4096> _buffer;
 	//发送队列
@@ -250,7 +246,7 @@ public:
 		}        
 		catch (const boost::system::system_error& error)        
 		{            
-			std::cout << __func__ << " Error:" << error.what() << std::endl;
+			spdlog::get("console")->critical("{0} Line:{1} error:{2}", __func__, __LINE__, error.what());
 		}
 	}
 	

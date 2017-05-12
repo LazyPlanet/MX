@@ -81,7 +81,7 @@ void Game::OnStart()
 
 	Asset::GameInformation message;
 	message.set_banker_player_id(_banker_player_id);
-	//BroadCast(message);
+	BroadCast(message);
 }
 
 bool Game::OnOver()
