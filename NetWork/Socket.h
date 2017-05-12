@@ -29,10 +29,18 @@ public:
 	
 	virtual bool Update() 
 	{
-		if (_closed) return false;
+		if (_closed) 
+		{
+			spdlog::get("console")->error("{0} Line:{1} client_id:{2} has closed.", __func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str());
+			return false;
+		}
 
 		//发送可以放到消息队列里面处理
-		if (_is_writing_async || (_write_queue.empty() && !_closing)) return true;
+		if (_is_writing_async || (_write_queue.empty() && !_closing)) 
+		{
+			spdlog::get("console")->error("{0} Line:{1} client_id:{2} has closed.", __func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str());
+			return true;
+		}
 
 		for (; HandleQueue(); ) {}
 

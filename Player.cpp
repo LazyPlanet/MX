@@ -946,7 +946,8 @@ int32_t Player::CmdSaizi(pb::Message* message)
 /////////////////////////////////////////////////////
 std::vector<Asset::PAI_OPER_TYPE> Player::CheckPai(const Asset::PaiElement& pai, int64_t from_player_id)
 {
-	std::cout << "玩家来的牌:line:" << __LINE__ << " card_type:" << pai.card_type() << " card_value:" << pai.card_value() << std::endl;
+	spdlog::get("console")->debug("{0} Line:{1} player_id:{2} card_type:{3} card_value:{4}", 
+			__func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 
 	PrintPai();
 
@@ -1093,6 +1094,9 @@ bool Player::CheckBaoHu(const Asset::PaiElement& pai)
 
 bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYPE>& fan_list)
 {
+	spdlog::get("console")->debug("{0} Line:{1} player_id:{2} card_type:{3} card_value:{4}", 
+			__func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+
 	auto cards = _cards; //复制当前牌
 
 	for (auto crds : _cards_outhand) //复制牌外牌
@@ -1102,17 +1106,6 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 	
 	for (auto& card : cards)
 		std::sort(card.second.begin(), card.second.end(), [](int x, int y){ return x < y; }); //由小到大，排序
-
-	/*
-	std::cout << "---------------------胡牌检查，当前玩家所有牌：" << std::endl;
-	for (auto card : cards)
-	{
-		std::cout << "牌类型：" << card.first << std::endl;
-		for (auto value : card.second)
-			std::cout << value << " ";
-		std::cout << std::endl;
-	}
-	*/
 
 	bool zhanlihu = false, jiahu = false, xuanfenggang = false, baopai = false, duanmen = false, yise = false, piao = false, baohu = false; //积分
 
@@ -1154,7 +1147,8 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 				{
 					if (has_count == 2) //有两门显然不是清一色
 					{
-						DEBUG("胡牌检查失败：缺门也不是清一色.");
+						spdlog::get("console")->debug("{0} Line:{1} player_id:{2} card_type:{3} card_value:{4} reason:缺门也不是清一色.", 
+								__func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 						return false; //不可缺门
 					}
 					else // <= 1
@@ -1164,7 +1158,8 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 				}
 				else //断门还不可以清一色
 				{
-					DEBUG("胡牌检查失败：缺门.");
+					spdlog::get("console")->debug("{0} Line:{1} player_id:{2} card_type:{3} card_value:{4} reason:缺门.", 
+							__func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 					return false;
 				}
 			}
@@ -1192,7 +1187,8 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 		{
 			if (_cards_outhand.size() == 0 && _minggang.size() == 0) 
 			{
-				DEBUG("胡牌检查失败：没开门.\n");
+				spdlog::get("console")->debug("{0} Line:{1} player_id:{2} card_type:{3} card_value:{4} reason:没开门.", 
+						__func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 				return false; //没开门
 			}
 		}
@@ -1244,7 +1240,8 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 
 	if (!has_yao) 
 	{
-		DEBUG("胡牌检查失败：没幺九.");
+		spdlog::get("console")->debug("{0} Line:{1} player_id:{2} card_type:{3} card_value:{4} reason:没幺九.", 
+				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 		return false;
 	}
 
@@ -1281,7 +1278,8 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 	bool can_hu = CanHuPai(card_list);	
 	if (!can_hu && !baohu) 
 	{
-		DEBUG("胡牌检查失败：自己牌内无法满足胡牌条件.\n");
+		spdlog::get("console")->debug("{0} Line:{1} player_id:{2} card_type:{3} card_value:{4} reason:自己牌内无法满足胡牌条件.", 
+				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 		return false;
 	}
 	
@@ -1303,7 +1301,8 @@ bool Player::CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYP
 	
 	if (!has_ke) 
 	{
-		DEBUG("胡牌检查失败：没有刻.");
+		spdlog::get("console")->debug("{0} Line:{1} player_id:{2} card_type:{3} card_value:{4} reason:没有刻.", 
+				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 		return false;
 	}
 
@@ -1953,8 +1952,6 @@ void Player::SynchronizePai()
 
 void Player::PrintPai()
 {
-	return;
-
 	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
 	
 	for (auto pai : _cards_outhand)
