@@ -137,9 +137,8 @@ bool Room::Remove(int64_t player_id)
 
 void Room::GameOver(int64_t player_id)
 {
-	if (_banker != player_id) ++_banker_index; //下庄
-
-	_banker = player_id;
+	if (_banker != player_id) 
+		_banker_index = (_banker_index + 1) % MAX_PLAYER_COUNT; //下庄
 }
 
 void Room::BroadCast(pb::Message* message, int64_t exclude_player_id)
@@ -165,7 +164,7 @@ void Room::SyncRoom()
 	
 	for (auto player : _players)
 	{
-		CP("%s:line:%d 同步房间数据:%d player_id:%ld position:%d\n", __func__, __LINE__, _players.size(), player->GetID(), player->GetPosition());
+		DEBUG("%s:line:%d 同步房间数据:%d player_id:%ld position:%d\n", __func__, __LINE__, _players.size(), player->GetID(), player->GetPosition());
 		auto p = message.mutable_player_list()->Add();
 		p->set_position(player->GetPosition());
 		p->mutable_common_prop()->CopyFrom(player->CommonProp());

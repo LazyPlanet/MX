@@ -27,6 +27,7 @@ class Player : public std::enable_shared_from_this<Player>
 private:
 	Asset::Player _stuff; //玩家数据
 	int64_t _heart_count = 0; //心跳次数
+	bool _dirty = false;
 
 	CallBack _method;
 	std::shared_ptr<WorldSession> _session = nullptr;	//网络连接
@@ -61,9 +62,10 @@ public:
 	void SyncCommonProperty();
 	//获取ID
 	virtual int64_t GetID() { return _stuff.common_prop().player_id(); }
-	virtual void SetID(int64_t player_id) { 
-		_stuff.mutable_common_prop()->set_player_id(player_id); 
-	} 
+	virtual void SetID(int64_t player_id) { _stuff.mutable_common_prop()->set_player_id(player_id); } 
+	//获取名字
+	virtual std::string GetName() { return _stuff.common_prop().name(); }
+	virtual void SetName(std::string name) { _stuff.mutable_common_prop()->set_name(name); } 
 	//获取级别
 	virtual int32_t GetLevel() { return _stuff.common_prop().level(); }
 	//获取性别
@@ -76,7 +78,6 @@ public:
 	virtual bool HandleProtocol(int32_t type_t, pb::Message* message);
 	virtual void SendProtocol(pb::Message& message);
 	virtual void SendProtocol(pb::Message* message);
-	//virtual void SendResponse(pb::Message* message);
 	//virtual void SendToRoomers(pb::Message& message); //向房间里玩家发送协议数据，发送到客户端
 	virtual void BroadCast(Asset::MsgItem& item);
 	//virtual void OnCreatePlayer(int64_t player_id);
@@ -100,6 +101,9 @@ public:
 	virtual int32_t Load();
 	//保存数据
 	virtual int32_t Save();
+	//是否脏数据
+	virtual bool IsDirty() { return _dirty; }
+	virtual void SetDirty() { _dirty = true; }
 	//同步玩家数据
 	virtual void SendPlayer();
 	//玩家心跳周期为10MS，如果该函数返回FALSE则表示掉线
@@ -138,6 +142,13 @@ public:
 	const std::shared_ptr<WorldSession> GetSession()
 	{
 		return _session;
+	}
+
+	bool IsConnect()
+	{
+		if (!_session) return false;
+			
+		return _session->IsConnect();
 	}
 	//发送错误信息
 	void AlertMessage(Asset::ERROR_CODE error_code, Asset::ERROR_TYPE error_type = Asset::ERROR_TYPE_NORMAL, Asset::ERROR_SHOW_TYPE error_show_type = Asset::ERROR_SHOW_TYPE_CHAT);
@@ -226,7 +237,7 @@ public:
 private:
 	std::shared_ptr<Room> _locate_room = nullptr; //实体所在房间
 	std::shared_ptr<Game> _game = nullptr; //当前游戏
-	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家手里的麻将
+	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards; //玩家手里的牌
 	std::map<int32_t/*麻将牌类型*/, std::vector<int32_t>/*牌值*/> _cards_outhand; //玩家墙外牌
 	std::vector<Asset::PaiElement> _minggang; //明杠
 	std::vector<Asset::PaiElement> _angang; //暗杠
@@ -239,6 +250,7 @@ public:
 	virtual int32_t CmdGetReward(pb::Message* message); //领取奖励
 	virtual int32_t CmdLoadScene(pb::Message* message); //加载场景
 	virtual int32_t CmdLuckyPlate(pb::Message* message); //幸运转盘
+	virtual int32_t CmdSaizi(pb::Message* message); //打股子
 	void OnEnterScene();
 	//获取房间
 	virtual std::shared_ptr<Room> GetRoom() { return _locate_room; }	//获取当前房间
@@ -250,12 +262,13 @@ public:
 
 	virtual int32_t OnFaPai(std::vector<int32_t>& cards); //发牌
 
-	std::vector<Asset::PAI_CHECK_RETURN> CheckPai(const Asset::PaiElement& pai, int64_t from_player_id);
+	std::vector<Asset::PAI_OPER_TYPE> CheckPai(const Asset::PaiElement& pai, int64_t from_player_id);
 
-	bool CheckHuPai(const Asset::PaiElement& pai); //胡牌
+	bool CheckBaoHu(const Asset::PaiElement& pai);
+
+	bool CheckHuPai(const Asset::PaiElement& pai, std::vector<Asset::FAN_TYPE>& fan_list); //胡牌
 
 	bool CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id); //是否可以杠牌
-	//bool CheckMingGangPai(const Asset::PaiElement& pai); //是否可以暗杠：检查门前是否有碰，自摸了一张，从而构成明杠
 	bool CheckAllGangPai(std::vector<Asset::PaiElement>& pais); //有玩家一直不杠牌, 每次都要提示, 比如玩家碰了7条,但是手里有7-8-9条,而选择暂时不杠
 
 	void OnGangPai(const Asset::PaiElement& pai, int64_t from_player_id); //杠牌
@@ -265,23 +278,43 @@ public:
 	void OnGangFengPai(); //旋风杠
 	void OnGangJianPai(); //箭杠
 
-	bool CheckFengGangPai(); 
-	bool CheckJianGangPai();
+	bool CheckFengGangPai(); //是否可以旋风杠-风杠 
+	bool CheckJianGangPai(); //是否可以旋风杠-箭杠
+	
+	bool CheckTingPai(); //是否可以听牌：能不能听牌，主要是看是否给牌可以胡
 
 	bool CheckPengPai(const Asset::PaiElement& pai); //是否可以碰牌
 	void OnPengPai(const Asset::PaiElement& pai); //碰牌
 
 	bool CheckChiPai(const Asset::PaiElement& pai); //是否可以吃牌
 	void OnChiPai(const Asset::PaiElement& pai, pb::Message* message); //吃牌
+
+	bool IsKaimen() { return _cards_outhand.size() != 0 || _minggang.size() != 0; } //是否开门
+	bool IsBimen() { return _cards_outhand.size() == 0 && _minggang.size() == 0; } //是否闭门
+
+	bool IsTingPai() { return _stuff.player_prop().has_tinged(); } //是否听牌
+	int32_t GetCountAfterTingOperation() { return _stuff.player_prop().oper_count_tingpai(); } //听牌后玩家操作
+	void IncreaseTingOperationCount(){ //听牌后操作
+		 _stuff.mutable_player_prop()->set_oper_count_tingpai(GetCountAfterTingOperation() + 1);
+	}
+
+	//明杠数量
+	int32_t GetMingGangCount() {
+		return _jiangang + _minggang.size();
+	}
+	//暗杠数量
+	int32_t GetAnGangCount() {
+		return _fenggang + _angang.size();
+	}
 	//是否已经在准备状态 
 	bool IsReady() { return _stuff.player_prop().game_oper_state() == Asset::GAME_OPER_TYPE_START; }
 	//获取玩家座次
 	Asset::POSITION_TYPE GetPosition() { return _stuff.player_prop().position(); }
 	void SetPosition(Asset::POSITION_TYPE position) { _stuff.mutable_player_prop()->set_position(position); }
 
-	void SynchronizePai();
 	void PrintPai();
-	void ClearCards() {	_cards.clear();	}
+	void ClearCards(); //清理玩家手中牌
+	void SynchronizePai();
 };
 
 /////////////////////////////////////////////////////

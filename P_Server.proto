@@ -81,3 +81,15 @@ message LogMessage {
 	repeated int32 cards = 9; //牌值
 	optional string content = 20; //内容
 }
+
+message FamilyName {
+	repeated bytes name = 1;
+}
+
+message WomanName {
+	repeated bytes name = 1;
+}
+
+message ManName {
+	repeated bytes name = 1;
+}

@@ -5,34 +5,15 @@
 #include <functional>
 #include <stdarg.h>
 
+#include "spdlog/spdlog.h"
+
 #include "P_Header.h"
 
 namespace Adoter
 {
 
-void CP(const char *str, ...); //控制台日志
 void DEBUG(const char *str, ...);
 void P(Asset::LOG_LEVEL level, const char *format, ...);
-
-enum ColorTypes
-{
-    BLACK,
-    RED,
-    GREEN,
-    BROWN,
-    BLUE,
-    MAGENTA,
-    CYAN,
-    GREY,
-    YELLOW,
-    LRED,
-    LGREEN,
-    LBLUE,
-    LMAGENTA,
-    LCYAN,
-    WHITE,
-	MAX_COLORS
-};
 
 namespace pb = google::protobuf;
 
@@ -48,6 +29,10 @@ class MXLog : public std::enable_shared_from_this<MXLog>
 public:
 
 	MXLog();
+	~MXLog() { 
+		DEBUG("%s:line:%d Delete all logs.\n", __func__, __LINE__);
+		spdlog::drop_all(); 
+	}
 
 	static MXLog& Instance()
 	{
@@ -61,20 +46,13 @@ public:
 
 	void Print(Asset::LogMessage* message); //日志输出
 	void ConsolePrint(Asset::LogMessage* message); //控制台输出
-    
-private:
-	void SetColor(bool stdout_stream, ColorTypes color);
-	void ResetColor(bool stdout_stream);
-
-	bool _colored; //控制台日志是否具有颜色
-	ColorTypes _colors[Asset::MAX_LOG_LEVEL];
 };
 
 #define MXLogInstance MXLog::Instance()
 
 //按级别日志
 #define LOG(level, message) \
-message->set_level(Asset::level); \
-MXLog::Instance().Print(message); \
+	message->set_level(Asset::level); \
+	MXLog::Instance().Print(message); \
 
 }

@@ -28,13 +28,6 @@ void utf8printf(FILE* out, const char *str, ...)
 	vutf8printf(out, str, &ap);
 }
 
-void CP(const char *str, ...)
-{
-	va_list ap;
-	va_start(ap, str);
-	vutf8printf(stdout, str, &ap);
-}
-
 void DEBUG(const char *str, ...)
 {
 	va_list ap;
@@ -157,101 +150,25 @@ void MXLog::Print(Asset::LogMessage* message)
 	}
 }
 
-MXLog::MXLog() : _colored(false)
+MXLog::MXLog()
 {
-    for (int32_t i = 0; i < Asset::MAX_LOG_LEVEL; ++i) _colors[i] = ColorTypes(MAX_COLORS);
+	////////////////////日志格式////////////////////
+	spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%f] [logname:%n] [level:%l] [thread:%t] %v");
 
-    InitColors("1 2");
+	////////////////////日志定义////////////////////
+	//
+	//控制台日志
+	auto console = spdlog::stdout_color_mt("console");
+	console->set_level(spdlog::level::trace);
+	//玩家日志
+	auto players = spdlog::basic_logger_mt("players", "logs/players");
+	players->flush_on(spdlog::level::trace);
+	//异步日志
+	spdlog::set_async_mode(4096); //队列大小必须是2的整数倍
+	auto player = spdlog::daily_logger_st("player", "logs/player");
+	player->flush_on(spdlog::level::trace);
 }
 
-void MXLog::InitColors(std::string const& str)
-{
-    if (str.empty())
-    {
-        _colored = false;
-        return;
-    }
-
-    int color[Asset::MAX_LOG_LEVEL];
-
-    std::istringstream ss(str);
-
-    for (int32_t i = 0; i < Asset::MAX_LOG_LEVEL; ++i)
-    {
-        ss >> color[i];
-
-        if (!ss) return;
-
-        if (color[i] < 0 || color[i] >= MAX_COLORS) return;
-    }
-
-    for (int32_t i = 0; i < Asset::MAX_LOG_LEVEL; ++i) _colors[i] = ColorTypes(color[i]);
-
-    _colored = true;
-}
-
-void MXLog::SetColor(bool stdout_stream, ColorTypes color)
-{
-    enum ANSITextAttr
-    {
-        TA_NORMAL                                = 0,
-        TA_BOLD                                  = 1,
-        TA_BLINK                                 = 5,
-        TA_REVERSE                               = 7
-    };
-
-    enum ANSIFgTextAttr
-    {
-        FG_BLACK                                 = 30,
-        FG_RED,
-        FG_GREEN,
-        FG_BROWN,
-        FG_BLUE,
-        FG_MAGENTA,
-        FG_CYAN,
-        FG_WHITE,
-        FG_YELLOW
-    };
-
-    enum ANSIBgTextAttr
-    {
-        BG_BLACK                                 = 40,
-        BG_RED,
-        BG_GREEN,
-        BG_BROWN,
-        BG_BLUE,
-        BG_MAGENTA,
-        BG_CYAN,
-        BG_WHITE
-    };
-
-    static int32_t UnixColorFG[MAX_COLORS] =
-    {
-        FG_BLACK,                                          // BLACK
-        FG_RED,                                            // RED
-        FG_GREEN,                                          // GREEN
-        FG_BROWN,                                          // BROWN
-        FG_BLUE,                                           // BLUE
-        FG_MAGENTA,                                        // MAGENTA
-        FG_CYAN,                                           // CYAN
-        FG_WHITE,                                          // WHITE
-        FG_YELLOW,                                         // YELLOW
-        FG_RED,                                            // LRED
-        FG_GREEN,                                          // LGREEN
-        FG_BLUE,                                           // LBLUE
-        FG_MAGENTA,                                        // LMAGENTA
-        FG_CYAN,                                           // LCYAN
-        FG_WHITE                                           // LWHITE
-    };
-
-    fprintf((stdout_stream? stdout : stderr), "\x1b[%d%sm", UnixColorFG[color], (color >= YELLOW && color < MAX_COLORS ? ";1" : ""));
-}
-
-void MXLog::ResetColor(bool stdout_stream)
-{
-    fprintf((stdout_stream ? stdout : stderr), "\x1b[0m");
-}
-	
 void MXLog::ConsolePrint(Asset::LogMessage* message)
 {
 	if (!message) return;
@@ -302,16 +219,7 @@ void MXLog::ConsolePrint(Asset::LogMessage* message)
 
     bool stdout_stream = message->level() != Asset::ERROR && message->level() != Asset::FATAL;
 
-    if (_colored)
-    {
-        SetColor(stdout_stream, _colors[message->level()]);
-		utf8printf(stdout_stream ? stdout : stderr, "%s|%ld|%s|%s\n", curr_time.c_str(), _server_id, _server_name.c_str(), output.c_str());
-        ResetColor(stdout_stream);
-    }
-    else
-	{
-		utf8printf(stdout_stream ? stdout : stderr, "%s|%ld|%s|%s\n", curr_time.c_str(), _server_id, _server_name.c_str(), output.c_str());
-	}
+	utf8printf(stdout_stream ? stdout : stderr, "%s|%ld|%s|%s\n", curr_time.c_str(), _server_id, _server_name.c_str(), output.c_str());
 }
 
 void MXLog::Load()

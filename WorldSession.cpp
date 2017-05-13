@@ -1,11 +1,18 @@
+
+#include <spdlog/spdlog.h>
+
 #include "WorldSession.h"
 #include "RedisManager.h"
 #include "CommonUtil.h"
 #include "Player.h"
 #include "MXLog.h"
+#include "Protocol.h"
+#include "PlayerName.h"
 
 namespace Adoter
 {
+
+namespace spd = spdlog;
 
 WorldSession::~WorldSession()
 {
@@ -24,12 +31,9 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 		log->set_client_ip(_socket.remote_endpoint().address().to_string());
 		LOG(ACTION, log.get());
 
-		if ("222.249.232.10" == _socket.remote_endpoint().address().to_string()) return;
-
 		if (error)
 		{
-			Close();
-			CP("Remote client disconnect, RemoteIp:%s", _socket.remote_endpoint().address().to_string().c_str());
+			Close(); ////断开网络连接
 			return;
 		}
 		else
@@ -37,14 +41,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			Asset::Meta meta;
 			bool result = meta.ParseFromArray(_buffer.data(), bytes_transferred);
 
-			if (!result) 
-			{
-				log->set_content("Meta parse error, line:" + __LINE__);
-				LOG(ERROR, log.get());
-
-				Close();
-				return;		//非法协议
-			}
+			if (!result) return;		//非法协议
 			
 			//std::cout << "接收数据：";
 			//meta.PrintDebugString(); //打印出来Message.
@@ -59,14 +56,16 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			if (!enum_value) return;
 
 			const std::string& enum_name = enum_value->name();
-			if (g_player)
-				DEBUG("%s:line:%d, 玩家:%ld 发送协议数据:%s", __func__, __LINE__, g_player->GetID(), enum_name.c_str());
 			
-			google::protobuf::Message* msg = ProtocolInstance.GetMessage(meta.type_t());	
+			if (g_player)
+				DEBUG("%s:line:%d, 玩家:%ld 接收客户端发送的协议数据:%s\n", __func__, __LINE__, g_player->GetID(), enum_name.c_str());
+			else
+				DEBUG("%s:line:%d, 接收客户端发送的协议数据:%s\n", __func__, __LINE__, enum_name.c_str());
+			
+			pb::Message* msg = ProtocolInstance.GetMessage(meta.type_t());	
 			if (!msg) 
 			{
-				Close();
-				CP("Could not found message of type:%d", meta.type_t());
+				DEBUG("Could not found message of type:%d", meta.type_t());
 				return;		//非法协议
 			}
 
@@ -74,14 +73,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			
 			//result = message->ParseFromString(meta.stuff());
 			result = message->ParseFromArray(meta.stuff().c_str(), meta.stuff().size());
-			if (!result) 
-			{
-				log->set_content("Meta parse error, line:" + __LINE__);
-				LOG(ERROR, log.get());
-
-				Close();
-				return;		//非法协议
-			}
+			if (!result) return;		//非法协议
 		
 			message->PrintDebugString(); //打印出来Message.
 
@@ -106,7 +98,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					int64_t player_id = redis->CreatePlayer();
 					if (player_id == 0) 
 					{
-						CP("Create player failed.");
+						DEBUG("Create player failed.");
 						return; //创建失败
 					}
 
@@ -116,6 +108,9 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 					redis->SaveUser(login->account().username(), stuff); //账号数据存盘
 
 					g_player = std::make_shared<Player>(player_id, shared_from_this());
+					std::string player_name = NameInstance.Get();
+					DEBUG("%s:line:%d, player_id:%ld, player_name:%s\n", __func__, __LINE__, player_id, player_name.c_str());
+					g_player->SetName(player_name);
 					g_player->Save(); //存盘，防止数据库无数据
 				}
 				else
@@ -174,7 +169,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 				if (_player_list.find(enter_game->player_id()) == _player_list.end())
 				{
 					Close();
-					CP("Player has not found.");
+					DEBUG("Player has not found.");
 					return; //账号下没有该角色数据
 				}
 
@@ -185,7 +180,7 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 			{
 				if (!g_player) 
 				{
-					CP("Player has not inited");
+					DEBUG("Player has not inited");
 					return; //未初始化的Player
 				}
 				//其他协议的调用规则
@@ -195,7 +190,6 @@ void WorldSession::InitializeHandler(const boost::system::error_code error, cons
 	}
 	catch (std::exception& e)
 	{
-		CP("异常：%s", e.what());
 		Close();
 		return;
 	}
@@ -215,15 +209,25 @@ void WorldSession::Start()
 	
 bool WorldSession::Update() 
 { 
-	if (!g_player) return true; //长时间未能上线
+	if (!Socket::Update()) return false;
+
+	if (!g_player) 
+	{
+		return true; //长时间未能上线
+	}
 
 	g_player->Update(); 
+
+	//std::cout << "-------------update" << std::endl;
 
 	return true;
 }
 
 void WorldSession::OnClose()
 {
+	spdlog::get("console")->error("{0} Line:{1} Remote client disconnect, remote_ip:{2}, player_id:{3}", 
+			__func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str(), g_player == nullptr ? 0 : g_player->GetID());
+
 	if (g_player) //网络断开
 	{
 		g_player->OnLogout(nullptr);
@@ -241,7 +245,7 @@ void WorldSession::SendProtocol(pb::Message* message)
 
 void WorldSession::SendProtocol(pb::Message& message)
 {
-	message.PrintDebugString(); //打印出来MESSAGE
+	spdlog::get("console")->warn(message.DebugString());
 
 	const pb::FieldDescriptor* field = message.GetDescriptor()->FindFieldByName("type_t");
 	if (!field) return;
@@ -254,7 +258,12 @@ void WorldSession::SendProtocol(pb::Message& message)
 	meta.set_stuff(message.SerializeAsString());
 
 	std::string content = meta.SerializeAsString();
-	AsyncSend(content);
+	//AsyncSend(content);
+
+	EnterQueue(std::move(content));
+	const pb::EnumValueDescriptor* enum_value = message.GetReflection()->GetEnum(message, field);
+	if (!enum_value) return;
+	DEBUG("%s:line:%d, protocol_name:%s, content:%s\n", __func__, __LINE__, enum_value->name().c_str(), message.ShortDebugString().c_str());
 }
 
 void WorldSessionManager::Add(std::shared_ptr<WorldSession> session)

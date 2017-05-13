@@ -5,16 +5,18 @@
 #include <mutex>
 #include <memory>
 #include <iostream>
+#include <queue>
 #include <unordered_map>
+#include <sstream>
+
 #include <boost/asio.hpp>
-#include "Protocol.h"
+#include <spdlog/spdlog.h>
+
 #include "AsyncAcceptor.h"
 #include "NetThread.h"
 
 namespace Adoter
 {
-
-namespace pb = google::protobuf;
 
 template<class T, class S = boost::asio::ip::tcp::socket>
 class Socket : public std::enable_shared_from_this<T>
@@ -23,17 +25,25 @@ public:
 	S _socket; 
 public:
 	explicit Socket(boost::asio::ip::tcp::socket&& socket) : _socket(std::move(socket)), _closed(false), _closing(false) { }
-	virtual ~Socket() 
-	{
-		//std::cout << __func__ <<  _socket.remote_endpoint().address() << std::endl;
-		//_socket.close();
-	}
+	virtual ~Socket() { }
 	
-	virtual bool Update() {
-		if (_closed) return false;
+	virtual bool Update() 
+	{
+		if (_closed) 
+		{
+			spdlog::get("console")->error("{0} Line:{1} client_id:{2} has closed.", __func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str());
+			return false;
+		}
+
 		//发送可以放到消息队列里面处理
-		//if (_isWritingAsync || (_writeQueue.empty() && !_closing)) return true;
-		//for (; HandleQueue();) {}
+		if (_is_writing_async || (_write_queue.empty() && !_closing)) 
+		{
+			//spdlog::get("console")->error("{0} Line:{1} client_id:{2} has closed.", __func__, __LINE__, _socket.remote_endpoint().address().to_string().c_str());
+			return true;
+		}
+
+		for (; HandleQueue(); ) {}
+
 		return true;
 	}
 
@@ -72,17 +82,100 @@ public:
 	virtual void AsyncSend(const char* buff, size_t size)
 	{
 		boost::asio::async_write(_socket, boost::asio::buffer(buff, size), std::bind(&Socket::OnSend, this, std::placeholders::_1, std::placeholders::_2));
-
-		/*
-		for (int i = 0; i < size; ++i)
-		{
-			std::cout << (int)buff[i] << " ";
-		}
-		*/
 	}
 	virtual void OnSend(const boost::system::error_code& error, std::size_t bytes_transferred)
 	{
 		std::cout << __func__ << ":bytes_transferred:" << bytes_transferred << " has error:" << error << std::endl;
+	}
+
+	bool AsyncProcessQueue()    
+	{
+		if (_is_writing_async) return false;
+		_is_writing_async = true;
+
+		_socket.async_write_some(boost::asio::null_buffers(), std::bind(&Socket<T, S>::WriteHandlerWrapper, 
+					this->shared_from_this(), std::placeholders::_1, std::placeholders::_2));
+		return false;
+	}
+
+	void WriteHandlerWrapper(boost::system::error_code /*error*/, std::size_t /*bytes_transferred*/)
+	{
+		_is_writing_async = false;
+		HandleQueue();
+	}
+
+	void EnterQueue(std::string&& meta)    
+	{        
+		auto content = std::move(meta);
+		//////////////////////////////////////////////////////数据包头
+		unsigned short body_size = content.size();
+		unsigned char header[2] = { 0 };
+
+		header[0] = (body_size >> 8) & 0xff;
+		header[1] = body_size & 0xff;
+		//////////////////////////////////////////////////////包数据体
+		auto body = content.c_str(); 
+
+		//////////////////////////////////////////////////////数据整理发送
+		char buffer[4096] = { 0 }; //发送数据缓存
+		for (int i = 0; i < 2; ++i) buffer[i] = header[i];
+		for (int i = 0; i < body_size; ++i) buffer[i + 2] = body[i];
+
+		//std::lock_guard<std::mutex> lock(_mutex);
+		_write_queue.push(std::string(buffer, body_size + 2));
+	}
+
+	bool HandleQueue()
+	{
+		//std::lock_guard<std::mutex> lock(_mutex);
+
+		if (!_socket.is_open()) 
+		{
+			spdlog::get("console")->error("{0} Line:{1} has disconnected from server.", __func__, __LINE__);
+			return false;
+		}
+
+		if (_write_queue.empty()) return false;
+		std::string& meta = _write_queue.front();  //其实是META数据
+
+		std::size_t bytes_to_send = meta.size();
+
+		boost::system::error_code error;
+		std::size_t bytes_sent = _socket.write_some(boost::asio::buffer(meta.c_str(), bytes_to_send), error);
+
+		if (error == boost::asio::error::would_block || error == boost::asio::error::try_again)
+		{
+			spdlog::get("console")->error("{0} Line:{1} bytes_to_send:{2} bytes_sent:{3}", __func__, __LINE__, bytes_to_send, bytes_sent);
+			return AsyncProcessQueue();
+
+			_write_queue.pop();
+
+			if (_closing && _write_queue.empty()) Close();
+
+			return false;
+		}
+		else if (bytes_sent == 0)
+		{
+			spdlog::get("console")->error("{0} Line:{1} bytes_to_send:{2} bytes_sent:{3}", __func__, __LINE__, bytes_to_send, bytes_sent);
+
+			_write_queue.pop();
+
+			if (_closing && _write_queue.empty()) Close();
+
+			return false;
+		}
+		else if (bytes_sent < bytes_to_send) //一般不会出现这个情况，重新发送，记个ERROR
+		{
+			spdlog::get("console")->error("{0} Line:{1} bytes_to_send:{2} bytes_sent:{3}", __func__, __LINE__, bytes_to_send, bytes_sent);
+			return AsyncProcessQueue();
+		}
+
+		spdlog::get("console")->debug("{0} Line:{1} bytes_to_send:{2} bytes_sent:{3}", __func__, __LINE__, bytes_to_send, bytes_sent);
+		_write_queue.pop();
+
+		if (_closing && _write_queue.empty()) Close();
+
+		return !_write_queue.empty();
 	}
 
 protected:
@@ -90,11 +183,15 @@ protected:
 protected:
 	std::atomic<bool> _closed;    
 	std::atomic<bool> _closing;
+	bool _is_writing_async = false;
+	//std::mutex _mutex;
 	//接收缓存
 	std::array<unsigned char, 4096> _buffer;
+	//发送队列
+	std::queue<std::string> _write_queue;
 };
 
-template <class SOCKET_TYPE> //各种类型的SOCKET，比如Session
+template <class SOCKET_TYPE> //各种类型的SOCKET，比如Session-其本质也要继承至Socket
 class SocketManager 
 {
 protected:
@@ -122,7 +219,7 @@ public:
 
 		_thread_count = thread_count;
 		
-		_threads = CreateThreads();
+		_threads = CreateThreads(); //继承类所实现的Socket
 
 		for (int32_t i = 0; i < _thread_count; ++i)            
 			_threads[i].Start();
@@ -164,7 +261,7 @@ public:
 		}        
 		catch (const boost::system::system_error& error)        
 		{            
-			std::cout << __func__ << " Error:" << error.what() << std::endl;
+			spdlog::get("console")->critical("{0} Line:{1} error:{2}", __func__, __LINE__, error.what());
 		}
 	}
 	

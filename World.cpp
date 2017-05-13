@@ -3,6 +3,8 @@
 #include "Room.h"
 #include "Game.h"
 #include "PlayerMatch.h"
+#include "PlayerName.h"
+#include "MXLog.h"
 
 namespace Adoter
 {
@@ -30,6 +32,12 @@ bool World::Load()
 	if (!GameInstance.Load()) 
 	{
 		//LOG(ERROR, "GameInstance load error.");
+		return false;
+	}
+
+	if (!NameInstance.Load())
+	{
+		DEBUG("%s:line:%d NameInstance.Load Failed\n", __func__, __LINE__);
 		return false;
 	}
 
