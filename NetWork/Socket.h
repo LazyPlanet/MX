@@ -128,6 +128,13 @@ public:
 	bool HandleQueue()
 	{
 		//std::lock_guard<std::mutex> lock(_mutex);
+
+		if (_socket.is_open()) 
+		{
+			spdlog::get("console")->error("{0} Line:{1} has disconnected from server.", __func__, __LINE__);
+			return false;
+		}
+
 		if (_write_queue.empty()) return false;
 		std::string& meta = _write_queue.front();  //其实是META数据
 

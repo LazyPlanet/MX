@@ -291,7 +291,7 @@ int32_t Player::CmdPaiOperate(pb::Message* message)
 				return 6; //没有这张牌
 			}
 
-			DEBUG("%s:line:%d,玩家:%ld 删除牌 类型:%d--值%d", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+			DEBUG("%s:line:%d,玩家:%ld删除手中的牌, 类型:%d, 值:%d\n", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 
 			pais.erase(it); //打出牌
 		}
@@ -1558,7 +1558,7 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		if (count == 3 /*牌是来自其他玩家*/ || count == 4 /*牌是玩家自己抓的*/) return true;  //玩家手里需要有3|4张牌
 	}
 
-	DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌:类型:%d--值%d from_player_id:%ld\n", 
+	DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌: 类型:%d 值:%d from_player_id:%ld\n", 
 			__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), from_player_id);
 
 	if (from_player_id == GetID()) //玩家自己抓牌
@@ -1569,7 +1569,7 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 
 		if (first_it == it->second.end()) 
 		{
-			DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌:类型:%d--值%d from_player_id:%ld\n", 
+			DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌: 类型:%d, 值:%d from_player_id:%ld\n", 
 				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), from_player_id);
 			return false;
 		}
@@ -1577,7 +1577,7 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		auto second_it = ++first_it;
 		if (second_it == it->second.end())
 		{
-			DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌:类型:%d--值%d from_player_id:%ld\n", 
+			DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌: 类型:%d, 值:%d from_player_id:%ld\n", 
 				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), from_player_id);
 			return false;
 		}
@@ -1585,18 +1585,18 @@ bool Player::CheckGangPai(const Asset::PaiElement& pai, int64_t from_player_id)
 		auto third_it = ++second_it;
 		if (third_it == it->second.end())
 		{
-			DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌:类型:%d--值%d from_player_id:%ld\n", 
+			DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌: 类型:%d, 值:%d from_player_id:%ld\n", 
 				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), from_player_id);
 			return false;
 		}
 		
-		DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌 类型:%d--值%d %d %d %d\n", 
+		DEBUG("%s:line:%d,杠牌 玩家%ld墙外牌: 类型:%d, 值:%d %d %d %d\n", 
 				__func__, __LINE__, GetID(), pai.card_type(), pai.card_value(), *first_it, *second_it, *third_it);
 
 		if ((*first_it == *second_it) && (*second_it == *third_it)) return true;  //玩家牌面有3张牌
 	}
 		
-	DEBUG("%s:line:%d,玩家%ld不能杠牌 类型:%d--值%d\n", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+	DEBUG("%s:line:%d,玩家%ld不能杠牌, 类型:%d, 值:%d\n", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
 
 	return false;
 }
