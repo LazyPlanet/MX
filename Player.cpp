@@ -1954,6 +1954,16 @@ void Player::PrintPai()
 {
 	Asset::PaiNotify notify; /////玩家当前牌数据发给Client
 	
+	for (auto pai : _minggang)
+	{
+		DEBUG("%s:line:%d, 玩家 %ld明杠真正的牌数据，牌类型:%d, 牌值:%d\n", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+	}
+	
+	for (auto pai : _angang)
+	{
+		DEBUG("%s:line:%d, 玩家 %ld暗杠真正的牌数据，牌类型:%d, 牌值:%d\n", __func__, __LINE__, GetID(), pai.card_type(), pai.card_value());
+	}
+	
 	for (auto pai : _cards_outhand)
 	{
 		DEBUG("%s:line:%d, 玩家 %ld牌外真正的牌数据，牌类型:%d, 牌值:", __func__, __LINE__, GetID(), pai.first);
