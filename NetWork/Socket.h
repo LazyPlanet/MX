@@ -129,7 +129,7 @@ public:
 	{
 		//std::lock_guard<std::mutex> lock(_mutex);
 
-		if (_socket.is_open()) 
+		if (!_socket.is_open()) 
 		{
 			spdlog::get("console")->error("{0} Line:{1} has disconnected from server.", __func__, __LINE__);
 			return false;
